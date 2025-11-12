@@ -60,12 +60,14 @@ export default function DashboardPage() {
   };
 
   const filters = [
-    { id: 'my-team', label: 'Meu Time', testId: 'filter-my-team' },
-    { id: 'all', label: 'Todos', testId: 'filter-all' },
+    { id: 'my-team', label: 'Meu Time', testId: 'filter-my-team', isText: true },
+    { id: 'all', label: 'Todos', testId: 'filter-all', isText: true },
     ...TEAMS_DATA.slice(0, 5).map(team => ({
       id: team.id,
       label: team.shortName,
+      logoUrl: team.logoUrl,
       testId: `filter-team-${team.id}`,
+      isText: false,
     })),
   ];
 
@@ -76,21 +78,33 @@ export default function DashboardPage() {
       {/* Filter Bar */}
       <div className="sticky top-16 z-40 bg-black/40 backdrop-blur-xl border-b border-white/10">
         <div className="container px-6 py-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide justify-center">
             {filters.map((filter) => (
               <Button
                 key={filter.id}
                 variant={activeFilter === filter.id ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setActiveFilter(filter.id)}
-                className={`whitespace-nowrap font-light transition-all duration-300 ${
+                className={`font-light transition-all duration-300 ${
+                  filter.isText 
+                    ? 'whitespace-nowrap px-4' 
+                    : 'w-12 h-12 p-0 flex items-center justify-center'
+                } ${
                   activeFilter === filter.id
                     ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
                     : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
                 }`}
                 data-testid={filter.testId}
               >
-                {filter.label}
+                {filter.isText ? (
+                  filter.label
+                ) : (
+                  <img 
+                    src={filter.logoUrl} 
+                    alt={filter.label}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                )}
               </Button>
             ))}
           </div>
