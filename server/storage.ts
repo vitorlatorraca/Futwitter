@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, or, sql } from "drizzle-orm";
 import {
   users,
   journalists,
@@ -175,6 +175,105 @@ export class DatabaseStorage implements IStorage {
     return match;
   }
 
+  async getLastMatch(teamId: string): Promise<(Match & { players: (Player & { wasStarter: boolean; averageRating?: number })[] }) | null> {
+    const [lastMatch] = await db
+      .select()
+      .from(matches)
+      .where(and(
+        eq(matches.teamId, teamId),
+        eq(matches.status, 'FINISHED')
+      ))
+      .orderBy(desc(matches.matchDate))
+      .limit(1);
+
+    if (!lastMatch) return null;
+
+    // Get players from this match
+    const matchPlayersList = await db
+      .select({
+        player: players,
+        wasStarter: matchPlayers.wasStarter,
+      })
+      .from(matchPlayers)
+      .innerJoin(players, eq(matchPlayers.playerId, players.id))
+      .where(eq(matchPlayers.matchId, lastMatch.id));
+
+    // Get average ratings for each player in this match
+    const playersWithRatings = await Promise.all(
+      matchPlayersList.map(async ({ player, wasStarter }) => {
+        const ratings = await db
+          .select()
+          .from(playerRatings)
+          .where(and(
+            eq(playerRatings.playerId, player.id),
+            eq(playerRatings.matchId, lastMatch.id)
+          ));
+
+        const averageRating = ratings.length > 0
+          ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+          : null;
+
+        return {
+          ...player,
+          wasStarter,
+          averageRating: averageRating || undefined,
+        };
+      })
+    );
+
+    return {
+      ...lastMatch,
+      players: playersWithRatings,
+    };
+  }
+
+  async getUpcomingMatches(teamId: string, limit = 3): Promise<Match[]> {
+    return await db
+      .select()
+      .from(matches)
+      .where(and(
+        eq(matches.teamId, teamId),
+        eq(matches.status, 'SCHEDULED')
+      ))
+      .orderBy(matches.matchDate)
+      .limit(limit);
+  }
+
+  async getStandings(): Promise<Team[]> {
+    return await db
+      .select()
+      .from(teams)
+      .orderBy(desc(teams.points), desc(teams.wins), teams.name);
+  }
+
+  async getPlayerRatingForMatch(playerId: string, matchId: string, userId: string): Promise<PlayerRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(playerRatings)
+      .where(and(
+        eq(playerRatings.playerId, playerId),
+        eq(playerRatings.matchId, matchId),
+        eq(playerRatings.userId, userId)
+      ))
+      .limit(1);
+    return rating || undefined;
+  }
+
+  async getPlayerAverageRatingForMatch(playerId: string, matchId: string): Promise<number | null> {
+    const ratings = await db
+      .select()
+      .from(playerRatings)
+      .where(and(
+        eq(playerRatings.playerId, playerId),
+        eq(playerRatings.matchId, matchId)
+      ));
+
+    if (ratings.length === 0) return null;
+    
+    const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+    return sum / ratings.length;
+  }
+
   // News
   async getAllNews(teamId?: string): Promise<any[]> {
     let query = db
@@ -296,6 +395,34 @@ export class DatabaseStorage implements IStorage {
 
   // Player Ratings
   async createPlayerRating(insertRating: InsertPlayerRating): Promise<PlayerRating> {
+    // Check if rating already exists
+    const existing = await db
+      .select()
+      .from(playerRatings)
+      .where(
+        and(
+          eq(playerRatings.userId, insertRating.userId),
+          eq(playerRatings.playerId, insertRating.playerId),
+          eq(playerRatings.matchId, insertRating.matchId)
+        )
+      )
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing rating
+      const [updated] = await db
+        .update(playerRatings)
+        .set({ 
+          rating: insertRating.rating,
+          comment: insertRating.comment,
+          updatedAt: new Date()
+        })
+        .where(eq(playerRatings.id, existing[0].id))
+        .returning();
+      return updated;
+    }
+
+    // Create new rating
     const [rating] = await db
       .insert(playerRatings)
       .values(insertRating)
