@@ -17,12 +17,21 @@ function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
-// Middleware to check if user is a journalist
-function requireJournalist(req: any, res: any, next: any) {
-  if (req.session.userType !== 'JOURNALIST') {
-    return res.status(403).json({ message: 'Acesso negado. Apenas jornalistas.' });
+// Middleware to check if user is a journalist or influencer
+async function requireJournalistOrInfluencer(req: any, res: any, next: any) {
+  if (req.session.userType === 'JOURNALIST') {
+    return next();
   }
-  next();
+  
+  // Check if user is an influencer
+  if (req.session.userId) {
+    const user = await storage.getUser(req.session.userId);
+    if (user?.isInfluencer) {
+      return next();
+    }
+  }
+  
+  return res.status(403).json({ message: 'Acesso negado. Apenas jornalistas ou influencers.' });
 }
 
 // Middleware to check if user is an admin
@@ -304,14 +313,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/news/my-news', requireAuth, requireJournalist, async (req, res) => {
+  app.get('/api/news/my-news', requireAuth, requireJournalistOrInfluencer, async (req, res) => {
     try {
-      const journalist = await storage.getJournalist(req.session.userId!);
-      if (!journalist) {
-        return res.status(404).json({ message: 'Jornalista não encontrado' });
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      const newsItems = await storage.getNewsByJournalist(journalist.id);
+      let newsItems: any[] = [];
+
+      // Se for jornalista, buscar notícias por journalistId
+      if (user.userType === 'JOURNALIST') {
+        const journalist = await storage.getJournalist(userId);
+        if (journalist) {
+          newsItems = await storage.getNewsByJournalist(journalist.id);
+        }
+      }
+
+      // Se for influencer, buscar notícias por userId
+      if (user.isInfluencer) {
+        const influencerNews = await storage.getNewsByUser(userId);
+        newsItems = [...newsItems, ...influencerNews];
+      }
 
       // Enrich with team data
       const enrichedNews = await Promise.all(
@@ -328,14 +352,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/news', requireAuth, requireJournalist, async (req, res) => {
+  app.post('/api/news', requireAuth, requireJournalistOrInfluencer, async (req, res) => {
     try {
-      const journalist = await storage.getJournalist(req.session.userId!);
-      if (!journalist) {
-        return res.status(404).json({ message: 'Jornalista não encontrado' });
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
       const newsData = insertNewsSchema.parse(req.body);
+
+      // Se for influencer, garantir que está postando apenas para o time dele
+      if (user.isInfluencer && user.userType !== 'JOURNALIST') {
+        if (newsData.teamId !== user.teamId) {
+          return res.status(403).json({ message: 'Influencers só podem postar notícias para o seu próprio time' });
+        }
+        // Criar notícia com userId
+        const newsItem = await storage.createNews({
+          ...newsData,
+          userId: user.id,
+          teamId: user.teamId!, // Forçar o time do influencer
+        });
+        return res.status(201).json(newsItem);
+      }
+
+      // Se for jornalista, usar journalistId
+      const journalist = await storage.getJournalist(userId);
+      if (!journalist) {
+        return res.status(404).json({ message: 'Jornalista não encontrado' });
+      }
 
       const newsItem = await storage.createNews({
         ...newsData,
@@ -349,7 +394,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/news/:id', requireAuth, requireJournalist, async (req, res) => {
+  app.delete('/api/news/:id', requireAuth, requireJournalistOrInfluencer, async (req, res) => {
     try {
       await storage.deleteNews(req.params.id);
       res.json({ message: 'Notícia excluída com sucesso' });

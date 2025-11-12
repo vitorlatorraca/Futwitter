@@ -80,7 +80,9 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
             className="w-10 h-10 rounded-full object-cover border-2 border-white/10"
           />
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm text-white truncate">{news.journalist.user.name}</p>
+            <p className="font-medium text-sm text-white truncate">
+              {news.journalist?.user?.name || (news as any).author?.name || 'Autor desconhecido'}
+            </p>
             <p className="text-xs text-gray-400 truncate font-light">{news.team.name}</p>
           </div>
           <Badge className="bg-white/10 border-white/10 text-white/90 font-light text-xs">{categoryLabel}</Badge>

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, desc, or, sql } from "drizzle-orm";
+import { eq, and, desc, or, sql, isNotNull } from "drizzle-orm";
 import {
   users,
   journalists,
@@ -69,6 +69,7 @@ export interface IStorage {
   // News
   getAllNews(teamId?: string): Promise<any[]>;
   getNewsByJournalist(journalistId: string): Promise<News[]>;
+  getNewsByUser(userId: string): Promise<News[]>;
   createNews(news: InsertNews): Promise<News>;
   updateNews(id: string, data: Partial<News>): Promise<News | undefined>;
   deleteNews(id: string): Promise<void>;
@@ -307,41 +308,97 @@ export class DatabaseStorage implements IStorage {
 
   // News
   async getAllNews(teamId?: string): Promise<any[]> {
-    let query = db
-      .select({
-        id: news.id,
-        journalistId: news.journalistId,
-        teamId: news.teamId,
-        title: news.title,
-        content: news.content,
-        imageUrl: news.imageUrl,
-        category: news.category,
-        likesCount: news.likesCount,
-        dislikesCount: news.dislikesCount,
-        isPublished: news.isPublished,
-        publishedAt: news.publishedAt,
-        createdAt: news.createdAt,
-        updatedAt: news.updatedAt,
-        team: teams,
-        journalist: {
-          id: journalists.id,
-          user: {
-            name: users.name,
-          },
-        },
-      })
-      .from(news)
-      .innerJoin(teams, eq(news.teamId, teams.id))
-      .innerJoin(journalists, eq(news.journalistId, journalists.id))
-      .innerJoin(users, eq(journalists.userId, users.id))
-      .where(eq(news.isPublished, true))
-      .orderBy(desc(news.publishedAt));
+    try {
+      // Construir condições base
+      const baseConditions = teamId 
+        ? and(eq(news.isPublished, true), eq(news.teamId, teamId))
+        : eq(news.isPublished, true);
 
-    if (teamId) {
-      query = query.where(eq(news.teamId, teamId)) as any;
+      // Buscar todas as notícias primeiro
+      const allNewsItems = await db
+        .select()
+        .from(news)
+        .where(baseConditions)
+        .orderBy(desc(news.publishedAt));
+
+      // Para cada notícia, buscar os dados relacionados
+      const enrichedNews = await Promise.all(
+        allNewsItems.map(async (newsItem) => {
+          // Buscar dados do time
+          const team = await this.getTeam(newsItem.teamId);
+          if (!team) return null;
+
+          let authorName = 'Autor desconhecido';
+          let journalistData = null;
+
+          // Se tem journalistId, buscar dados do jornalista
+          if (newsItem.journalistId) {
+            const journalist = await db
+              .select()
+              .from(journalists)
+              .where(eq(journalists.id, newsItem.journalistId))
+              .limit(1);
+            
+            if (journalist.length > 0) {
+              const journalistUser = await this.getUser(journalist[0].userId);
+              if (journalistUser) {
+                authorName = journalistUser.name;
+                journalistData = {
+                  id: journalist[0].id,
+                  user: {
+                    name: journalistUser.name,
+                  },
+                };
+              }
+            }
+          }
+          // Se tem userId (influencer), buscar dados do usuário
+          else if (newsItem.userId) {
+            const influencerUser = await this.getUser(newsItem.userId);
+            if (influencerUser) {
+              authorName = influencerUser.name;
+              journalistData = {
+                user: {
+                  name: influencerUser.name,
+                },
+              };
+            }
+          }
+
+          return {
+            id: newsItem.id,
+            journalistId: newsItem.journalistId,
+            userId: newsItem.userId,
+            teamId: newsItem.teamId,
+            title: newsItem.title,
+            content: newsItem.content,
+            imageUrl: newsItem.imageUrl,
+            category: newsItem.category,
+            likesCount: newsItem.likesCount,
+            dislikesCount: newsItem.dislikesCount,
+            isPublished: newsItem.isPublished,
+            publishedAt: newsItem.publishedAt,
+            createdAt: newsItem.createdAt,
+            updatedAt: newsItem.updatedAt,
+            team: {
+              id: team.id,
+              name: team.name,
+              logoUrl: team.logoUrl,
+              primaryColor: team.primaryColor,
+              secondaryColor: team.secondaryColor,
+            },
+            journalist: journalistData,
+            author: newsItem.userId ? { name: authorName } : null,
+          };
+        })
+      );
+
+      // Filtrar nulls e retornar
+      return enrichedNews.filter((item): item is NonNullable<typeof item> => item !== null);
+    } catch (error) {
+      console.error('Error in getAllNews:', error);
+      throw error;
     }
-
-    return await query;
   }
 
   async getNewsByJournalist(journalistId: string): Promise<News[]> {
@@ -349,6 +406,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(news)
       .where(eq(news.journalistId, journalistId))
+      .orderBy(desc(news.publishedAt));
+  }
+
+  async getNewsByUser(userId: string): Promise<News[]> {
+    return await db
+      .select()
+      .from(news)
+      .where(eq(news.userId, userId))
       .orderBy(desc(news.publishedAt));
   }
 

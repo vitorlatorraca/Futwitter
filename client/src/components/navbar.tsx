@@ -22,7 +22,7 @@ export function Navbar() {
     { label: t('nav.profile'), href: '/perfil', testId: 'link-perfil' },
   ];
 
-  if (user.userType === 'JOURNALIST') {
+  if (user.userType === 'JOURNALIST' || user.isInfluencer) {
     navLinks.push({ label: t('nav.journalist'), href: '/jornalista', testId: 'link-jornalista' });
   }
 

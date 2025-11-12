@@ -103,7 +103,8 @@ export const matchPlayers = pgTable("match_players", {
 
 export const news = pgTable("news", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
-  journalistId: varchar("journalist_id", { length: 36 }).notNull(),
+  journalistId: varchar("journalist_id", { length: 36 }),
+  userId: varchar("user_id", { length: 36 }), // Para influencers que não são jornalistas
   teamId: varchar("team_id", { length: 36 }).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   content: text("content").notNull(),
@@ -259,6 +260,10 @@ export const newsRelations = relations(news, ({ one, many }) => ({
     fields: [news.journalistId],
     references: [journalists.id],
   }),
+  user: one(users, {
+    fields: [news.userId],
+    references: [users.id],
+  }),
   team: one(teams, {
     fields: [news.teamId],
     references: [teams.id],
@@ -351,7 +356,7 @@ export const selectMatchSchema = createSelectSchema(matches);
 export const insertNewsSchema = createInsertSchema(news, {
   title: z.string().min(10, "Título deve ter pelo menos 10 caracteres").max(200, "Título não pode ter mais de 200 caracteres"),
   content: z.string().min(50, "Conteúdo deve ter pelo menos 50 caracteres").max(1000, "Conteúdo não pode ter mais de 1000 caracteres"),
-}).omit({ id: true, journalistId: true, createdAt: true, updatedAt: true, likesCount: true, dislikesCount: true, publishedAt: true });
+}).omit({ id: true, journalistId: true, userId: true, createdAt: true, updatedAt: true, likesCount: true, dislikesCount: true, publishedAt: true });
 
 export const selectNewsSchema = createSelectSchema(news);
 
