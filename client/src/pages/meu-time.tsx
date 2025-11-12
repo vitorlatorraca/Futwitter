@@ -15,8 +15,6 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { Team, Player, Match } from '@shared/schema';
 
-const CORINTHIANS_ID = 'corinthians';
-
 export default function MeuTimePage() {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -25,48 +23,62 @@ export default function MeuTimePage() {
   const [playerRatings, setPlayerRatings] = useState<Record<string, number>>({});
   const [pollVote, setPollVote] = useState<string | null>(null);
 
-  const corinthians = TEAMS_DATA.find(t => t.id === CORINTHIANS_ID);
-
-  // Get team data
+  // Get team data using user's teamId
   const { data: teamData, isLoading: isLoadingTeam } = useQuery<Team & { players: Player[] }>({
-    queryKey: ['/api/teams', CORINTHIANS_ID],
-    enabled: !!user?.teamId,
-  });
-
-  // Get last match with lineup
-  const { data: lastMatch, isLoading: isLoadingLastMatch } = useQuery<any>({
-    queryKey: ['/api/teams', CORINTHIANS_ID, 'last-match'],
+    queryKey: ['/api/teams', user?.teamId],
     queryFn: async () => {
-      const response = await fetch(`/api/teams/${CORINTHIANS_ID}/last-match`, {
+      if (!user?.teamId) return null;
+      const response = await fetch(`/api/teams/${user.teamId}`, {
         credentials: 'include',
       });
       if (!response.ok) return null;
       return response.json();
     },
+    enabled: !!user?.teamId,
+  });
+
+  const teamFromData = teamData ? TEAMS_DATA.find(t => t.name === teamData.name) : null;
+
+  // Get last match with lineup
+  const { data: lastMatch, isLoading: isLoadingLastMatch } = useQuery<any>({
+    queryKey: ['/api/teams', user?.teamId, 'last-match'],
+    queryFn: async () => {
+      if (!user?.teamId) return null;
+      const response = await fetch(`/api/teams/${user.teamId}/last-match`, {
+        credentials: 'include',
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!user?.teamId,
   });
 
   // Get recent matches (last 5)
   const { data: recentMatches, isLoading: isLoadingRecent } = useQuery<Match[]>({
-    queryKey: ['/api/matches', CORINTHIANS_ID, 'recent'],
+    queryKey: ['/api/matches', user?.teamId, 'recent'],
     queryFn: async () => {
-      const response = await fetch(`/api/matches/${CORINTHIANS_ID}/recent?limit=5`, {
+      if (!user?.teamId) return [];
+      const response = await fetch(`/api/matches/${user.teamId}/recent?limit=5`, {
         credentials: 'include',
       });
       if (!response.ok) return [];
       return response.json();
     },
+    enabled: !!user?.teamId,
   });
 
   // Get upcoming matches
   const { data: upcomingMatches, isLoading: isLoadingUpcoming } = useQuery<Match[]>({
-    queryKey: ['/api/teams', CORINTHIANS_ID, 'upcoming'],
+    queryKey: ['/api/teams', user?.teamId, 'upcoming'],
     queryFn: async () => {
-      const response = await fetch(`/api/teams/${CORINTHIANS_ID}/upcoming?limit=3`, {
+      if (!user?.teamId) return [];
+      const response = await fetch(`/api/teams/${user.teamId}/upcoming?limit=3`, {
         credentials: 'include',
       });
       if (!response.ok) return [];
       return response.json();
     },
+    enabled: !!user?.teamId,
   });
 
   // Get standings
@@ -86,7 +98,7 @@ export default function MeuTimePage() {
       return await apiRequest('POST', `/api/players/${playerId}/ratings`, { matchId, rating });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/teams', CORINTHIANS_ID, 'last-match'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/teams', user?.teamId, 'last-match'] });
       toast({
         title: 'Avaliação salva!',
         description: 'Sua nota foi registrada com sucesso',
@@ -129,8 +141,8 @@ export default function MeuTimePage() {
     });
   };
 
-  const corinthiansPosition = standings?.findIndex(t => t.id === CORINTHIANS_ID) ?? -1;
-  const corinthiansStanding = corinthiansPosition >= 0 ? standings![corinthiansPosition] : null;
+  const teamPosition = standings?.findIndex(t => t.id === user?.teamId) ?? -1;
+  const teamStanding = teamPosition >= 0 ? standings![teamPosition] : null;
 
   // Mock data for poll and meme
   const dailyPoll = {
@@ -154,15 +166,15 @@ export default function MeuTimePage() {
         {/* Team Header */}
         {isLoadingTeam ? (
           <Skeleton className="h-48 rounded-2xl bg-white/5 mb-8" />
-        ) : teamData && corinthians ? (
+        ) : teamData && teamFromData ? (
           <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-8 md:p-12 mb-8 border border-white/10 shadow-2xl overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/10 via-transparent to-[#6366f1]/10 rounded-3xl pointer-events-none"></div>
             
             <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8">
               <div className="relative">
                 <img
-                  src={corinthians.logoUrl}
-                  alt="Escudo Corinthians"
+                  src={teamFromData.logoUrl}
+                  alt={`Escudo ${teamData.name}`}
                   className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-2xl"
                 />
                 <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/20 to-[#6366f1]/20 rounded-full blur-2xl -z-10"></div>
@@ -171,9 +183,9 @@ export default function MeuTimePage() {
                 <h1 className="font-light text-4xl md:text-5xl text-white mb-4 tracking-tight">
                   {teamData.name}
                 </h1>
-                {corinthiansStanding && (
+                {teamStanding && (
                   <Badge className="mb-6 bg-white/10 border-white/10 text-white/90 font-light text-sm">
-                    {corinthiansPosition + 1}º Lugar - {corinthiansStanding.points} pontos
+                    {teamPosition + 1}º Lugar - {teamStanding.points} pontos
                   </Badge>
                 )}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
@@ -361,7 +373,7 @@ export default function MeuTimePage() {
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <p className="text-white font-light">
-                              {match.isHomeMatch ? 'Corinthians' : match.opponent} x {match.isHomeMatch ? match.opponent : 'Corinthians'}
+                              {match.isHomeMatch ? teamData?.name : match.opponent} x {match.isHomeMatch ? match.opponent : teamData?.name}
                             </p>
                             <p className="text-sm text-gray-400 font-light mt-1">
                               {format(new Date(match.matchDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -401,7 +413,7 @@ export default function MeuTimePage() {
                       <div
                         key={team.id}
                         className={`flex items-center gap-3 p-2 rounded-lg ${
-                          team.id === CORINTHIANS_ID
+                          team.id === user?.teamId
                             ? 'bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 border border-[#8b5cf6]/30'
                             : 'bg-white/5 hover:bg-white/10'
                         } transition-all`}
@@ -435,7 +447,7 @@ export default function MeuTimePage() {
                         className="bg-white/5 rounded-xl p-4 border border-white/10"
                       >
                         <p className="text-white font-light text-sm mb-1">
-                          {match.isHomeMatch ? 'Corinthians' : match.opponent} x {match.isHomeMatch ? match.opponent : 'Corinthians'}
+                          {match.isHomeMatch ? teamData?.name : match.opponent} x {match.isHomeMatch ? match.opponent : teamData?.name}
                         </p>
                         <p className="text-xs text-gray-400 font-light">
                           {format(new Date(match.matchDate), "dd 'de' MMMM", { locale: ptBR })}
@@ -455,7 +467,9 @@ export default function MeuTimePage() {
                   <BarChart3 className="h-5 w-5 text-[#8b5cf6]" />
                   Enquete do Dia
                 </h2>
-                <p className="text-sm text-gray-300 font-light mb-4">{dailyPoll.question}</p>
+                <p className="text-sm text-gray-300 font-light mb-4">
+                  {teamData ? dailyPoll.question.replace('Corinthians', teamData.name) : dailyPoll.question}
+                </p>
                 <div className="space-y-2">
                   {dailyPoll.options.map((option) => {
                     const percentage = (option.votes / dailyPoll.totalVotes) * 100;
@@ -489,7 +503,7 @@ export default function MeuTimePage() {
                 <div className="aspect-video bg-white/5 flex items-center justify-center">
                   <img
                     src={memeImage}
-                    alt="Meme do Corinthians"
+                    alt={`Meme do ${teamData?.name || 'Time'}`}
                     className="w-full h-full object-cover"
                   />
                 </div>
