@@ -62,7 +62,7 @@ export default function DashboardPage() {
   const filters = [
     { id: 'my-team', label: 'Meu Time', testId: 'filter-my-team', isText: true },
     { id: 'all', label: 'Todos', testId: 'filter-all', isText: true },
-    ...TEAMS_DATA.slice(0, 5).map(team => ({
+    ...TEAMS_DATA.map(team => ({
       id: team.id,
       label: team.shortName,
       logoUrl: team.logoUrl,
@@ -100,7 +100,7 @@ export default function DashboardPage() {
                   filter.label
                 ) : (
                   <img 
-                    src={filter.logoUrl} 
+                    src={(filter as any).logoUrl} 
                     alt={filter.label}
                     className="w-8 h-8 rounded-full object-cover"
                   />
