@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import ConnectPgSimple from "connect-pg-simple";
-import { pool } from "./db";
+import { sessionPool } from "./db";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { insertUserSchema, insertNewsSchema, insertPlayerRatingSchema, insertInfluencerRequestSchema } from "@shared/schema";
@@ -38,7 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use(
     session({
       store: new PgSession({
-        pool,
+        pool: sessionPool,
         tableName: 'user_sessions',
         createTableIfMissing: true,
       }),
