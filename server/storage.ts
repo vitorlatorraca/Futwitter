@@ -12,6 +12,7 @@ import {
   playerRatings,
   badges,
   userBadges,
+  transfers,
   type User,
   type InsertUser,
   type Journalist,
@@ -31,6 +32,8 @@ import {
   type Badge,
   type UserBadge,
   type InsertUserBadge,
+  type Transfer,
+  type InsertTransfer,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -81,6 +84,10 @@ export interface IStorage {
   getUserBadges(userId: string): Promise<any[]>;
   awardBadge(userId: string, badgeId: string): Promise<UserBadge>;
   checkAndAwardBadges(userId: string): Promise<UserBadge[]>;
+
+  // Transfers
+  getTransfersByTeam(teamId: string, limit?: number): Promise<Transfer[]>;
+  createTransfer(transfer: InsertTransfer): Promise<Transfer>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -523,6 +530,21 @@ export class DatabaseStorage implements IStorage {
     }
 
     return awarded;
+  }
+
+  // Transfers
+  async getTransfersByTeam(teamId: string, limit = 10): Promise<Transfer[]> {
+    return await db
+      .select()
+      .from(transfers)
+      .where(eq(transfers.teamId, teamId))
+      .orderBy(desc(transfers.transferDate))
+      .limit(limit);
+  }
+
+  async createTransfer(insertTransfer: InsertTransfer): Promise<Transfer> {
+    const [transfer] = await db.insert(transfers).values(insertTransfer).returning();
+    return transfer;
   }
 }
 

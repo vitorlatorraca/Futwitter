@@ -107,6 +107,12 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.badges.unlocked': 'Desbloqueado',
     'profile.badges.locked': 'Bloqueado',
     
+    // My Team Page
+    'myTeam.lastMatch.crowdAverage': 'Média da torcida',
+    'myTeam.lastMatch.noRatings': 'Sem avaliações',
+    'myTeam.transfers.title': 'Transferências',
+    'myTeam.transfers.unknownTeam': 'Time desconhecido',
+    
     // Common
     'common.loading': 'Carregando...',
     'common.error': 'Erro',
@@ -211,6 +217,12 @@ const translations: Record<Language, Record<string, string>> = {
     'profile.stats.daysActive': 'Days Active',
     'profile.badges.unlocked': 'Unlocked',
     'profile.badges.locked': 'Locked',
+    
+    // My Team Page
+    'myTeam.lastMatch.crowdAverage': 'Crowd average',
+    'myTeam.lastMatch.noRatings': 'No ratings',
+    'myTeam.transfers.title': 'Transfers',
+    'myTeam.transfers.unknownTeam': 'Unknown team',
     
     // Common
     'common.loading': 'Loading...',

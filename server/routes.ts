@@ -241,6 +241,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/teams/:teamId/transfers', async (req, res) => {
+    try {
+      const { teamId } = req.params;
+      const limit = parseInt(req.query.limit as string) || 10;
+      const transfers = await storage.getTransfersByTeam(teamId, limit);
+      res.json(transfers);
+    } catch (error) {
+      console.error('Get transfers error:', error);
+      res.status(500).json({ message: 'Erro ao buscar transferências' });
+    }
+  });
+
   // ============================================
   // NEWS ROUTES
   // ============================================

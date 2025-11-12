@@ -10,14 +10,16 @@ import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { TEAMS_DATA } from '@/lib/team-data';
-import { Trophy, Calendar, TrendingUp, BarChart3, Image as ImageIcon, Loader2, Star } from 'lucide-react';
+import { Trophy, Calendar, TrendingUp, BarChart3, Image as ImageIcon, Loader2, Star, ArrowRightLeft, TrendingDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Team, Player, Match } from '@shared/schema';
+import type { Team, Player, Match, Transfer } from '@shared/schema';
+import { useI18n } from '@/lib/i18n';
 
 export default function MeuTimePage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [playerRatings, setPlayerRatings] = useState<Record<string, number>>({});
@@ -91,6 +93,20 @@ export default function MeuTimePage() {
       if (!response.ok) return [];
       return response.json();
     },
+  });
+
+  // Get transfers
+  const { data: transfers, isLoading: isLoadingTransfers } = useQuery<Transfer[]>({
+    queryKey: ['/api/teams', user?.teamId, 'transfers'],
+    queryFn: async () => {
+      if (!user?.teamId) return [];
+      const response = await fetch(`/api/teams/${user.teamId}/transfers?limit=10`, {
+        credentials: 'include',
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+    enabled: !!user?.teamId,
   });
 
   const ratingMutation = useMutation({
@@ -266,16 +282,24 @@ export default function MeuTimePage() {
                               </div>
                               <div className="flex-1">
                                 <p className="text-white font-light text-lg">{player.name}</p>
-                                <div className="flex items-center gap-2 mt-1">
+                                <div className="flex items-center gap-3 mt-1 flex-wrap">
                                   {player.averageRating ? (
                                     <>
                                       <Star className="h-4 w-4 fill-[#8b5cf6] text-[#8b5cf6]" />
                                       <span className="text-sm text-gray-400 font-light">
-                                        Média da torcida: {player.averageRating.toFixed(1)}
+                                        {t('myTeam.lastMatch.crowdAverage')}: {player.averageRating.toFixed(1)}
                                       </span>
                                     </>
                                   ) : (
-                                    <span className="text-sm text-gray-500 font-light">Sem avaliações</span>
+                                    <span className="text-sm text-gray-500 font-light">{t('myTeam.lastMatch.noRatings')}</span>
+                                  )}
+                                  {player.sofascoreRating && (
+                                    <>
+                                      <span className="text-gray-500">•</span>
+                                      <span className="text-sm text-[#6366f1] font-light">
+                                        SofaScore: {player.sofascoreRating.toFixed(1)}
+                                      </span>
+                                    </>
                                   )}
                                 </div>
                               </div>
@@ -389,6 +413,117 @@ export default function MeuTimePage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {/* Transfers Section */}
+            {isLoadingTransfers ? (
+              <Skeleton className="h-64 rounded-2xl bg-white/5" />
+            ) : transfers && transfers.length > 0 ? (
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
+                <CardContent className="p-6 relative z-10">
+                  <h2 className="text-2xl font-light text-white mb-6 tracking-tight flex items-center gap-3">
+                    <ArrowRightLeft className="h-6 w-6 text-[#8b5cf6]" />
+                    {t('myTeam.transfers.title')}
+                  </h2>
+                  <div className="space-y-4">
+                    {transfers.map((transfer) => {
+                      const isIncoming = transfer.transferType === 'IN' || transfer.transferType === 'LOAN_IN';
+                      const isOutgoing = transfer.transferType === 'OUT' || transfer.transferType === 'LOAN_OUT';
+                      
+                      return (
+                        <div
+                          key={transfer.id}
+                          className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 flex-1">
+                              {transfer.playerPhotoUrl ? (
+                                <img
+                                  src={transfer.playerPhotoUrl}
+                                  alt={transfer.playerName}
+                                  className="w-12 h-12 rounded-full object-cover border border-white/10"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                                  <span className="text-gray-400 text-xs">⚽</span>
+                                </div>
+                              )}
+                              <div className="flex-1">
+                                <p className="text-white font-light">{transfer.playerName}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {isIncoming ? (
+                                    <>
+                                      {transfer.fromTeamLogoUrl && (
+                                        <img
+                                          src={transfer.fromTeamLogoUrl}
+                                          alt={transfer.fromTeam || ''}
+                                          className="w-4 h-4 rounded-full object-cover"
+                                        />
+                                      )}
+                                      <span className="text-xs text-gray-400 font-light">
+                                        {transfer.fromTeam || t('myTeam.transfers.unknownTeam')}
+                                      </span>
+                                      <ArrowRightLeft className="h-3 w-3 text-green-400" />
+                                      {transfer.toTeamLogoUrl && (
+                                        <img
+                                          src={transfer.toTeamLogoUrl}
+                                          alt={transfer.toTeam || teamData?.name || ''}
+                                          className="w-4 h-4 rounded-full object-cover"
+                                        />
+                                      )}
+                                      <span className="text-xs text-green-400 font-light">
+                                        {transfer.toTeam || teamData?.name || ''}
+                                      </span>
+                                    </>
+                                  ) : isOutgoing ? (
+                                    <>
+                                      {transfer.fromTeamLogoUrl && (
+                                        <img
+                                          src={transfer.fromTeamLogoUrl}
+                                          alt={transfer.fromTeam || teamData?.name || ''}
+                                          className="w-4 h-4 rounded-full object-cover"
+                                        />
+                                      )}
+                                      <span className="text-xs text-red-400 font-light">
+                                        {transfer.fromTeam || teamData?.name || ''}
+                                      </span>
+                                      <ArrowRightLeft className="h-3 w-3 text-red-400" />
+                                      {transfer.toTeamLogoUrl && (
+                                        <img
+                                          src={transfer.toTeamLogoUrl}
+                                          alt={transfer.toTeam || ''}
+                                          className="w-4 h-4 rounded-full object-cover"
+                                        />
+                                      )}
+                                      <span className="text-xs text-gray-400 font-light">
+                                        {transfer.toTeam || t('myTeam.transfers.unknownTeam')}
+                                      </span>
+                                    </>
+                                  ) : null}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              {transfer.transferFee && (
+                                <p className="text-sm font-light text-white">{transfer.transferFee}</p>
+                              )}
+                              <p className="text-xs text-gray-400 font-light mt-1">
+                                {format(new Date(transfer.transferDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                              </p>
+                              {transfer.season && (
+                                <Badge className="mt-1 bg-white/10 border-white/10 text-white/80 font-light text-xs">
+                                  {transfer.season}
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </CardContent>
               </Card>
