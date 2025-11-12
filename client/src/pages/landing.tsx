@@ -1,131 +1,101 @@
+import React from 'react';
 import { Link } from 'wouter';
+import { useI18n } from '@/lib/i18n';
+import { PublicNavbar } from '@/components/public-navbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Trophy, Star, Users } from 'lucide-react';
-import heroImage from '@assets/generated_images/Brazilian_stadium_hero_image_6c66814c.png';
+import { Zap } from 'lucide-react';
 
 export default function LandingPage() {
+  const { t } = useI18n();
+  
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section 
-        className="relative min-h-screen flex items-center justify-center overflow-hidden"
-        style={{
-          backgroundImage: `url(${heroImage})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80" />
-        
-        <div className="relative z-10 container px-4 text-center">
-          <h1 className="font-display font-bold text-4xl md:text-5xl lg:text-6xl text-white mb-6 leading-tight">
-            Sua paixão pelo Brasileirão<br />em uma só plataforma
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] text-white">
+      <PublicNavbar />
+      
+      {/* Hero Section - Minimal & Aesthetic */}
+      <section className="max-w-5xl mx-auto px-6 py-24 md:py-32">
+        <div className="text-center mb-20">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8">
+            <Zap className="h-4 w-4 text-[#8b5cf6]" />
+            <span className="text-sm text-gray-400">Plataforma Social para Futebol Brasileiro</span>
+          </div>
+          
+          <h1 className="text-6xl md:text-7xl font-light text-white mb-8 leading-tight tracking-tight">
+            {t('landing.hero.title')}
           </h1>
-          <p className="text-lg md:text-xl text-white/90 mb-8 max-w-2xl mx-auto font-medium">
-            Avalie jogadores, leia notícias exclusivas e conecte-se com milhares de torcedores apaixonados
+          <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+            {t('landing.hero.subtitle')}
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/cadastro" data-testid="link-signup">
               <Button 
                 size="lg" 
-                className="text-base font-semibold px-8 bg-primary/90 hover:bg-primary backdrop-blur-sm"
+                className="text-base font-medium px-8 py-6 h-auto bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
               >
-                Criar Conta Grátis
+                {t('landing.cta.signup')}
               </Button>
             </Link>
             <Link href="/login" data-testid="link-login">
               <Button 
                 size="lg" 
-                variant="outline" 
-                className="text-base font-semibold px-8 bg-white/10 hover:bg-white/20 backdrop-blur-sm border-white/30 text-white"
+                variant="outline"
+                className="text-base font-medium px-8 py-6 h-auto border border-white/20 text-white hover:bg-white/5 hover:border-white/30 rounded-lg backdrop-blur-sm transition-all duration-300"
               >
-                Já tenho conta
+                {t('landing.cta.login')}
               </Button>
             </Link>
           </div>
-
-          <div className="flex flex-wrap gap-6 justify-center text-white/80 text-sm font-medium">
-            <span className="flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
-              20 Times
-            </span>
-            <span className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
-              500+ Jogadores
-            </span>
-            <span className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Milhares de Torcedores
-            </span>
-          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-background">
-        <div className="container px-4">
-          <h2 className="font-display font-bold text-3xl md:text-4xl text-center mb-12">
-            Tudo que você precisa em um só lugar
+      {/* Story Section - Minimal & Aesthetic */}
+      <section className="max-w-4xl mx-auto px-6 py-20">
+        <div className="mb-12">
+          <h2 className="text-4xl md:text-5xl font-light text-white mb-4 text-center tracking-tight">
+            A História do Projeto
           </h2>
-          
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            <Card className="border-2 hover:border-primary/50 transition-colors">
-              <CardContent className="p-8 text-center">
-                <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                  <Star className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="font-display font-semibold text-xl mb-3">Avalie Jogadores</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Dê notas e comentários sobre o desempenho dos jogadores do seu time em cada partida
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 hover:border-primary/50 transition-colors">
-              <CardContent className="p-8 text-center">
-                <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                  <Trophy className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="font-display font-semibold text-xl mb-3">Notícias Exclusivas</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Fique por dentro das últimas notícias, análises e bastidores do seu time favorito
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-2 hover:border-primary/50 transition-colors">
-              <CardContent className="p-8 text-center">
-                <div className="bg-primary/10 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
-                  <Users className="h-8 w-8 text-primary" />
-                </div>
-                <h3 className="font-display font-semibold text-xl mb-3">Conecte-se</h3>
-                <p className="text-muted-foreground leading-relaxed">
-                  Interaja com outros torcedores, curta e comente notícias da sua torcida
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+          <div className="w-24 h-px bg-gradient-to-r from-transparent via-[#8b5cf6] to-transparent mx-auto"></div>
         </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t py-8 bg-muted/30">
-        <div className="container px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2024 Brasileirão. Todos os direitos reservados.
-            </p>
-            <div className="flex gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-foreground transition-colors">Sobre</a>
-              <a href="#" className="hover:text-foreground transition-colors">Termos</a>
-              <a href="#" className="hover:text-foreground transition-colors">Privacidade</a>
+        
+        <div className="relative">
+          {/* Glassmorphism Card */}
+          <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 md:p-12 border border-white/10 shadow-2xl">
+            {/* Gradient overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/10 via-transparent to-[#6366f1]/10 rounded-3xl pointer-events-none"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-1 h-8 bg-gradient-to-b from-[#8b5cf6] to-[#6366f1] rounded-full"></div>
+                <h3 className="text-2xl md:text-3xl font-light text-white">
+                  O Início
+                </h3>
+              </div>
+              
+              <div className="space-y-6 text-lg text-gray-300 leading-relaxed font-light">
+                <p className="text-gray-300/90">
+                  O <span className="text-white font-medium">Brasileirão DataFlow</span> nasceu da paixão pelo futebol brasileiro e da vontade de criar uma plataforma 
+                  que unisse torcedores, jornalistas e fãs em um só lugar. A ideia era combinar o melhor do Instagram 
+                  (engajamento e feed interativo) com a autoridade do ESPN (notícias e análises profissionais).
+                </p>
+                <p className="text-gray-300/90">
+                  Começamos com uma arquitetura full-stack moderna: <span className="text-[#8b5cf6]">React 18 + TypeScript</span> no frontend, 
+                  <span className="text-[#8b5cf6]"> Express.js</span> no backend, e <span className="text-[#8b5cf6]">PostgreSQL</span> como banco de dados. 
+                  A escolha do <span className="text-[#8b5cf6]">Drizzle ORM</span> garantiu type-safety em todo o 
+                  stack, desde o banco até o frontend.
+                </p>
+              </div>
             </div>
           </div>
+          
+          {/* Decorative elements */}
+          <div className="absolute -top-4 -right-4 w-32 h-32 bg-[#8b5cf6]/20 rounded-full blur-3xl"></div>
+          <div className="absolute -bottom-4 -left-4 w-40 h-40 bg-[#6366f1]/20 rounded-full blur-3xl"></div>
         </div>
-      </footer>
+      </section>
+
+      {/* Spacer */}
+      <div className="h-32"></div>
     </div>
   );
 }

@@ -1,26 +1,29 @@
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { LanguageSelector } from '@/components/language-selector';
 import { Menu, LogOut } from 'lucide-react';
 import { useState } from 'react';
 
 export function Navbar() {
   const { user, logout } = useAuth();
+  const { t } = useI18n();
   const [location] = useLocation();
   const [isOpen, setIsOpen] = useState(false);
 
   if (!user) return null;
 
   const navLinks = [
-    { label: 'Feed', href: '/dashboard', testId: 'link-feed' },
-    { label: 'Meu Time', href: '/meu-time', testId: 'link-meu-time' },
-    { label: 'Perfil', href: '/perfil', testId: 'link-perfil' },
+    { label: t('nav.feed'), href: '/dashboard', testId: 'link-feed' },
+    { label: t('nav.myTeam'), href: '/meu-time', testId: 'link-meu-time' },
+    { label: t('nav.profile'), href: '/perfil', testId: 'link-perfil' },
   ];
 
   if (user.userType === 'JOURNALIST') {
-    navLinks.push({ label: 'Painel Jornalista', href: '/jornalista', testId: 'link-jornalista' });
+    navLinks.push({ label: t('nav.journalist'), href: '/jornalista', testId: 'link-jornalista' });
   }
 
   const isActive = (path: string) => location === path;
@@ -52,6 +55,7 @@ export function Navbar() {
 
         {/* User Menu */}
         <div className="flex items-center gap-3">
+          <LanguageSelector />
           <div className="hidden md:flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
@@ -102,6 +106,9 @@ export function Navbar() {
                       </Button>
                     </Link>
                   ))}
+                  <div className="pt-2 border-t">
+                    <LanguageSelector />
+                  </div>
                   <Button
                     variant="ghost"
                     className="w-full justify-start text-destructive hover:text-destructive"
@@ -112,7 +119,7 @@ export function Navbar() {
                     data-testid="button-logout-mobile"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
-                    Sair
+                    {t('nav.logout')}
                   </Button>
                 </div>
               </div>
