@@ -98,6 +98,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = req.body;
 
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+      }
+
       const user = await storage.getUserByEmail(email);
       if (!user) {
         return res.status(401).json({ message: 'Email ou senha incorretos' });
@@ -115,7 +119,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
     } catch (error: any) {
       console.error('Login error:', error);
-      res.status(500).json({ message: 'Erro ao fazer login' });
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ message: error.message || 'Erro ao fazer login' });
     }
   });
 
@@ -140,9 +145,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get me error:', error);
-      res.status(500).json({ message: 'Erro ao buscar usuário' });
+      console.error('Error stack:', error.stack);
+      res.status(500).json({ message: error.message || 'Erro ao buscar usuário' });
     }
   });
 
