@@ -1,0 +1,326 @@
+# FLOWCHART DO SISTEMA E-COMMERCE DE CAMISAS DE FUTEBOL
+
+## Código Mermaid (Cole em: mermaid.live ou use extensão Markdown)
+
+```mermaid
+graph TB
+    Start([Início: PRD E-commerce<br/>Camisas de Futebol]) --> PRD[📄 Product Requirements Document]
+    
+    PRD --> Design[🎨 Design & UX]
+    PRD --> Structure[🏗️ Estrutura do Site]
+    PRD --> Features[⚡ Funcionalidades]
+    PRD --> Tech[💻 Especificações Técnicas]
+    
+    Design --> DesignPrinciples[Princípios de Design<br/>Moderno & Premium]
+    Design --> ColorPalette[Paleta de Cores<br/>Azul Escuro + Dourado]
+    Design --> Typography[Tipografia<br/>Sans-serif Moderna]
+    
+    Structure --> Header[Header com Menu<br/>Busca & Ações]
+    Structure --> ProductGrid[Grid de Produtos<br/>Responsivo 3-4 Colunas]
+    Structure --> Sidebar[Sidebar de Filtros<br/>280-320px]
+    Structure --> ProductPage[Página de Detalhes<br/>Galeria + Info]
+    
+    Features --> Filters{🔍 Sistema de Filtragem<br/>Avançado}
+    Features --> Search[🔎 Busca Inteligente<br/>com Autocomplete]
+    Features --> Cart[🛒 Carrinho & Checkout<br/>Multi-etapas]
+    Features --> Wishlist[❤️ Wishlist &<br/>Favoritos]
+    Features --> Reviews[⭐ Reviews &<br/>Avaliações]
+    
+    Filters --> FilterLeague[Por Liga/Competição]
+    Filters --> FilterClub[Por Clube]
+    Filters --> FilterTeam[Por Seleção]
+    Filters --> FilterPlayer[Por Jogador]
+    Filters --> FilterSize[Por Tamanho<br/>PP-XGG]
+    Filters --> FilterSeason[Por Temporada<br/>1990-2024]
+    Filters --> FilterType[Por Tipo<br/>Home/Away/Third]
+    Filters --> FilterCondition[Por Condição<br/>Nova/Usada]
+    Filters --> FilterFeatures[Por Características<br/>Autografada/Match Worn]
+    Filters --> FilterPrice[Por Preço<br/>Slider CAD $0-10k+]
+    Filters --> FilterBrand[Por Marca<br/>Nike/Adidas/Puma]
+    Filters --> FilterGender[Por Gênero<br/>M/F/Infantil]
+    
+    Tech --> Performance[Performance<br/>Lazy Load & CDN]
+    Tech --> SEO[SEO<br/>URLs Amigáveis]
+    Tech --> Security[Segurança<br/>HTTPS & PCI]
+    Tech --> Mobile[Mobile-First<br/>PWA]
+    
+    PRD --> Schema[(🗄️ Database Schema<br/>Prisma)]
+    
+    Schema --> UserManagement[👥 User Management]
+    Schema --> ProductCatalog[📦 Product Catalog]
+    Schema --> Categorization[🏷️ Categorization]
+    Schema --> Shopping[🛍️ Shopping]
+    Schema --> OrderManagement[📋 Order Management]
+    Schema --> ReviewSystem[💬 Review System]
+    Schema --> Analytics[📊 Analytics]
+    
+    UserManagement --> UserModel[User<br/>Address<br/>Role]
+    
+    ProductCatalog --> ProductModel[Product<br/>596 camisas]
+    ProductCatalog --> VariantModel[ProductVariant<br/>Tamanhos]
+    ProductCatalog --> ImageModel[ProductImage<br/>5+ fotos]
+    ProductCatalog --> AuthModel[AuthenticityDocument<br/>Certificados]
+    
+    Categorization --> LeagueModel[League<br/>Premier/La Liga/etc]
+    Categorization --> ClubModel[Club<br/>Times]
+    Categorization --> NationalModel[NationalTeam<br/>Seleções]
+    Categorization --> PlayerModel[Player<br/>Jogadores]
+    Categorization --> BrandModel[Brand<br/>Nike/Adidas]
+    
+    Shopping --> CartModel[CartItem<br/>Carrinho]
+    Shopping --> WishlistModel[WishlistItem<br/>Favoritos]
+    
+    OrderManagement --> OrderModel[Order<br/>Pedidos]
+    OrderManagement --> OrderItemModel[OrderItem<br/>Items do Pedido]
+    OrderManagement --> StatusModel[OrderStatusHistory<br/>Histórico]
+    
+    ReviewSystem --> ReviewModel[Review<br/>Avaliações 1-5★]
+    ReviewSystem --> NotificationModel[Notification<br/>Alertas]
+    
+    Analytics --> ViewsModel[ProductView<br/>Visualizações]
+    Analytics --> SearchModel[SearchQuery<br/>Buscas]
+    
+    Schema --> Relationships{🔗 Relacionamentos}
+    
+    Relationships --> UserToOrders[User → Orders<br/>1:N]
+    Relationships --> ProductToImages[Product → Images<br/>1:N]
+    Relationships --> ProductToVariants[Product → Variants<br/>1:N por tamanho]
+    Relationships --> ProductToCategories[Product → League/Club/<br/>Team/Player<br/>N:1]
+    Relationships --> OrderToItems[Order → OrderItems<br/>1:N]
+    Relationships --> UserToWishlist[User → Wishlist<br/>1:N]
+    Relationships --> UserToCart[User → Cart<br/>1:N]
+    Relationships --> ProductToReviews[Product → Reviews<br/>1:N]
+    
+    Schema --> Enums[📋 Enums]
+    
+    Enums --> ProductEnums[ProductType<br/>ProductCondition<br/>JerseyType<br/>Size<br/>Gender]
+    Enums --> OrderEnums[OrderStatus<br/>PaymentStatus<br/>PaymentMethod]
+    Enums --> SystemEnums[ReviewStatus<br/>NotificationType<br/>DiscountType]
+    
+    Schema --> Indexes[⚡ Indexes & Performance]
+    
+    Indexes --> ProductIndexes[Product: slug, leagueId,<br/>clubId, status, price]
+    Indexes --> OrderIndexes[Order: orderNumber,<br/>userId, status]
+    Indexes --> UserIndexes[User: email]
+    
+    Schema --> Features2[✨ Features Suportadas]
+    
+    Features2 --> FeatureAuth[✓ Sistema de Autenticação<br/>OAuth + Email]
+    Features2 --> FeatureMultiAddress[✓ Múltiplos Endereços<br/>Billing & Shipping]
+    Features2 --> FeatureInventory[✓ Gestão de Estoque<br/>Por Variante]
+    Features2 --> FeatureReviews2[✓ Sistema de Reviews<br/>Verified Purchase]
+    Features2 --> FeatureNotifications[✓ Notificações<br/>Price Drop & Restock]
+    Features2 --> FeatureCoupons[✓ Cupons & Descontos<br/>Percentage/Fixed]
+    Features2 --> FeatureTracking[✓ Order Tracking<br/>Status History]
+    Features2 --> FeatureAnalytics2[✓ Analytics<br/>Views & Searches]
+    
+    Indexes --> Implementation[🚀 Próximos Passos]
+    
+    Implementation --> Step1[1. Setup Prisma<br/>& Database]
+    Implementation --> Step2[2. Seed Data<br/>596 produtos]
+    Implementation --> Step3[3. Build API<br/>REST/GraphQL]
+    Implementation --> Step4[4. Frontend<br/>Next.js/React]
+    Implementation --> Step5[5. Implementar Filtros<br/>12 categorias]
+    Implementation --> Step6[6. Sistema de Busca<br/>Elasticsearch]
+    Implementation --> Step7[7. Payment Gateway<br/>Stripe]
+    Implementation --> Step8[8. Deploy<br/>Vercel/AWS]
+    
+    Step8 --> End([✅ E-commerce<br/>Completo & Funcional])
+    
+    style Start fill:#00d4ff,stroke:#0099cc,stroke-width:3px,color:#000
+    style End fill:#00ff87,stroke:#00cc6a,stroke-width:3px,color:#000
+    style PRD fill:#667eea,stroke:#5568d3,stroke-width:2px,color:#fff
+    style Schema fill:#f093fb,stroke:#d671ed,stroke-width:2px,color:#000
+    style Filters fill:#ffd700,stroke:#ccac00,stroke-width:2px,color:#000
+    style Implementation fill:#ff6b6b,stroke:#cc5555,stroke-width:2px,color:#fff
+    style Relationships fill:#4facfe,stroke:#3a8bcc,stroke-width:2px,color:#fff
+```
+
+---
+
+## ESTRUTURA DO FLOWCHART EM TEXTO
+
+### 1. INÍCIO
+```
+PRD E-commerce Camisas de Futebol
+```
+
+### 2. PRODUCT REQUIREMENTS DOCUMENT
+Dividido em 4 áreas principais:
+
+#### A. DESIGN & UX
+- Princípios de Design (Moderno & Premium)
+- Paleta de Cores (Azul Escuro + Dourado)
+- Tipografia (Sans-serif Moderna)
+
+#### B. ESTRUTURA DO SITE
+- Header com Menu (Busca & Ações)
+- Grid de Produtos (Responsivo 3-4 Colunas)
+- Sidebar de Filtros (280-320px)
+- Página de Detalhes (Galeria + Info)
+
+#### C. FUNCIONALIDADES
+1. **Sistema de Filtragem Avançado** (12 categorias):
+   - Por Liga/Competição
+   - Por Clube
+   - Por Seleção Nacional
+   - Por Jogador
+   - Por Tamanho (PP-XGG)
+   - Por Temporada (1990-2024)
+   - Por Tipo (Home/Away/Third)
+   - Por Condição (Nova/Usada)
+   - Por Características (Autografada/Match Worn)
+   - Por Preço (CAD $0-10k+)
+   - Por Marca (Nike/Adidas/Puma)
+   - Por Gênero (M/F/Infantil)
+
+2. **Busca Inteligente** com Autocomplete
+3. **Carrinho & Checkout** Multi-etapas
+4. **Wishlist & Favoritos**
+5. **Reviews & Avaliações**
+
+#### D. ESPECIFICAÇÕES TÉCNICAS
+- Performance (Lazy Load & CDN)
+- SEO (URLs Amigáveis)
+- Segurança (HTTPS & PCI)
+- Mobile-First (PWA)
+
+---
+
+### 3. DATABASE SCHEMA (PRISMA)
+
+#### A. USER MANAGEMENT
+- User (com Address e Role)
+
+#### B. PRODUCT CATALOG
+- Product (596 camisas)
+- ProductVariant (por tamanho)
+- ProductImage (5+ fotos por produto)
+- AuthenticityDocument (certificados)
+
+#### C. CATEGORIZATION
+- League (Premier League, La Liga, etc)
+- Club (Times)
+- NationalTeam (Seleções)
+- Player (Jogadores)
+- Brand (Nike, Adidas, etc)
+
+#### D. SHOPPING
+- CartItem (Carrinho)
+- WishlistItem (Favoritos)
+
+#### E. ORDER MANAGEMENT
+- Order (Pedidos)
+- OrderItem (Items do Pedido)
+- OrderStatusHistory (Histórico de status)
+
+#### F. REVIEW SYSTEM
+- Review (Avaliações 1-5★)
+- Notification (Alertas)
+
+#### G. ANALYTICS
+- ProductView (Visualizações)
+- SearchQuery (Buscas realizadas)
+
+---
+
+### 4. RELACIONAMENTOS PRINCIPAIS
+
+```
+User → Orders (1:N)
+User → Wishlist (1:N)
+User → Cart (1:N)
+
+Product → Images (1:N)
+Product → Variants (1:N)
+Product → Reviews (1:N)
+Product → League/Club/Team/Player (N:1)
+
+Order → OrderItems (1:N)
+```
+
+---
+
+### 5. ENUMS DEFINIDOS
+
+#### Produtos:
+- ProductType
+- ProductCondition
+- JerseyType
+- Size
+- Gender
+
+#### Pedidos:
+- OrderStatus
+- PaymentStatus
+- PaymentMethod
+
+#### Sistema:
+- ReviewStatus
+- NotificationType
+- DiscountType
+
+---
+
+### 6. FEATURES SUPORTADAS
+
+✓ Sistema de Autenticação (OAuth + Email)
+✓ Múltiplos Endereços (Billing & Shipping)
+✓ Gestão de Estoque (Por Variante/Tamanho)
+✓ Sistema de Reviews (Verified Purchase)
+✓ Notificações (Price Drop & Restock)
+✓ Cupons & Descontos (Percentage/Fixed)
+✓ Order Tracking (Status History)
+✓ Analytics (Views & Searches)
+
+---
+
+### 7. PRÓXIMOS PASSOS DE IMPLEMENTAÇÃO
+
+1. **Setup Prisma & Database** - Configurar PostgreSQL
+2. **Seed Data** - Adicionar 596 produtos
+3. **Build API** - REST ou GraphQL
+4. **Frontend** - Next.js/React
+5. **Implementar Filtros** - 12 categorias
+6. **Sistema de Busca** - Elasticsearch ou Algolia
+7. **Payment Gateway** - Integração Stripe
+8. **Deploy** - Vercel/AWS
+
+---
+
+### 8. RESULTADO FINAL
+
+✅ E-commerce Completo & Funcional
+
+---
+
+## COMO VISUALIZAR O FLOWCHART
+
+### Opção 1: Mermaid Live Editor
+1. Acesse: https://mermaid.live
+2. Cole o código Mermaid acima
+3. Visualize e exporte como PNG/SVG
+
+### Opção 2: VS Code
+1. Instale extensão "Markdown Preview Mermaid Support"
+2. Abra este arquivo .md
+3. Pressione Ctrl+Shift+V para preview
+
+### Opção 3: GitHub
+1. Faça commit deste arquivo em um repositório
+2. GitHub renderiza Mermaid automaticamente
+
+### Opção 4: Obsidian/Notion
+- Ambos suportam blocos Mermaid nativamente
+
+---
+
+## LEGENDA DE CORES
+
+🟦 Azul (#667eea) - PRD
+🟪 Rosa (#f093fb) - Schema Database
+🟨 Amarelo (#ffd700) - Sistema de Filtros
+🟥 Vermelho (#ff6b6b) - Implementação
+🟦 Azul Claro (#4facfe) - Relacionamentos
+🟢 Verde (#00ff87) - Conclusão
+🔵 Azul Ciano (#00d4ff) - Início

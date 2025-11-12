@@ -1,0 +1,181 @@
+graph TD
+    Start([Usuário acessa o site]) --> LandingPage[Landing Page]
+    
+    LandingPage --> HasAccount{Já tem conta?}
+    HasAccount -->|Sim| LoginPage[Página de Login]
+    HasAccount -->|Não| SignupPage[Página de Cadastro]
+    
+    %% FLUXO DE CADASTRO
+    SignupPage --> FillForm[Preenche formulário:<br/>Nome, Email, Senha]
+    FillForm --> ValidateForm{Dados válidos?}
+    ValidateForm -->|Não| ShowError1[Mostra erros de validação]
+    ShowError1 --> FillForm
+    ValidateForm -->|Sim| TeamSelection[Tela de Seleção de Time]
+    
+    TeamSelection --> ShowTeams[Exibe 20 escudos dos times]
+    ShowTeams --> UserSelectsTeam[Usuário clica em um time]
+    UserSelectsTeam --> ConfirmModal[Modal de confirmação:<br/>'Tem certeza? Não poderá mudar']
+    
+    ConfirmModal --> UserConfirms{Confirma?}
+    UserConfirms -->|Não| ShowTeams
+    UserConfirms -->|Sim| CreateAccount[Cria conta e vincula ao time]
+    CreateAccount --> OnboardingTour[Tour guiado pela plataforma]
+    OnboardingTour --> Dashboard
+    
+    %% FLUXO DE LOGIN
+    LoginPage --> EnterCredentials[Digita email e senha]
+    EnterCredentials --> ValidateLogin{Credenciais válidas?}
+    ValidateLogin -->|Não| LoginError[Mostra erro de login]
+    LoginError --> LoginPage
+    ValidateLogin -->|Sim| CheckTeam{Tem time vinculado?}
+    CheckTeam -->|Não| TeamSelection
+    CheckTeam -->|Sim| Dashboard[Dashboard Principal - Feed]
+    
+    %% DASHBOARD PRINCIPAL
+    Dashboard --> MainNav{Navegação principal}
+    
+    MainNav -->|Feed| FeedView[Visualização do Feed]
+    MainNav -->|Meu Time| MyTeamView[Página Meu Time]
+    MainNav -->|Perfil| ProfileView[Página de Perfil]
+    
+    %% FLUXO DO FEED
+    FeedView --> FeedFilter{Filtro ativo?}
+    FeedFilter -->|Todos os times| ShowAllNews[Mostra notícias de todos]
+    FeedFilter -->|Meu time| ShowMyTeamNews[Mostra só do meu time]
+    FeedFilter -->|Time específico| ShowTeamNews[Mostra de time selecionado]
+    
+    ShowAllNews --> NewsCard[Card de Notícia]
+    ShowMyTeamNews --> NewsCard
+    ShowTeamNews --> NewsCard
+    
+    NewsCard --> CheckTeamMatch{Notícia é do<br/>meu time?}
+    CheckTeamMatch -->|Sim| EnableInteraction[Botões Like/Dislike ativos]
+    CheckTeamMatch -->|Não| DisableInteraction[Botões Like/Dislike desabilitados]
+    
+    EnableInteraction --> UserInteracts{Usuário clica?}
+    UserInteracts -->|Like| SendLike[Envia Like]
+    UserInteracts -->|Dislike| SendDislike[Envia Dislike]
+    UserInteracts -->|Remove| RemoveInteraction[Remove interação]
+    
+    SendLike --> UpdateCounter1[Atualiza contador em tempo real]
+    SendDislike --> UpdateCounter1
+    RemoveInteraction --> UpdateCounter1
+    UpdateCounter1 --> FeedView
+    
+    DisableInteraction --> ShowTooltip[Tooltip: 'Você só pode interagir<br/>com notícias do seu time']
+    ShowTooltip --> FeedView
+    
+    %% FLUXO MEU TIME
+    MyTeamView --> TeamHeader[Header do Time:<br/>Escudo, Posição, Estatísticas]
+    TeamHeader --> PlayersList[Lista de Jogadores<br/>agrupados por posição]
+    
+    PlayersList --> PlayerCard[Card do Jogador]
+    PlayerCard --> PlayerActions{Ação do usuário}
+    
+    PlayerActions -->|Clica em 'Avaliar'| OpenRatingModal[Abre Modal de Avaliação]
+    PlayerActions -->|Apenas visualiza| ShowPlayerStats[Mostra média e estatísticas]
+    
+    OpenRatingModal --> LoadMatches[Carrega últimas 5 partidas]
+    LoadMatches --> ShowMatches[Lista partidas com adversário e placar]
+    
+    ShowMatches --> MatchItem[Item de Partida]
+    MatchItem --> CheckParticipation{Jogador participou?}
+    
+    CheckParticipation -->|Sim| EnableRating[Campo de nota ativo<br/>0-10 escala 0.5]
+    CheckParticipation -->|Não| DisableRating[Campo desabilitado:<br/>'Jogador não participou']
+    
+    EnableRating --> UserRates[Usuário seleciona nota]
+    UserRates --> OptionalComment{Quer comentar?}
+    OptionalComment -->|Sim| AddComment[Adiciona comentário<br/>até 200 caracteres]
+    OptionalComment -->|Não| SkipComment[Pula comentário]
+    
+    AddComment --> SaveRating[Botão 'Salvar Avaliação']
+    SkipComment --> SaveRating
+    
+    SaveRating --> ValidateRatings{Pelo menos<br/>1 nota dada?}
+    ValidateRatings -->|Não| ShowWarning[Aviso: 'Avalie pelo menos uma partida']
+    ShowWarning --> ShowMatches
+    ValidateRatings -->|Sim| SaveToDb[Salva no banco de dados]
+    
+    SaveToDb --> UpdatePlayerAverage[Recalcula média do jogador]
+    UpdatePlayerAverage --> ShowSuccess[Mensagem de sucesso]
+    ShowSuccess --> CloseModal[Fecha modal]
+    CloseModal --> PlayersList
+    
+    ShowPlayerStats --> ViewDetails{Usuário clica<br/>para detalhes?}
+    ViewDetails -->|Sim| ShowRatingDetails[Mostra:<br/>- Média da comunidade<br/>- Minha avaliação<br/>- Gráfico de distribuição<br/>- Comentários recentes]
+    ViewDetails -->|Não| PlayersList
+    
+    ShowRatingDetails --> CanEdit{É minha avaliação?}
+    CanEdit -->|Sim| EditButton[Botão 'Editar']
+    CanEdit -->|Não| ReadOnly[Apenas visualização]
+    
+    EditButton --> OpenRatingModal
+    ReadOnly --> ShowRatingDetails
+    
+    %% FLUXO DE PERFIL
+    ProfileView --> ProfileOptions{Opções de perfil}
+    ProfileOptions -->|Dados pessoais| EditProfile[Editar nome e email]
+    ProfileOptions -->|Alterar senha| ChangePassword[Trocar senha]
+    ProfileOptions -->|Ver estatísticas| UserStats[Minhas estatísticas:<br/>- Avaliações feitas<br/>- Interações no feed<br/>- Badges ganhos]
+    ProfileOptions -->|Sair| Logout[Fazer logout]
+    
+    EditProfile --> SaveProfile[Salvar alterações]
+    SaveProfile --> ProfileView
+    
+    ChangePassword --> ValidatePassword{Senha atual<br/>correta?}
+    ValidatePassword -->|Não| PasswordError[Erro: senha incorreta]
+    PasswordError --> ChangePassword
+    ValidatePassword -->|Sim| UpdatePassword[Atualiza senha]
+    UpdatePassword --> ProfileView
+    
+    UserStats --> ViewBadges[Visualiza badges e conquistas]
+    ViewBadges --> ProfileView
+    
+    Logout --> LandingPage
+    
+    %% FLUXO JORNALISTA (Separado)
+    Dashboard -->|Se é jornalista| JournalistPanel[Painel do Jornalista]
+    JournalistPanel --> JournalistActions{Ações}
+    
+    JournalistActions -->|Publicar notícia| CreateNews[Formulário de Publicação]
+    JournalistActions -->|Ver minhas notícias| MyNews[Minhas Publicações]
+    JournalistActions -->|Estatísticas| NewsStats[Estatísticas:<br/>- Likes/Dislikes<br/>- Alcance<br/>- Engajamento]
+    
+    CreateNews --> FillNewsForm[Preenche:<br/>- Time relacionado<br/>- Categoria<br/>- Título 200 chars<br/>- Conteúdo 1000 chars<br/>- Imagem opcional]
+    FillNewsForm --> PreviewNews[Preview da notícia]
+    PreviewNews --> ConfirmPublish{Confirma<br/>publicação?}
+    
+    ConfirmPublish -->|Não| FillNewsForm
+    ConfirmPublish -->|Sim| PublishNews[Publica notícia]
+    PublishNews --> ShowInFeed[Notícia aparece no feed]
+    ShowInFeed --> JournalistPanel
+    
+    MyNews --> ListMyNews[Lista de notícias publicadas]
+    ListMyNews --> EditOrDelete{Ação}
+    EditOrDelete -->|Editar| FillNewsForm
+    EditOrDelete -->|Excluir| ConfirmDelete{Confirma exclusão?}
+    ConfirmDelete -->|Sim| DeleteNews[Remove notícia]
+    ConfirmDelete -->|Não| MyNews
+    DeleteNews --> MyNews
+    
+    NewsStats --> ViewMetrics[Visualiza métricas detalhadas]
+    ViewMetrics --> JournalistPanel
+    
+    %% NOTIFICAÇÕES E REAL-TIME
+    Dashboard -.->|Notificações| NotificationCenter[Central de Notificações]
+    NotificationCenter --> NotifTypes{Tipo}
+    NotifTypes -->|Nova notícia do meu time| NotifNews[Alerta de notícia]
+    NotifTypes -->|Partida próxima| NotifMatch[Lembrete de jogo]
+    NotifTypes -->|Badge desbloqueado| NotifBadge[Nova conquista]
+    
+    NotifNews --> Dashboard
+    NotifMatch --> Dashboard
+    NotifBadge --> Dashboard
+    
+    style Start fill:#e1f5ff
+    style Dashboard fill:#fff4e1
+    style TeamSelection fill:#ffe1e1
+    style MyTeamView fill:#e1ffe1
+    style FeedView fill:#f0e1ff
+    style JournalistPanel fill:#ffe1f0

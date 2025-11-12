@@ -1,0 +1,279 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enum para tipos de usuário
+enum UserType {
+  FAN        // Torcedor comum
+  JOURNALIST // Jornalista credenciado
+  ADMIN      // Administrador
+}
+
+// Enum para posições dos jogadores
+enum PlayerPosition {
+  GOALKEEPER  // Goleiro
+  DEFENDER    // Defensor
+  MIDFIELDER  // Meio-campista
+  FORWARD     // Atacante
+}
+
+// Enum para categorias de notícias
+enum NewsCategory {
+  NEWS       // Notícia
+  ANALYSIS   // Análise
+  BACKSTAGE  // Bastidores
+  MARKET     // Mercado
+}
+
+// Enum para tipo de interação
+enum InteractionType {
+  LIKE
+  DISLIKE
+}
+
+// Enum para status de verificação de jornalista
+enum JournalistStatus {
+  PENDING   // Aguardando aprovação
+  APPROVED  // Aprovado
+  REJECTED  // Rejeitado
+  SUSPENDED // Suspenso
+}
+
+// ============================================
+// USUÁRIOS E AUTENTICAÇÃO
+// ============================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  userType  UserType @default(FAN)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relação com time escolhido (obrigatório para torcedores)
+  teamId String?
+  team   Team?   @relation("UserTeam", fields: [teamId], references: [id])
+
+  // Dados adicionais de jornalista
+  journalist Journalist?
+
+  // Interações e avaliações
+  newsInteractions NewsInteraction[]
+  playerRatings    PlayerRating[]
+  comments         Comment[]
+
+  @@index([email])
+  @@index([teamId])
+}
+
+model Journalist {
+  id               String           @id @default(cuid())
+  userId           String           @unique
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization     String // Veículo de comunicação
+  professionalId   String // Registro profissional (MTB, etc)
+  portfolioUrl     String? // Link para portfolio
+  status           JournalistStatus @default(PENDING)
+  verificationDate DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  // Notícias publicadas
+  news News[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+// ============================================
+// TIMES E JOGADORES
+// ============================================
+
+model Team {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  shortName       String // Nome abreviado (ex: FLA, CAM)
+  logoUrl         String
+  primaryColor    String // Cor hexadecimal
+  secondaryColor  String // Cor hexadecimal
+  currentPosition Int? // Posição na tabela
+  points          Int      @default(0)
+  wins            Int      @default(0)
+  draws           Int      @default(0)
+  losses          Int      @default(0)
+  goalsFor        Int      @default(0)
+  goalsAgainst    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relações
+  users   User[]   @relation("UserTeam")
+  players Player[]
+  news    News[]
+  matches Match[]  @relation("TeamMatches")
+
+  @@index([name])
+}
+
+model Player {
+  id           String         @id @default(cuid())
+  teamId       String
+  team         Team           @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  name         String
+  photoUrl     String?
+  position     PlayerPosition
+  jerseyNumber Int
+  birthDate    DateTime?
+  nationality  String?
+  isActive     Boolean        @default(true) // Se está ativo no elenco
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Relações
+  ratings          PlayerRating[]
+  matchParticipations MatchPlayer[]
+
+  @@unique([teamId, jerseyNumber]) // Número único por time
+  @@index([teamId])
+  @@index([position])
+}
+
+// ============================================
+// PARTIDAS E PARTICIPAÇÕES
+// ============================================
+
+model Match {
+  id               String   @id @default(cuid())
+  teamId           String
+  team             Team     @relation("TeamMatches", fields: [teamId], references: [id], onDelete: Cascade)
+  opponent         String // Nome do time adversário
+  opponentLogoUrl  String?
+  isHomeMatch      Boolean // True se jogo em casa
+  teamScore        Int?
+  opponentScore    Int?
+  matchDate        DateTime
+  stadium          String?
+  championshipRound Int? // Rodada do campeonato
+  status           String   @default("SCHEDULED") // SCHEDULED, ONGOING, FINISHED, POSTPONED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relações
+  playerParticipations MatchPlayer[]
+  playerRatings        PlayerRating[]
+
+  @@index([teamId])
+  @@index([matchDate])
+  @@index([status])
+}
+
+model MatchPlayer {
+  id        String   @id @default(cuid())
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  participated Boolean @default(true) // Se o jogador efetivamente jogou
+  wasStarter   Boolean @default(false) // Se foi titular
+  minutesPlayed Int? // Minutos jogados
+  createdAt DateTime @default(now())
+
+  @@unique([matchId, playerId])
+  @@index([matchId])
+  @@index([playerId])
+}
+
+// ============================================
+// NOTÍCIAS E INTERAÇÕES
+// ============================================
+
+model News {
+  id           String       @id @default(cuid())
+  journalistId String
+  journalist   Journalist   @relation(fields: [journalistId], references: [id], onDelete: Cascade)
+  teamId       String
+  team         Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  title        String // Máximo 200 caracteres (validar no backend)
+  content      String       @db.Text // Máximo 1000 caracteres (validar no backend)
+  imageUrl     String?
+  category     NewsCategory @default(NEWS)
+  likesCount   Int          @default(0)
+  dislikesCount Int         @default(0)
+  isPublished  Boolean      @default(true)
+  publishedAt  DateTime     @default(now())
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  // Relações
+  interactions NewsInteraction[]
+
+  @@index([teamId])
+  @@index([journalistId])
+  @@index([publishedAt])
+  @@index([category])
+}
+
+model NewsInteraction {
+  id              String          @id @default(cuid())
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  newsId          String
+  news            News            @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  interactionType InteractionType
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@unique([userId, newsId]) // Um usuário só pode ter uma interação por notícia
+  @@index([userId])
+  @@index([newsId])
+}
+
+// ============================================
+// AVALIAÇÕES DE JOGADORES
+// ============================================
+
+model PlayerRating {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  matchId   String
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  rating    Float // Nota de 0 a 10 (com 0.5 de incremento)
+  comment   String? // Máximo 200 caracteres (validar no backend)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, playerId, matchId]) // Um usuário só pode avaliar um jogador uma vez por partida
+  @@index([playerId])
+  @@index([matchId])
+  @@index([userId])
+}
+
+// ============================================
+// COMENTÁRIOS (Fase futura)
+// ============================================
+
+model Comment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String   @db.Text
+  isApproved Boolean @default(false) // Sistema de moderação
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([isApproved])
+}
