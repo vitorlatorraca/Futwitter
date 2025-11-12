@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
+import { useI18n } from '@/lib/i18n';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +16,7 @@ import { User, Lock, BarChart3, Award, Loader2 } from 'lucide-react';
 export default function PerfilPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useI18n();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 
@@ -36,16 +38,16 @@ export default function PerfilPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
       toast({
-        title: 'Perfil atualizado',
-        description: 'Suas informações foram salvas com sucesso',
+        title: t('profile.update.successTitle'),
+        description: t('profile.update.successDescription'),
       });
       setIsEditing(false);
     },
     onError: (error: any) => {
       toast({
         variant: 'destructive',
-        title: 'Erro',
-        description: error.message || 'Não foi possível atualizar o perfil',
+        title: t('common.error'),
+        description: error.message || t('profile.update.errorDescription'),
       });
     },
   });
@@ -56,16 +58,16 @@ export default function PerfilPage() {
     },
     onSuccess: () => {
       toast({
-        title: 'Senha alterada',
-        description: 'Sua senha foi atualizada com sucesso',
+        title: t('profile.password.successTitle'),
+        description: t('profile.password.successDescription'),
       });
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     },
     onError: (error: any) => {
       toast({
         variant: 'destructive',
-        title: 'Erro',
-        description: error.message || 'Não foi possível alterar a senha',
+        title: t('common.error'),
+        description: error.message || t('profile.password.errorDescription'),
       });
     },
   });
@@ -78,8 +80,8 @@ export default function PerfilPage() {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
         variant: 'destructive',
-        title: 'Erro',
-        description: 'As senhas não coincidem',
+        title: t('common.error'),
+        description: t('profile.password.mismatchError'),
       });
       return;
     }
@@ -87,8 +89,8 @@ export default function PerfilPage() {
     if (passwordData.newPassword.length < 6) {
       toast({
         variant: 'destructive',
-        title: 'Erro',
-        description: 'A nova senha deve ter pelo menos 6 caracteres',
+        title: t('common.error'),
+        description: t('profile.password.lengthError'),
       });
       return;
     }
@@ -110,47 +112,65 @@ export default function PerfilPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] relative overflow-hidden">
+      {/* Decorative blur circles */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-[#8b5cf6] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
+      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-[#6366f1] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-[#8b5cf6] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+
       <Navbar />
 
-      <div className="container px-4 py-8 max-w-4xl">
-        <h1 className="font-display font-bold text-3xl mb-8">Meu Perfil</h1>
+      <div className="container px-6 py-8 max-w-4xl relative z-10">
+        <h1 className="font-light text-4xl md:text-5xl text-white mb-8 tracking-tight">{t('profile.title')}</h1>
 
         <Tabs defaultValue="info" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="info" className="gap-2" data-testid="tab-info">
+          <TabsList className="grid w-full grid-cols-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-1">
+            <TabsTrigger 
+              value="info" 
+              className="gap-2 font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              data-testid="tab-info"
+            >
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Informações</span>
+              <span className="hidden sm:inline">{t('profile.tabs.info')}</span>
             </TabsTrigger>
-            <TabsTrigger value="stats" className="gap-2" data-testid="tab-stats">
+            <TabsTrigger 
+              value="stats" 
+              className="gap-2 font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              data-testid="tab-stats"
+            >
               <BarChart3 className="h-4 w-4" />
-              <span className="hidden sm:inline">Estatísticas</span>
+              <span className="hidden sm:inline">{t('profile.tabs.stats')}</span>
             </TabsTrigger>
-            <TabsTrigger value="badges" className="gap-2" data-testid="tab-badges">
+            <TabsTrigger 
+              value="badges" 
+              className="gap-2 font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              data-testid="tab-badges"
+            >
               <Award className="h-4 w-4" />
-              <span className="hidden sm:inline">Badges</span>
+              <span className="hidden sm:inline">{t('profile.tabs.badges')}</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-6">
-            <Card>
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
               <CardHeader>
-                <CardTitle>Dados Pessoais</CardTitle>
-                <CardDescription>Atualize suas informações</CardDescription>
+                <CardTitle className="text-white font-light text-2xl">{t('profile.info.title')}</CardTitle>
+                <CardDescription className="text-gray-400 font-light">{t('profile.info.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome completo</Label>
+                  <Label htmlFor="name" className="text-gray-300">{t('profile.info.name')}</Label>
                   <Input
                     id="name"
                     value={profileData.name}
                     onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                     disabled={!isEditing}
                     data-testid="input-name"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email" className="text-gray-300">{t('profile.info.email')}</Label>
                   <Input
                     id="email"
                     type="email"
@@ -158,76 +178,103 @@ export default function PerfilPage() {
                     onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                     disabled={!isEditing}
                     data-testid="input-email"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                   />
                 </div>
                 {isEditing ? (
                   <div className="flex gap-2">
-                    <Button onClick={handleSaveProfile} disabled={profileMutation.isPending} data-testid="button-save">
+                    <Button 
+                      onClick={handleSaveProfile} 
+                      disabled={profileMutation.isPending} 
+                      data-testid="button-save"
+                      className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                    >
                       {profileMutation.isPending ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Salvando...
+                          {t('profile.info.saving')}
                         </>
                       ) : (
-                        'Salvar'
+                        t('profile.info.save')
                       )}
                     </Button>
-                    <Button variant="outline" onClick={() => setIsEditing(false)} disabled={profileMutation.isPending} data-testid="button-cancel">
-                      Cancelar
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setIsEditing(false)} 
+                      disabled={profileMutation.isPending} 
+                      data-testid="button-cancel"
+                      className="font-light bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20"
+                    >
+                      {t('profile.info.cancel')}
                     </Button>
                   </div>
                 ) : (
-                  <Button onClick={() => setIsEditing(true)} data-testid="button-edit">
-                    Editar Perfil
+                  <Button 
+                    onClick={() => setIsEditing(true)} 
+                    data-testid="button-edit"
+                    className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                  >
+                    {t('profile.info.edit')}
                   </Button>
                 )}
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
               <CardHeader>
-                <CardTitle>Alterar Senha</CardTitle>
-                <CardDescription>Mantenha sua conta segura</CardDescription>
+                <CardTitle className="text-white font-light text-2xl flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-[#8b5cf6]" />
+                  {t('profile.password.title')}
+                </CardTitle>
+                <CardDescription className="text-gray-400 font-light">{t('profile.password.subtitle')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="currentPassword">Senha atual</Label>
+                  <Label htmlFor="currentPassword" className="text-gray-300">{t('profile.password.current')}</Label>
                   <Input
                     id="currentPassword"
                     type="password"
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                     data-testid="input-current-password"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="newPassword">Nova senha</Label>
+                  <Label htmlFor="newPassword" className="text-gray-300">{t('profile.password.new')}</Label>
                   <Input
                     id="newPassword"
                     type="password"
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                     data-testid="input-new-password"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                  <Label htmlFor="confirmPassword" className="text-gray-300">{t('profile.password.confirm')}</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                     data-testid="input-confirm-password"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                   />
                 </div>
-                <Button onClick={handleChangePassword} disabled={passwordMutation.isPending} data-testid="button-change-password">
+                <Button 
+                  onClick={handleChangePassword} 
+                  disabled={passwordMutation.isPending} 
+                  data-testid="button-change-password"
+                  className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                >
                   {passwordMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Alterando...
+                      {t('profile.password.changing')}
                     </>
                   ) : (
-                    'Alterar Senha'
+                    t('profile.password.change')
                   )}
                 </Button>
               </CardContent>
@@ -236,22 +283,22 @@ export default function PerfilPage() {
 
           <TabsContent value="stats">
             <div className="grid md:grid-cols-3 gap-6">
-              <Card>
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
                 <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">{mockStats.ratingsCount}</div>
-                  <p className="text-sm text-muted-foreground">Avaliações Feitas</p>
+                  <div className="text-4xl font-light text-white mb-2">{mockStats.ratingsCount}</div>
+                  <p className="text-sm text-gray-400 font-light">{t('profile.stats.ratings')}</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
                 <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">{mockStats.newsLiked}</div>
-                  <p className="text-sm text-muted-foreground">Notícias Curtidas</p>
+                  <div className="text-4xl font-light text-white mb-2">{mockStats.newsLiked}</div>
+                  <p className="text-sm text-gray-400 font-light">{t('profile.stats.newsLiked')}</p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
                 <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-bold text-primary mb-2">{mockStats.daysActive}</div>
-                  <p className="text-sm text-muted-foreground">Dias Ativo</p>
+                  <div className="text-4xl font-light text-white mb-2">{mockStats.daysActive}</div>
+                  <p className="text-sm text-gray-400 font-light">{t('profile.stats.daysActive')}</p>
                 </CardContent>
               </Card>
             </div>
@@ -260,14 +307,23 @@ export default function PerfilPage() {
           <TabsContent value="badges">
             <div className="grid md:grid-cols-2 gap-4">
               {badges.map((badge: any) => (
-                <Card key={badge.id} className={!badge.unlocked ? 'opacity-50' : ''}>
+                <Card 
+                  key={badge.id} 
+                  className={`bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20 ${!badge.unlocked ? 'opacity-50' : ''}`}
+                >
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="text-4xl">{badge.icon}</div>
                     <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{badge.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-2">{badge.description}</p>
-                      <Badge variant={badge.unlocked ? 'default' : 'secondary'}>
-                        {badge.unlocked ? 'Desbloqueado' : 'Bloqueado'}
+                      <h3 className="font-light text-white mb-1">{badge.name}</h3>
+                      <p className="text-sm text-gray-400 font-light mb-2">{badge.description}</p>
+                      <Badge 
+                        variant={badge.unlocked ? 'default' : 'secondary'}
+                        className={badge.unlocked 
+                          ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white border-0 shadow-md shadow-purple-500/20 font-light' 
+                          : 'bg-white/10 border-white/10 text-white/80 font-light'
+                        }
+                      >
+                        {badge.unlocked ? t('profile.badges.unlocked') : t('profile.badges.locked')}
                       </Badge>
                     </div>
                   </CardContent>

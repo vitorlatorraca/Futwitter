@@ -68,6 +68,7 @@ export const players = pgTable("players", {
   jerseyNumber: integer("jersey_number").notNull(),
   birthDate: timestamp("birth_date"),
   nationality: varchar("nationality", { length: 100 }),
+  sofascoreRating: real("sofascore_rating"), // Média SofaScore (0-10)
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -159,6 +160,23 @@ export const userBadges = pgTable("user_badges", {
   userId: varchar("user_id", { length: 36 }).notNull(),
   badgeId: varchar("badge_id", { length: 36 }).notNull(),
   earnedAt: timestamp("earned_at").notNull().defaultNow(),
+});
+
+export const transfers = pgTable("transfers", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  teamId: varchar("team_id", { length: 36 }).notNull(),
+  playerName: varchar("player_name", { length: 255 }).notNull(),
+  playerPhotoUrl: text("player_photo_url"),
+  fromTeam: varchar("from_team", { length: 255 }),
+  fromTeamLogoUrl: text("from_team_logo_url"),
+  toTeam: varchar("to_team", { length: 255 }),
+  toTeamLogoUrl: text("to_team_logo_url"),
+  transferType: varchar("transfer_type", { length: 50 }).notNull(), // 'IN', 'OUT', 'LOAN_IN', 'LOAN_OUT'
+  transferFee: varchar("transfer_fee", { length: 100 }), // Ex: "€5.00M", "Grátis", "Empréstimo"
+  transferDate: timestamp("transfer_date").notNull(),
+  season: varchar("season", { length: 20 }), // Ex: "2024/2025"
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
 // ============================================
@@ -345,6 +363,10 @@ export const selectBadgeSchema = createSelectSchema(badges);
 export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({ id: true, earnedAt: true });
 export const selectUserBadgeSchema = createSelectSchema(userBadges);
 
+// Transfer schemas
+export const insertTransferSchema = createInsertSchema(transfers).omit({ id: true, createdAt: true, updatedAt: true });
+export const selectTransferSchema = createSelectSchema(transfers);
+
 // ============================================
 // TYPES
 // ============================================
@@ -380,3 +402,6 @@ export type InsertBadge = z.infer<typeof insertBadgeSchema>;
 
 export type UserBadge = typeof userBadges.$inferSelect;
 export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
+
+export type Transfer = typeof transfers.$inferSelect;
+export type InsertTransfer = z.infer<typeof insertTransferSchema>;
