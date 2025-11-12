@@ -25,6 +25,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   userType: userTypeEnum("user_type").notNull().default("FAN"),
   teamId: varchar("team_id", { length: 36 }),
+  isInfluencer: boolean("is_influencer").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

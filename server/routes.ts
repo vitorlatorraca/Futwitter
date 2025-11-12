@@ -25,6 +25,14 @@ function requireJournalist(req: any, res: any, next: any) {
   next();
 }
 
+// Middleware to check if user is an admin
+function requireAdmin(req: any, res: any, next: any) {
+  if (req.session.userType !== 'ADMIN') {
+    return res.status(403).json({ message: 'Acesso negado. Apenas administradores.' });
+  }
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Configure session
   app.use(
@@ -78,7 +86,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Award signup badge
       await storage.checkAndAwardBadges(user.id);
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
     } catch (error: any) {
       console.error('Registration error:', error);
       res.status(400).json({ message: error.message || 'Erro ao criar conta' });
@@ -103,7 +111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       req.session.userType = user.userType;
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
     } catch (error: any) {
       console.error('Login error:', error);
       res.status(500).json({ message: 'Erro ao fazer login' });
@@ -130,7 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
     } catch (error) {
       console.error('Get me error:', error);
       res.status(500).json({ message: 'Erro ao buscar usuário' });
@@ -505,6 +513,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Check badges error:', error);
       res.status(500).json({ message: 'Erro ao verificar badges' });
+    }
+  });
+
+  // ============================================
+  // ADMIN ROUTES
+  // ============================================
+
+  app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      // Remove senhas dos usuários antes de retornar
+      const usersWithoutPasswords = allUsers.map(({ password, ...user }) => user);
+      res.json(usersWithoutPasswords);
+    } catch (error) {
+      console.error('Get all users error:', error);
+      res.status(500).json({ message: 'Erro ao buscar usuários' });
+    }
+  });
+
+  app.put('/api/admin/users/:id/influencer', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { isInfluencer } = req.body;
+
+      if (typeof isInfluencer !== 'boolean') {
+        return res.status(400).json({ message: 'isInfluencer deve ser um booleano' });
+      }
+
+      const updatedUser = await storage.updateUserInfluencerStatus(id, isInfluencer);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      // Remove senha antes de retornar
+      const { password, ...userWithoutPassword } = updatedUser;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error('Update influencer status error:', error);
+      res.status(500).json({ message: 'Erro ao atualizar status de influencer' });
     }
   });
 

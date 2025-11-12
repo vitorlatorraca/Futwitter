@@ -26,6 +26,10 @@ export function Navbar() {
     navLinks.push({ label: t('nav.journalist'), href: '/jornalista', testId: 'link-jornalista' });
   }
 
+  if (user.userType === 'ADMIN') {
+    navLinks.push({ label: 'Admin', href: '/admin', testId: 'link-admin' });
+  }
+
   const isActive = (path: string) => location === path;
 
   return (
