@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
@@ -105,12 +105,9 @@ export default function PerfilPage() {
     daysActive: 7,
   };
 
-  const mockBadges = [
-    { id: '1', name: 'Torcedor Novato', icon: '🎖️', unlocked: true },
-    { id: '2', name: 'Avaliador Ativo', icon: '⭐', unlocked: true },
-    { id: '3', name: 'Fiel da Semana', icon: '🏆', unlocked: false },
-    { id: '4', name: 'Comentarista', icon: '💬', unlocked: false },
-  ];
+  const { data: badges = [], refetch: refetchBadges } = useQuery({
+    queryKey: ['/api/badges'],
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -262,12 +259,13 @@ export default function PerfilPage() {
 
           <TabsContent value="badges">
             <div className="grid md:grid-cols-2 gap-4">
-              {mockBadges.map((badge) => (
+              {badges.map((badge: any) => (
                 <Card key={badge.id} className={!badge.unlocked ? 'opacity-50' : ''}>
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="text-4xl">{badge.icon}</div>
                     <div className="flex-1">
                       <h3 className="font-semibold mb-1">{badge.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-2">{badge.description}</p>
                       <Badge variant={badge.unlocked ? 'default' : 'secondary'}>
                         {badge.unlocked ? 'Desbloqueado' : 'Bloqueado'}
                       </Badge>

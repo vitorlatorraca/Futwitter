@@ -144,6 +144,23 @@ export const comments = pgTable("comments", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const badges = pgTable("badges", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description").notNull(),
+  icon: varchar("icon", { length: 10 }).notNull(),
+  condition: varchar("condition", { length: 100 }).notNull(),
+  threshold: integer("threshold").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const userBadges = pgTable("user_badges", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  badgeId: varchar("badge_id", { length: 36 }).notNull(),
+  earnedAt: timestamp("earned_at").notNull().defaultNow(),
+});
+
 // ============================================
 // RELATIONS
 // ============================================
@@ -160,6 +177,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   newsInteractions: many(newsInteractions),
   playerRatings: many(playerRatings),
   comments: many(comments),
+  userBadges: many(userBadges),
 }));
 
 export const journalistsRelations = relations(journalists, ({ one, many }) => ({
@@ -251,6 +269,21 @@ export const commentsRelations = relations(comments, ({ one }) => ({
   }),
 }));
 
+export const badgesRelations = relations(badges, ({ many }) => ({
+  userBadges: many(userBadges),
+}));
+
+export const userBadgesRelations = relations(userBadges, ({ one }) => ({
+  user: one(users, {
+    fields: [userBadges.userId],
+    references: [users.id],
+  }),
+  badge: one(badges, {
+    fields: [userBadges.badgeId],
+    references: [badges.id],
+  }),
+}));
+
 // ============================================
 // SCHEMAS FOR VALIDATION
 // ============================================
@@ -304,6 +337,14 @@ export const insertPlayerRatingSchema = createInsertSchema(playerRatings, {
 
 export const selectPlayerRatingSchema = createSelectSchema(playerRatings);
 
+// Badge schemas
+export const insertBadgeSchema = createInsertSchema(badges).omit({ id: true, createdAt: true });
+export const selectBadgeSchema = createSelectSchema(badges);
+
+// User badge schemas
+export const insertUserBadgeSchema = createInsertSchema(userBadges).omit({ id: true, earnedAt: true });
+export const selectUserBadgeSchema = createSelectSchema(userBadges);
+
 // ============================================
 // TYPES
 // ============================================
@@ -333,3 +374,9 @@ export type PlayerRating = typeof playerRatings.$inferSelect;
 export type InsertPlayerRating = z.infer<typeof insertPlayerRatingSchema>;
 
 export type Comment = typeof comments.$inferSelect;
+
+export type Badge = typeof badges.$inferSelect;
+export type InsertBadge = z.infer<typeof insertBadgeSchema>;
+
+export type UserBadge = typeof userBadges.$inferSelect;
+export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;

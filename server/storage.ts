@@ -10,6 +10,8 @@ import {
   news,
   newsInteractions,
   playerRatings,
+  badges,
+  userBadges,
   type User,
   type InsertUser,
   type Journalist,
@@ -26,6 +28,9 @@ import {
   type InsertNewsInteraction,
   type PlayerRating,
   type InsertPlayerRating,
+  type Badge,
+  type UserBadge,
+  type InsertUserBadge,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -70,6 +75,12 @@ export interface IStorage {
   createPlayerRating(rating: InsertPlayerRating): Promise<PlayerRating>;
   getPlayerRatings(playerId: string): Promise<PlayerRating[]>;
   getPlayerAverageRating(playerId: string): Promise<number | null>;
+
+  // Badges
+  getAllBadges(): Promise<Badge[]>;
+  getUserBadges(userId: string): Promise<any[]>;
+  awardBadge(userId: string, badgeId: string): Promise<UserBadge>;
+  checkAndAwardBadges(userId: string): Promise<UserBadge[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -306,6 +317,85 @@ export class DatabaseStorage implements IStorage {
     
     const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
     return sum / ratings.length;
+  }
+
+  // Badges
+  async getAllBadges(): Promise<Badge[]> {
+    return await db.select().from(badges);
+  }
+
+  async getUserBadges(userId: string): Promise<any[]> {
+    const result = await db
+      .select({
+        id: userBadges.id,
+        earnedAt: userBadges.earnedAt,
+        badge: badges,
+      })
+      .from(userBadges)
+      .innerJoin(badges, eq(userBadges.badgeId, badges.id))
+      .where(eq(userBadges.userId, userId));
+    
+    return result;
+  }
+
+  async awardBadge(userId: string, badgeId: string): Promise<UserBadge> {
+    // Check if user already has this badge
+    const existing = await db
+      .select()
+      .from(userBadges)
+      .where(and(eq(userBadges.userId, userId), eq(userBadges.badgeId, badgeId)))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return existing[0];
+    }
+
+    const [userBadge] = await db
+      .insert(userBadges)
+      .values({ userId, badgeId })
+      .returning();
+    
+    return userBadge;
+  }
+
+  async checkAndAwardBadges(userId: string): Promise<UserBadge[]> {
+    const awarded: UserBadge[] = [];
+    const allBadges = await this.getAllBadges();
+    const userBadgesList = await this.getUserBadges(userId);
+    const earnedBadgeIds = new Set(userBadgesList.map(ub => ub.badge.id));
+
+    // Get user stats
+    const ratingsCount = await db
+      .select()
+      .from(playerRatings)
+      .where(eq(playerRatings.userId, userId));
+    
+    const interactionsCount = await db
+      .select()
+      .from(newsInteractions)
+      .where(eq(newsInteractions.userId, userId));
+
+    // Check each badge condition
+    for (const badge of allBadges) {
+      if (earnedBadgeIds.has(badge.id)) continue;
+
+      let shouldAward = false;
+
+      if (badge.condition === 'signup') {
+        shouldAward = true;
+      } else if (badge.condition === 'player_ratings') {
+        shouldAward = ratingsCount.length >= badge.threshold;
+      } else if (badge.condition === 'news_interactions') {
+        shouldAward = interactionsCount.length >= badge.threshold;
+      }
+
+      if (shouldAward) {
+        const userBadge = await this.awardBadge(userId, badge.id);
+        awarded.push(userBadge);
+      }
+    }
+
+    return awarded;
   }
 }
 

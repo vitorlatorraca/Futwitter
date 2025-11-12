@@ -75,6 +75,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       req.session.userType = user.userType;
 
+      // Award signup badge
+      await storage.checkAndAwardBadges(user.id);
+
       res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType });
     } catch (error: any) {
       console.error('Registration error:', error);
@@ -309,6 +312,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Recalculate counts
       await storage.recalculateNewsCounts(newsId);
 
+      // Check for new badges
+      await storage.checkAndAwardBadges(userId);
+
       res.status(201).json(interaction);
     } catch (error) {
       console.error('Create interaction error:', error);
@@ -331,6 +337,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         playerId,
         userId,
       });
+
+      // Check for new badges
+      await storage.checkAndAwardBadges(userId);
 
       res.status(201).json(rating);
     } catch (error: any) {
@@ -391,6 +400,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Change password error:', error);
       res.status(500).json({ message: 'Erro ao alterar senha' });
+    }
+  });
+
+  // ============================================
+  // BADGE ROUTES
+  // ============================================
+
+  app.get('/api/badges', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const userBadges = await storage.getUserBadges(userId);
+      const allBadges = await storage.getAllBadges();
+
+      const badgesWithStatus = allBadges.map(badge => {
+        const userBadge = userBadges.find(ub => ub.badge.id === badge.id);
+        return {
+          ...badge,
+          unlocked: !!userBadge,
+          earnedAt: userBadge?.earnedAt || null,
+        };
+      });
+
+      res.json(badgesWithStatus);
+    } catch (error) {
+      console.error('Get badges error:', error);
+      res.status(500).json({ message: 'Erro ao buscar badges' });
+    }
+  });
+
+  app.post('/api/badges/check', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const newBadges = await storage.checkAndAwardBadges(userId);
+      res.json(newBadges);
+    } catch (error) {
+      console.error('Check badges error:', error);
+      res.status(500).json({ message: 'Erro ao verificar badges' });
     }
   });
 
