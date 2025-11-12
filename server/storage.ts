@@ -64,6 +64,7 @@ export interface IStorage {
   getUserNewsInteraction(userId: string, newsId: string): Promise<NewsInteraction | undefined>;
   createNewsInteraction(interaction: InsertNewsInteraction): Promise<NewsInteraction>;
   deleteNewsInteraction(userId: string, newsId: string): Promise<void>;
+  recalculateNewsCounts(newsId: string): Promise<void>;
 
   // Player Ratings
   createPlayerRating(rating: InsertPlayerRating): Promise<PlayerRating>;
@@ -259,6 +260,27 @@ export class DatabaseStorage implements IStorage {
           eq(newsInteractions.newsId, newsId)
         )
       );
+  }
+
+  async recalculateNewsCounts(newsId: string): Promise<void> {
+    // Count likes and dislikes for this news
+    const interactions = await db
+      .select()
+      .from(newsInteractions)
+      .where(eq(newsInteractions.newsId, newsId));
+
+    const likesCount = interactions.filter(i => i.interactionType === 'LIKE').length;
+    const dislikesCount = interactions.filter(i => i.interactionType === 'DISLIKE').length;
+
+    // Update the news table with new counts
+    await db
+      .update(news)
+      .set({ 
+        likesCount, 
+        dislikesCount,
+        updatedAt: new Date()
+      })
+      .where(eq(news.id, newsId));
   }
 
   // Player Ratings

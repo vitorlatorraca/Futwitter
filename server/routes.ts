@@ -290,6 +290,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (existing.interactionType === type) {
           // Remove interaction if same type
           await storage.deleteNewsInteraction(userId, newsId);
+          // Recalculate counts
+          await storage.recalculateNewsCounts(newsId);
           return res.json({ message: 'Interação removida' });
         } else {
           // Delete old interaction before creating new one
@@ -303,6 +305,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         newsId,
         interactionType: type,
       });
+
+      // Recalculate counts
+      await storage.recalculateNewsCounts(newsId);
 
       res.status(201).json(interaction);
     } catch (error) {
