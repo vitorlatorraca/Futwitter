@@ -5,7 +5,7 @@ import ConnectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
-import { insertUserSchema, insertNewsSchema, insertPlayerRatingSchema } from "@shared/schema";
+import { insertUserSchema, insertNewsSchema, insertPlayerRatingSchema, insertInfluencerRequestSchema } from "@shared/schema";
 
 const PgSession = ConnectPgSimple(session);
 
@@ -553,6 +553,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Update influencer status error:', error);
       res.status(500).json({ message: 'Erro ao atualizar status de influencer' });
+    }
+  });
+
+  // ============================================
+  // INFLUENCER REQUEST ROUTES
+  // ============================================
+
+  app.post('/api/influencer/request', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const requestData = insertInfluencerRequestSchema.parse(req.body);
+
+      // Verificar se já existe uma solicitação
+      const existingRequest = await storage.getInfluencerRequestByUserId(userId);
+      if (existingRequest) {
+        if (existingRequest.status === 'PENDING') {
+          return res.status(400).json({ message: 'Você já possui uma solicitação pendente' });
+        }
+        if (existingRequest.status === 'APPROVED') {
+          return res.status(400).json({ message: 'Você já é um influencer' });
+        }
+      }
+
+      const request = await storage.createInfluencerRequest({
+        ...requestData,
+        userId,
+      });
+
+      res.status(201).json(request);
+    } catch (error: any) {
+      console.error('Create influencer request error:', error);
+      res.status(400).json({ message: error.message || 'Erro ao criar solicitação' });
+    }
+  });
+
+  app.get('/api/influencer/request/my', requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const request = await storage.getInfluencerRequestByUserId(userId);
+      res.json(request || null);
+    } catch (error) {
+      console.error('Get my influencer request error:', error);
+      res.status(500).json({ message: 'Erro ao buscar solicitação' });
+    }
+  });
+
+  app.get('/api/admin/influencer-requests', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { status } = req.query;
+      const requests = await storage.getAllInfluencerRequests(status as string);
+      res.json(requests);
+    } catch (error) {
+      console.error('Get influencer requests error:', error);
+      res.status(500).json({ message: 'Erro ao buscar solicitações' });
+    }
+  });
+
+  app.put('/api/admin/influencer-requests/:id/review', requireAuth, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const adminId = req.session.userId!;
+
+      if (!['APPROVED', 'REJECTED'].includes(status)) {
+        return res.status(400).json({ message: 'Status inválido. Use APPROVED ou REJECTED' });
+      }
+
+      const updatedRequest = await storage.updateInfluencerRequestStatus(id, status, adminId);
+      
+      if (!updatedRequest) {
+        return res.status(404).json({ message: 'Solicitação não encontrada' });
+      }
+
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error('Review influencer request error:', error);
+      res.status(500).json({ message: 'Erro ao revisar solicitação' });
     }
   });
 

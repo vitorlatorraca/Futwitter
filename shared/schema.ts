@@ -180,6 +180,17 @@ export const transfers = pgTable("transfers", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const influencerRequests = pgTable("influencer_requests", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id", { length: 36 }).notNull().unique(),
+  reason: text("reason"), // Motivo da solicitação
+  status: varchar("status", { length: 50 }).notNull().default("PENDING"), // 'PENDING', 'APPROVED', 'REJECTED'
+  reviewedBy: varchar("reviewed_by", { length: 36 }), // ID do admin que revisou
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 // ============================================
 // RELATIONS
 // ============================================
@@ -368,6 +379,12 @@ export const selectUserBadgeSchema = createSelectSchema(userBadges);
 export const insertTransferSchema = createInsertSchema(transfers).omit({ id: true, createdAt: true, updatedAt: true });
 export const selectTransferSchema = createSelectSchema(transfers);
 
+// Influencer request schemas
+export const insertInfluencerRequestSchema = createInsertSchema(influencerRequests, {
+  reason: z.string().max(500, "Motivo não pode ter mais de 500 caracteres").optional(),
+}).omit({ id: true, status: true, reviewedBy: true, reviewedAt: true, createdAt: true, updatedAt: true });
+export const selectInfluencerRequestSchema = createSelectSchema(influencerRequests);
+
 // ============================================
 // TYPES
 // ============================================
@@ -406,3 +423,6 @@ export type InsertUserBadge = z.infer<typeof insertUserBadgeSchema>;
 
 export type Transfer = typeof transfers.$inferSelect;
 export type InsertTransfer = z.infer<typeof insertTransferSchema>;
+
+export type InfluencerRequest = typeof influencerRequests.$inferSelect;
+export type InsertInfluencerRequest = z.infer<typeof insertInfluencerRequestSchema>;

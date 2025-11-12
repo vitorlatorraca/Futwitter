@@ -9,8 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Shield, Users, CheckCircle, XCircle, Loader2, Search } from 'lucide-react';
+import { Shield, Users, CheckCircle, XCircle, Loader2, Search, Star, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { User } from '@shared/schema';
 
 export default function AdminPage() {
@@ -19,6 +20,7 @@ export default function AdminPage() {
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [requestStatusFilter, setRequestStatusFilter] = useState<string>('PENDING');
 
   // Verificar se o usuário é admin
   if (user?.userType !== 'ADMIN') {
@@ -50,6 +52,18 @@ export default function AdminPage() {
     },
   });
 
+  // Buscar solicitações de influencer
+  const { data: influencerRequests, isLoading: isLoadingRequests } = useQuery({
+    queryKey: ['/api/admin/influencer-requests', requestStatusFilter],
+    queryFn: async () => {
+      const response = await fetch(`/api/admin/influencer-requests?status=${requestStatusFilter}`, {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Erro ao buscar solicitações');
+      return response.json();
+    },
+  });
+
   const influencerMutation = useMutation({
     mutationFn: async ({ userId, isInfluencer }: { userId: string; isInfluencer: boolean }) => {
       return await apiRequest('PUT', `/api/admin/users/${userId}/influencer`, { isInfluencer });
@@ -66,6 +80,27 @@ export default function AdminPage() {
         variant: 'destructive',
         title: 'Erro',
         description: error.message || 'Não foi possível atualizar o status',
+      });
+    },
+  });
+
+  const reviewRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+      return await apiRequest('PUT', `/api/admin/influencer-requests/${requestId}/review`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/influencer-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      toast({
+        title: 'Solicitação revisada',
+        description: 'A solicitação foi processada com sucesso',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message || 'Não foi possível revisar a solicitação',
       });
     },
   });
@@ -160,14 +195,34 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* Users List */}
-        <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
-          <CardHeader>
-            <CardTitle className="text-white font-light text-2xl">Usuários</CardTitle>
-            <CardDescription className="text-gray-400 font-light">
-              Gerencie o status de influencer dos usuários
-            </CardDescription>
-          </CardHeader>
+        {/* Tabs for Users and Requests */}
+        <Tabs defaultValue="users" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-1">
+            <TabsTrigger 
+              value="users" 
+              className="font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5"
+            >
+              <Users className="h-4 w-4 mr-2" />
+              Usuários
+            </TabsTrigger>
+            <TabsTrigger 
+              value="requests" 
+              className="font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5"
+            >
+              <Star className="h-4 w-4 mr-2" />
+              Solicitações de Influencer
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="users">
+            {/* Users List */}
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
+              <CardHeader>
+                <CardTitle className="text-white font-light text-2xl">Usuários</CardTitle>
+                <CardDescription className="text-gray-400 font-light">
+                  Gerencie o status de influencer dos usuários
+                </CardDescription>
+              </CardHeader>
           <CardContent>
             {isLoading ? (
               <div className="space-y-4">
@@ -241,6 +296,179 @@ export default function AdminPage() {
             )}
           </CardContent>
         </Card>
+          </TabsContent>
+
+          <TabsContent value="requests">
+            {/* Influencer Requests */}
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
+              <CardHeader>
+                <CardTitle className="text-white font-light text-2xl">Solicitações de Influencer</CardTitle>
+                <CardDescription className="text-gray-400 font-light">
+                  Revise e aprove ou rejeite solicitações de usuários para se tornarem influencers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {/* Filter Buttons */}
+                <div className="flex gap-2 mb-6">
+                  <Button
+                    variant={requestStatusFilter === 'PENDING' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setRequestStatusFilter('PENDING')}
+                    className={`font-light transition-all duration-300 ${
+                      requestStatusFilter === 'PENDING'
+                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                        : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    }`}
+                  >
+                    <Clock className="h-4 w-4 mr-2" />
+                    Pendentes
+                  </Button>
+                  <Button
+                    variant={requestStatusFilter === 'APPROVED' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setRequestStatusFilter('APPROVED')}
+                    className={`font-light transition-all duration-300 ${
+                      requestStatusFilter === 'APPROVED'
+                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                        : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    }`}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Aprovadas
+                  </Button>
+                  <Button
+                    variant={requestStatusFilter === 'REJECTED' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setRequestStatusFilter('REJECTED')}
+                    className={`font-light transition-all duration-300 ${
+                      requestStatusFilter === 'REJECTED'
+                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                        : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
+                    }`}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Rejeitadas
+                  </Button>
+                </div>
+
+                {isLoadingRequests ? (
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                      <Skeleton key={i} className="h-32 rounded-lg bg-white/5" />
+                    ))}
+                  </div>
+                ) : influencerRequests && influencerRequests.length > 0 ? (
+                  <div className="space-y-4">
+                    {influencerRequests.map((request: any) => (
+                      <div
+                        key={request.id}
+                        className="bg-white/5 rounded-xl p-6 border border-white/10 hover:border-white/20 transition-all"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] flex items-center justify-center text-white font-light text-lg">
+                              {request.user.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <p className="text-white font-light text-lg">{request.user.name}</p>
+                                <Badge
+                                  className={`font-light ${
+                                    request.status === 'PENDING'
+                                      ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                                      : request.status === 'APPROVED'
+                                      ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                                      : 'bg-red-500/20 text-red-400 border-red-500/30'
+                                  }`}
+                                >
+                                  {request.status === 'PENDING' && 'Pendente'}
+                                  {request.status === 'APPROVED' && 'Aprovado'}
+                                  {request.status === 'REJECTED' && 'Rejeitado'}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-400 font-light mb-3">{request.user.email}</p>
+                              {request.reason && (
+                                <div className="bg-white/5 rounded-lg p-3 mb-3">
+                                  <p className="text-sm text-gray-300 font-light">{request.reason}</p>
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-500 font-light">
+                                Solicitado em {new Date(request.createdAt).toLocaleDateString('pt-BR', {
+                                  day: '2-digit',
+                                  month: 'long',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </p>
+                              {request.reviewedAt && (
+                                <p className="text-xs text-gray-500 font-light mt-1">
+                                  Revisado em {new Date(request.reviewedAt).toLocaleDateString('pt-BR', {
+                                    day: '2-digit',
+                                    month: 'long',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {request.status === 'PENDING' && (
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() => reviewRequestMutation.mutate({ requestId: request.id, status: 'APPROVED' })}
+                                disabled={reviewRequestMutation.isPending}
+                                className="font-light bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white border-0 shadow-lg shadow-green-500/20"
+                              >
+                                {reviewRequestMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Aprovar
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => reviewRequestMutation.mutate({ requestId: request.id, status: 'REJECTED' })}
+                                disabled={reviewRequestMutation.isPending}
+                                className="font-light bg-white/5 border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/50"
+                              >
+                                {reviewRequestMutation.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <>
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Rejeitar
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Star className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                    <p className="text-gray-400 font-light">
+                      {requestStatusFilter === 'PENDING'
+                        ? 'Nenhuma solicitação pendente'
+                        : requestStatusFilter === 'APPROVED'
+                        ? 'Nenhuma solicitação aprovada'
+                        : 'Nenhuma solicitação rejeitada'}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

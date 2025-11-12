@@ -13,6 +13,7 @@ import {
   badges,
   userBadges,
   transfers,
+  influencerRequests,
   type User,
   type InsertUser,
   type Journalist,
@@ -34,6 +35,8 @@ import {
   type InsertUserBadge,
   type Transfer,
   type InsertTransfer,
+  type InfluencerRequest,
+  type InsertInfluencerRequest,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -90,6 +93,12 @@ export interface IStorage {
   // Transfers
   getTransfersByTeam(teamId: string, limit?: number): Promise<Transfer[]>;
   createTransfer(transfer: InsertTransfer): Promise<Transfer>;
+
+  // Influencer Requests
+  createInfluencerRequest(request: InsertInfluencerRequest): Promise<InfluencerRequest>;
+  getInfluencerRequestByUserId(userId: string): Promise<InfluencerRequest | undefined>;
+  getAllInfluencerRequests(status?: string): Promise<(InfluencerRequest & { user: User })[]>;
+  updateInfluencerRequestStatus(requestId: string, status: string, reviewedBy: string): Promise<InfluencerRequest | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -560,6 +569,80 @@ export class DatabaseStorage implements IStorage {
   async createTransfer(insertTransfer: InsertTransfer): Promise<Transfer> {
     const [transfer] = await db.insert(transfers).values(insertTransfer).returning();
     return transfer;
+  }
+
+  // Influencer Requests
+  async createInfluencerRequest(insertRequest: InsertInfluencerRequest): Promise<InfluencerRequest> {
+    const [request] = await db.insert(influencerRequests).values(insertRequest).returning();
+    return request;
+  }
+
+  async getInfluencerRequestByUserId(userId: string): Promise<InfluencerRequest | undefined> {
+    const [request] = await db
+      .select()
+      .from(influencerRequests)
+      .where(eq(influencerRequests.userId, userId))
+      .limit(1);
+    return request || undefined;
+  }
+
+  async getAllInfluencerRequests(status?: string): Promise<(InfluencerRequest & { user: User })[]> {
+    let query = db
+      .select({
+        id: influencerRequests.id,
+        userId: influencerRequests.userId,
+        reason: influencerRequests.reason,
+        status: influencerRequests.status,
+        reviewedBy: influencerRequests.reviewedBy,
+        reviewedAt: influencerRequests.reviewedAt,
+        createdAt: influencerRequests.createdAt,
+        updatedAt: influencerRequests.updatedAt,
+        user: users,
+      })
+      .from(influencerRequests)
+      .innerJoin(users, eq(influencerRequests.userId, users.id))
+      .orderBy(desc(influencerRequests.createdAt));
+
+    if (status) {
+      query = query.where(eq(influencerRequests.status, status)) as any;
+    }
+
+    const results = await query;
+    return results.map((row: any) => ({
+      id: row.id,
+      userId: row.userId,
+      reason: row.reason,
+      status: row.status,
+      reviewedBy: row.reviewedBy,
+      reviewedAt: row.reviewedAt,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      user: row.user,
+    }));
+  }
+
+  async updateInfluencerRequestStatus(
+    requestId: string,
+    status: string,
+    reviewedBy: string
+  ): Promise<InfluencerRequest | undefined> {
+    const [request] = await db
+      .update(influencerRequests)
+      .set({
+        status,
+        reviewedBy,
+        reviewedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(influencerRequests.id, requestId))
+      .returning();
+
+    // Se aprovado, atualizar o status de influencer do usuário
+    if (status === 'APPROVED' && request) {
+      await this.updateUserInfluencerStatus(request.userId, true);
+    }
+
+    return request || undefined;
   }
 }
 

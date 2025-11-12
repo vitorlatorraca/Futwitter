@@ -11,7 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { User, Lock, BarChart3, Award, Loader2 } from 'lucide-react';
+import { User, Lock, BarChart3, Award, Loader2, Star, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 export default function PerfilPage() {
   const { user } = useAuth();
@@ -19,6 +21,8 @@ export default function PerfilPage() {
   const { t } = useI18n();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const [influencerReason, setInfluencerReason] = useState('');
+  const [isRequestDialogOpen, setIsRequestDialogOpen] = useState(false);
 
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
@@ -109,6 +113,42 @@ export default function PerfilPage() {
 
   const { data: badges = [], refetch: refetchBadges } = useQuery({
     queryKey: ['/api/badges'],
+  });
+
+  // Buscar solicitação de influencer
+  const { data: influencerRequest } = useQuery({
+    queryKey: ['/api/influencer/request/my'],
+    queryFn: async () => {
+      const response = await fetch('/api/influencer/request/my', {
+        credentials: 'include',
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!user && !user.isInfluencer,
+  });
+
+  const influencerRequestMutation = useMutation({
+    mutationFn: async (reason: string) => {
+      return await apiRequest('POST', '/api/influencer/request', { reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/influencer/request/my'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: 'Solicitação enviada',
+        description: 'Sua solicitação para ser influencer foi enviada com sucesso',
+      });
+      setIsRequestDialogOpen(false);
+      setInfluencerReason('');
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message || 'Não foi possível enviar a solicitação',
+      });
+    },
   });
 
   return (
@@ -279,6 +319,131 @@ export default function PerfilPage() {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Influencer Request Section */}
+            {user && !user.isInfluencer && (
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
+                <CardHeader>
+                  <CardTitle className="text-white font-light text-2xl flex items-center gap-2">
+                    <Star className="h-5 w-5 text-[#8b5cf6]" />
+                    Solicitar Status de Influencer
+                  </CardTitle>
+                  <CardDescription className="text-gray-400 font-light">
+                    Envie uma solicitação para se tornar um influencer na plataforma
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {influencerRequest ? (
+                    <div className="space-y-3">
+                      <div className={`p-4 rounded-lg border ${
+                        influencerRequest.status === 'PENDING'
+                          ? 'bg-yellow-500/10 border-yellow-500/30'
+                          : influencerRequest.status === 'APPROVED'
+                          ? 'bg-green-500/10 border-green-500/30'
+                          : 'bg-red-500/10 border-red-500/30'
+                      }`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          {influencerRequest.status === 'PENDING' && (
+                            <>
+                              <Clock className="h-5 w-5 text-yellow-400" />
+                              <span className="text-yellow-400 font-light">Solicitação Pendente</span>
+                            </>
+                          )}
+                          {influencerRequest.status === 'APPROVED' && (
+                            <>
+                              <CheckCircle className="h-5 w-5 text-green-400" />
+                              <span className="text-green-400 font-light">Aprovado</span>
+                            </>
+                          )}
+                          {influencerRequest.status === 'REJECTED' && (
+                            <>
+                              <XCircle className="h-5 w-5 text-red-400" />
+                              <span className="text-red-400 font-light">Rejeitado</span>
+                            </>
+                          )}
+                        </div>
+                        {influencerRequest.reason && (
+                          <p className="text-gray-300 font-light text-sm mt-2">{influencerRequest.reason}</p>
+                        )}
+                        <p className="text-gray-400 font-light text-xs mt-2">
+                          Enviado em {new Date(influencerRequest.createdAt).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button
+                          className="w-full font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                        >
+                          <Star className="h-4 w-4 mr-2" />
+                          Solicitar Ser Influencer
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-black/70 backdrop-blur-xl border border-white/10 text-white">
+                        <DialogHeader>
+                          <DialogTitle className="text-2xl font-light text-white">
+                            Solicitar Status de Influencer
+                          </DialogTitle>
+                          <DialogDescription className="text-gray-400 font-light">
+                            Explique por que você gostaria de ser um influencer na plataforma
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="reason" className="text-gray-300">Motivo (opcional)</Label>
+                            <Textarea
+                              id="reason"
+                              placeholder="Conte-nos sobre você e por que você seria um bom influencer..."
+                              value={influencerReason}
+                              onChange={(e) => setInfluencerReason(e.target.value)}
+                              maxLength={500}
+                              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6] min-h-[120px]"
+                            />
+                            <p className="text-xs text-gray-500 text-right font-light">
+                              {influencerReason.length}/500 caracteres
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => influencerRequestMutation.mutate(influencerReason)}
+                            disabled={influencerRequestMutation.isPending}
+                            className="w-full font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                          >
+                            {influencerRequestMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Enviando...
+                              </>
+                            ) : (
+                              'Enviar Solicitação'
+                            )}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Show influencer badge if user is influencer */}
+            {user?.isInfluencer && (
+              <Card className="bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 backdrop-blur-xl border border-[#8b5cf6]/30 shadow-lg shadow-purple-500/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] flex items-center justify-center">
+                      <Star className="h-8 w-8 text-white fill-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-light text-white mb-1">Você é um Influencer!</h3>
+                      <p className="text-gray-300 font-light text-sm">
+                        Seu conteúdo tem destaque especial na plataforma
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="stats">
