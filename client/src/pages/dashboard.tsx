@@ -70,12 +70,12 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
       <Navbar />
 
       {/* Filter Bar */}
-      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="container px-4 py-3">
+      <div className="sticky top-16 z-40 bg-black/40 backdrop-blur-xl border-b border-white/10">
+        <div className="container px-6 py-4">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
             {filters.map((filter) => (
               <Button
@@ -83,7 +83,11 @@ export default function DashboardPage() {
                 variant={activeFilter === filter.id ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setActiveFilter(filter.id)}
-                className="whitespace-nowrap font-medium"
+                className={`whitespace-nowrap font-light transition-all duration-300 ${
+                  activeFilter === filter.id
+                    ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                    : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
+                }`}
                 data-testid={filter.testId}
               >
                 {filter.label}
@@ -94,13 +98,13 @@ export default function DashboardPage() {
       </div>
 
       {/* News Feed */}
-      <div className="container px-4 py-8">
+      <div className="container px-6 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
           {isLoading ? (
             <>
               {[1, 2, 3].map((i) => (
                 <div key={i} className="space-y-4">
-                  <Skeleton className="h-[400px] rounded-lg" />
+                  <Skeleton className="h-[400px] rounded-2xl bg-white/5" />
                 </div>
               ))}
             </>
@@ -114,12 +118,14 @@ export default function DashboardPage() {
               />
             ))
           ) : (
-            <div className="text-center py-16">
-              <div className="text-6xl mb-4">📰</div>
-              <h3 className="font-display font-semibold text-xl mb-2">
+            <div className="text-center py-20">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">
+                <span className="text-4xl">📰</span>
+              </div>
+              <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
                 Nenhuma notícia ainda
               </h3>
-              <p className="text-muted-foreground">
+              <p className="text-gray-400 font-light">
                 {activeFilter === 'my-team' 
                   ? 'Não há notícias do seu time no momento'
                   : 'Não há notícias disponíveis no momento'

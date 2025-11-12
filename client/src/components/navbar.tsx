@@ -29,11 +29,11 @@ export function Navbar() {
   const isActive = (path: string) => location === path;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
+    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/40 backdrop-blur-xl supports-[backdrop-filter]:bg-black/20">
+      <div className="container flex h-16 items-center justify-between px-6">
         {/* Logo */}
         <Link href="/dashboard" data-testid="link-logo">
-          <div className="flex items-center gap-2 text-xl font-display font-bold tracking-tight hover-elevate active-elevate-2 rounded-md px-3 py-2 cursor-pointer">
+          <div className="flex items-center gap-2 text-xl font-light tracking-tight hover:opacity-80 transition-opacity cursor-pointer text-white">
             <span className="text-2xl">⚽</span>
             <span className="hidden sm:inline">Brasileirão</span>
           </div>
@@ -44,8 +44,12 @@ export function Navbar() {
           {navLinks.map((link) => (
             <Link key={link.href} href={link.href} data-testid={link.testId}>
               <Button
-                variant={isActive(link.href) ? 'secondary' : 'ghost'}
-                className="font-medium"
+                variant={isActive(link.href) ? 'default' : 'ghost'}
+                className={`font-light transition-all duration-300 ${
+                  isActive(link.href)
+                    ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0'
+                    : 'text-white/80 hover:text-white hover:bg-white/5 border-0'
+                }`}
               >
                 {link.label}
               </Button>
@@ -57,18 +61,18 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <LanguageSelector />
           <div className="hidden md:flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+            <Avatar className="h-8 w-8 border border-white/10">
+              <AvatarFallback className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white text-sm font-medium">
                 {user.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm font-medium hidden lg:inline">{user.name}</span>
+            <span className="text-sm font-light text-white/80 hidden lg:inline">{user.name}</span>
           </div>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => logout()}
-            className="hidden md:flex"
+            className="hidden md:flex text-white/80 hover:text-white hover:bg-white/5 border-0"
             data-testid="button-logout"
           >
             <LogOut className="h-5 w-5" />
@@ -77,41 +81,45 @@ export function Navbar() {
           {/* Mobile Menu */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" data-testid="button-menu">
+              <Button variant="ghost" size="icon" data-testid="button-menu" className="text-white/80 hover:text-white hover:bg-white/5 border-0">
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-64">
+            <SheetContent side="right" className="w-64 bg-[#0a0a0a] border-white/10">
               <div className="flex flex-col gap-4 mt-8">
-                <div className="flex items-center gap-3 pb-4 border-b">
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                <div className="flex items-center gap-3 pb-4 border-b border-white/10">
+                  <Avatar className="h-10 w-10 border border-white/10">
+                    <AvatarFallback className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white">
                       {user.name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-sm">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                    <p className="font-medium text-sm text-white">{user.name}</p>
+                    <p className="text-xs text-gray-400 font-light">{user.email}</p>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   {navLinks.map((link) => (
                     <Link key={link.href} href={link.href} data-testid={link.testId}>
                       <Button
-                        variant={isActive(link.href) ? 'secondary' : 'ghost'}
-                        className="w-full justify-start font-medium"
+                        variant={isActive(link.href) ? 'default' : 'ghost'}
+                        className={`w-full justify-start font-light transition-all duration-300 ${
+                          isActive(link.href)
+                            ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0'
+                            : 'text-white/80 hover:text-white hover:bg-white/5 border-0'
+                        }`}
                         onClick={() => setIsOpen(false)}
                       >
                         {link.label}
                       </Button>
                     </Link>
                   ))}
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t border-white/10">
                     <LanguageSelector />
                   </div>
                   <Button
                     variant="ghost"
-                    className="w-full justify-start text-destructive hover:text-destructive"
+                    className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10 border-0 font-light"
                     onClick={() => {
                       setIsOpen(false);
                       logout();

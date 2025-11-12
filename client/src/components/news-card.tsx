@@ -37,11 +37,15 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
         size="sm"
         onClick={() => canInteract && onInteract(news.id, type)}
         disabled={!canInteract}
-        className="gap-2"
+        className={`gap-2 font-light transition-all duration-300 ${
+          isActive
+            ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+            : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
+        }`}
         data-testid={`button-${type.toLowerCase()}-${news.id}`}
       >
         <Icon className="h-4 w-4" />
-        <span className="font-semibold">{count}</span>
+        <span className="font-medium">{count}</span>
       </Button>
     );
 
@@ -52,7 +56,7 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
             <TooltipTrigger asChild>
               {button}
             </TooltipTrigger>
-            <TooltipContent>
+            <TooltipContent className="bg-[#16181c] border-white/10 text-white">
               <p className="text-xs">Você só pode interagir com notícias do seu time</p>
             </TooltipContent>
           </Tooltip>
@@ -64,19 +68,22 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow" data-testid={`news-card-${news.id}`}>
-      <CardHeader className="p-6 pb-4">
+    <Card className="overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover:border-white/20 transition-all duration-300 shadow-2xl" data-testid={`news-card-${news.id}`}>
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
+      
+      <CardHeader className="p-6 pb-4 relative z-10">
         <div className="flex items-center gap-3">
           <img
             src={news.team.logoUrl}
             alt={`Escudo ${news.team.name}`}
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-10 h-10 rounded-full object-cover border-2 border-white/10"
           />
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm truncate">{news.journalist.user.name}</p>
-            <p className="text-xs text-muted-foreground truncate">{news.team.name}</p>
+            <p className="font-medium text-sm text-white truncate">{news.journalist.user.name}</p>
+            <p className="text-xs text-gray-400 truncate font-light">{news.team.name}</p>
           </div>
-          <Badge variant="secondary" className="text-xs">{categoryLabel}</Badge>
+          <Badge className="bg-white/10 border-white/10 text-white/90 font-light text-xs">{categoryLabel}</Badge>
         </div>
       </CardHeader>
 
@@ -87,25 +94,26 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
             alt={news.title}
             className="w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
         </div>
       )}
 
-      <CardContent className="p-6 space-y-4">
+      <CardContent className="p-6 space-y-4 relative z-10">
         <div>
-          <h3 className="font-display font-semibold text-xl mb-2 leading-tight">
+          <h3 className="font-light text-2xl text-white mb-3 leading-tight tracking-tight">
             {news.title}
           </h3>
-          <p className="text-muted-foreground leading-relaxed line-clamp-3">
+          <p className="text-gray-300 leading-relaxed line-clamp-3 font-light">
             {news.content}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-gray-400 font-light">
           <span>{format(new Date(news.publishedAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</span>
         </div>
       </CardContent>
 
-      <CardFooter className="p-6 pt-0 flex gap-2">
+      <CardFooter className="p-6 pt-0 flex gap-2 relative z-10">
         <InteractionButton type="LIKE" count={news.likesCount} icon={ThumbsUp} />
         <InteractionButton type="DISLIKE" count={news.dislikesCount} icon={ThumbsDown} />
       </CardFooter>
