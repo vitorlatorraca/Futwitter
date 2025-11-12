@@ -18,12 +18,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ['/api/auth/me'],
+    queryFn: async () => {
+      const response = await fetch('/api/auth/me', {
+        credentials: 'include',
+      });
+      if (response.status === 401) {
+        return null;
+      }
+      if (!response.ok) {
+        throw new Error('Erro ao buscar usuário');
+      }
+      return response.json();
+    },
     retry: false,
   });
 
   const loginMutation = useMutation({
     mutationFn: async ({ email, password }: { email: string; password: string }) => {
-      return await apiRequest('POST', '/api/auth/login', { email, password });
+      const user = await apiRequest('POST', '/api/auth/login', { email, password });
+      return user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
