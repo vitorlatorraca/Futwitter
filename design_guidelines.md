@@ -1,4 +1,4 @@
-# Design Guidelines: Plataforma Brasileirão
+# Design Guidelines: Brasileirão Platform
 
 ## Design Approach
 
@@ -42,7 +42,7 @@
 ### Navigation
 
 **Top Bar (Fixed)**: 
-- Logo left, main nav center (Feed | Meu Time | Perfil), user avatar right
+- Logo left, main nav center (Feed | My Team | Profile), user avatar right
 - Height: h-16, backdrop-blur-md with subtle border-b
 - Mobile: Collapsed hamburger menu
 
@@ -53,14 +53,14 @@
 **Hero Section** (min-h-screen):
 - Large hero image: Stadium crowd with flares/passionate fans (full-bleed background)
 - Centered content overlay with gradient backdrop
-- Headline: "Sua paixão pelo Brasileirão em uma só plataforma"
+- Headline: "Your passion for Brasileirão in one platform"
 - CTA buttons with blurred backgrounds over image
-- Trust indicators: "20 Times | 500+ Jogadores | Milhares de Torcedores"
+- Trust indicators: "20 Teams | 500+ Players | Thousands of Fans"
 
 **Features Section** (3-column grid desktop, stack mobile):
 - Icons: Heroicons via CDN
 - Cards with subtle borders, no background fills
-- Features: "Avalie Jogadores", "Notícias Exclusivas", "Conecte-se com Torcedores"
+- Features: "Rate Players", "Exclusive News", "Connect with Fans"
 
 **Footer**: Multi-column (About, Times, Legal, Social), newsletter signup optional
 
@@ -74,7 +74,7 @@
 ### Feed (Dashboard)
 
 **Filter Bar**: Sticky below header, horizontal scroll tabs
-- Pills: "Meu Time" (accented with user's team color), "Todos", individual teams
+- Pills: "My Team" (accented with user's team color), "All", individual teams
 - Active state: team color background with opacity-20
 
 **News Card**:
@@ -84,21 +84,21 @@
 - Image treatment: rounded-lg, aspect-video
 - Interaction buttons: Only active for own team (others have opacity-40 with tooltip)
 
-**Empty States**: Centered icon + message (e.g., "Nenhuma notícia do seu time ainda")
+**Empty States**: Centered icon + message (e.g., "No news from your team yet")
 
 ### My Team Page
 
 **Team Header** (full-width):
 - Large team shield left (w-32 h-32)
-- Team name + position badge ("3º Lugar")
-- Stats row: grid-cols-4 (Pontos | Vitórias | Empates | Derrotas)
+- Team name + position badge ("3rd Place")
+- Stats row: grid-cols-4 (Points | Wins | Draws | Losses)
 - Background: Subtle gradient using team's primaryColor at 10% opacity
 
 **Player Cards** (grouped by position):
 - Position headers: Uppercase tracking-wide with icon
 - Grid: 2 cols mobile, 3 cols tablet, 4 cols desktop
 - Card content: Photo (rounded-full or square), Number, Name, Rating (★★★★☆)
-- "Avaliar" button: Outlined, team color on hover
+- "Rate" button: Outlined, team color on hover
 
 **Rating Modal**:
 - Max-w-3xl centered
@@ -121,7 +121,7 @@
 ### Profile
 
 **Stats Dashboard**:
-- Card-based metrics: "Avaliações Feitas", "Notícias Curtidas", "Dias Ativo"
+- Card-based metrics: "Ratings Made", "News Liked", "Days Active"
 - Badge showcase: Grid of earned badges (locked/unlocked states)
 
 ---
@@ -143,7 +143,7 @@
 - Focus states: 2px ring in team color (or default blue if neutral context)
 - Form labels: Always visible, never placeholder-only
 - Interactive elements: Minimum 44x44px touch targets
-- Alt text: Descriptive for all images ("Escudo do Flamengo", "Notícia: [title]")
+- Alt text: Descriptive for all images ("Flamengo Shield", "News: [title]")
 - Color contrast: WCAG AA minimum, especially with team colors on backgrounds
 
 ---
@@ -156,7 +156,7 @@
 - Never: Full backgrounds that reduce text readability
 
 **Football Vernacular**:
-- Use Brazilian terms: "Meu Time" not "My Team", "Placar" not "Score"
+- Use Brazilian terms where appropriate for authenticity: "Meu Time" (My Team), "Placar" (Score)
 - Emoji sparingly: ⚽ 🏆 for emphasis, not decoration
 
 **Responsive Priorities**:
