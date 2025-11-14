@@ -159,18 +159,27 @@ export default function DashboardPage() {
                 {(error as Error).message || 'Ocorreu um erro ao buscar as notícias'}
               </p>
             </div>
-          ) : newsData && newsData.length > 0 ? (
-            newsData.map((news: any) => {
-              console.log('[Dashboard] Rendering news:', news.id, 'team.id:', news.team?.id, 'user.teamId:', user?.teamId);
-              return (
-                <NewsCard
-                  key={news.id}
-                  news={news}
-                  canInteract={news.team?.id === user?.teamId}
-                  onInteract={handleInteraction}
-                />
-              );
-            })
+          ) : newsData && Array.isArray(newsData) && newsData.length > 0 ? (
+            newsData
+              .filter((news: any) => {
+                // Filter out any null or invalid news items
+                if (!news || !news.id || !news.team) {
+                  console.warn('[Dashboard] Invalid news item:', news);
+                  return false;
+                }
+                return true;
+              })
+              .map((news: any) => {
+                console.log('[Dashboard] Rendering news:', news.id, 'team.id:', news.team?.id, 'user.teamId:', user?.teamId);
+                return (
+                  <NewsCard
+                    key={news.id}
+                    news={news}
+                    canInteract={news.team?.id === user?.teamId}
+                    onInteract={handleInteraction}
+                  />
+                );
+              })
           ) : (
             <div className="text-center py-20">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">
