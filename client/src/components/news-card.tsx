@@ -27,6 +27,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
+  // Safety check
+  if (!news || !news.team) {
+    console.error('[NewsCard] Invalid news data:', news);
+    return null;
+  }
+
   const categoryLabel = CATEGORY_LABELS[news.category] || news.category;
 
   const InteractionButton = ({ type, count, icon: Icon }: { type: 'LIKE' | 'DISLIKE', count: number, icon: any }) => {
