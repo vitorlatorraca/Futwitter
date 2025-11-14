@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, desc, or, sql, isNotNull } from "drizzle-orm";
+import { eq, and, desc, or, sql, isNotNull, inArray } from "drizzle-orm";
 import {
   users,
   journalists,
@@ -307,130 +307,142 @@ export class DatabaseStorage implements IStorage {
   }
 
   // News
-  async getAllNews(teamId?: string): Promise<any[]> {
+  async getAllNews(teamId?: string, limit: number = 50, offset: number = 0): Promise<any[]> {
     try {
       // Construir condições base
       const baseConditions = teamId 
         ? and(eq(news.isPublished, true), eq(news.teamId, teamId))
         : eq(news.isPublished, true);
 
-      // Buscar todas as notícias primeiro
+      // Buscar notícias com paginação
       const allNewsItems = await db
         .select()
-      .from(news)
+        .from(news)
         .where(baseConditions)
-      .orderBy(desc(news.publishedAt));
+        .orderBy(desc(news.publishedAt))
+        .limit(limit)
+        .offset(offset);
 
-      console.log(`[getAllNews] Found ${allNewsItems.length} news items, teamId filter: ${teamId || 'none'}`);
-      console.log(`[getAllNews] News items:`, allNewsItems.map(n => ({ id: n.id, title: n.title, teamId: n.teamId, userId: n.userId, journalistId: n.journalistId })));
+      if (allNewsItems.length === 0) {
+        return [];
+      }
 
-      // Para cada notícia, buscar os dados relacionados
-      const enrichedNews = await Promise.all(
-        allNewsItems.map(async (newsItem) => {
-          try {
-            // Buscar dados do time
-            console.log(`[getAllNews] Looking up team with id: "${newsItem.teamId}"`);
-            const team = await this.getTeam(newsItem.teamId);
-            if (!team) {
-              console.log(`[getAllNews] Team not found for teamId: ${newsItem.teamId}, news title: ${newsItem.title}`);
-              // Tentar buscar todos os times para debug
-              const allTeams = await this.getAllTeams();
-              console.log(`[getAllNews] Available team IDs:`, allTeams.map(t => t.id));
-              return null;
-            }
-            console.log(`[getAllNews] Found team: ${team.name} (id: ${team.id})`);
+      // OTIMIZAÇÃO: Buscar todos os dados relacionados em batch (evita N+1)
+      // 1. Coletar todos os IDs únicos
+      const teamIds = [...new Set(allNewsItems.map(n => n.teamId))];
+      const journalistIds = [...new Set(allNewsItems.map(n => n.journalistId).filter(Boolean))];
+      const userIds = [...new Set(allNewsItems.map(n => n.userId).filter(Boolean))];
 
-            let authorName = 'Unknown Author';
-            let journalistData = null;
+      // 2. Buscar todos os times de uma vez (batch query - evita N+1)
+      const allTeamsMap = new Map<string, any>();
+      if (teamIds.length > 0) {
+        const allTeams = await db
+          .select()
+          .from(teams)
+          .where(inArray(teams.id, teamIds));
+        allTeams.forEach(team => allTeamsMap.set(team.id, team));
+      }
 
-            // Se tem journalistId, buscar dados do jornalista
-            if (newsItem.journalistId) {
-              const journalist = await db
-                .select()
-                .from(journalists)
-                .where(eq(journalists.id, newsItem.journalistId))
-                .limit(1);
-              
-              if (journalist.length > 0) {
-                const journalistUser = await this.getUser(journalist[0].userId);
-                if (journalistUser) {
-                  authorName = journalistUser.name;
-                  journalistData = {
-                    id: journalist[0].id,
-                    user: {
-                      name: journalistUser.name,
-                    },
-                  };
-                }
-              }
-            }
-            // Se tem userId (influencer), buscar dados do usuário
-            else if (newsItem.userId) {
-              console.log(`[getAllNews] Processing influencer news, userId: ${newsItem.userId}`);
-              const influencerUser = await this.getUser(newsItem.userId);
-              if (influencerUser) {
-                authorName = influencerUser.name;
+      // 3. Buscar todos os jornalistas de uma vez (batch query)
+      const journalistsMap = new Map<string, any>();
+      const journalistUserIds: string[] = [];
+      if (journalistIds.length > 0) {
+        const allJournalists = await db
+          .select()
+          .from(journalists)
+          .where(inArray(journalists.id, journalistIds));
+        allJournalists.forEach(j => {
+          journalistsMap.set(j.id, j);
+          journalistUserIds.push(j.userId);
+        });
+      }
+
+      // 4. Buscar todos os usuários de uma vez (batch query - jornalistas + influencers)
+      const allUserIds = [...new Set([...journalistUserIds, ...userIds])];
+      const usersMap = new Map<string, any>();
+      if (allUserIds.length > 0) {
+        const allUsers = await db
+          .select()
+          .from(users)
+          .where(inArray(users.id, allUserIds));
+        allUsers.forEach(user => usersMap.set(user.id, user));
+      }
+
+      // 5. Construir resultado enriquecido
+      const enrichedNews = allNewsItems.map((newsItem) => {
+        try {
+          const team = allTeamsMap.get(newsItem.teamId);
+          if (!team) {
+            return null;
+          }
+
+          let authorName = 'Unknown Author';
+          let journalistData = null;
+
+          // Se tem journalistId, buscar dados do jornalista
+          if (newsItem.journalistId) {
+            const journalist = journalistsMap.get(newsItem.journalistId);
+            if (journalist) {
+              const journalistUser = usersMap.get(journalist.userId);
+              if (journalistUser) {
+                authorName = journalistUser.name;
                 journalistData = {
+                  id: journalist.id,
                   user: {
-                    name: influencerUser.name,
+                    name: journalistUser.name,
                   },
                 };
-                console.log(`[getAllNews] Found influencer user: ${influencerUser.name}`);
-              } else {
-                console.log(`[getAllNews] Influencer user not found for userId: ${newsItem.userId}`);
               }
             }
-
-            const enrichedNewsItem = {
-              id: newsItem.id,
-              journalistId: newsItem.journalistId,
-              userId: newsItem.userId,
-              teamId: newsItem.teamId,
-              title: newsItem.title,
-              content: newsItem.content,
-              imageUrl: newsItem.imageUrl,
-              category: newsItem.category,
-              likesCount: newsItem.likesCount,
-              dislikesCount: newsItem.dislikesCount,
-              isPublished: newsItem.isPublished,
-              publishedAt: newsItem.publishedAt,
-              createdAt: newsItem.createdAt,
-              updatedAt: newsItem.updatedAt,
-              team: {
-                id: team.id,
-                name: team.name,
-                logoUrl: team.logoUrl,
-                primaryColor: team.primaryColor,
-                secondaryColor: team.secondaryColor,
-              },
-              journalist: journalistData,
-              author: newsItem.userId ? { name: authorName } : null,
-            };
-            
-            // Validate structure before returning
-            if (!enrichedNewsItem.team || !enrichedNewsItem.team.id) {
-              console.error(`[getAllNews] Invalid team structure for news ${enrichedNewsItem.id}:`, enrichedNewsItem.team);
-              return null;
-            }
-            
-            return enrichedNewsItem;
-          } catch (itemError: any) {
-            console.error(`[getAllNews] Error processing news item ${newsItem.id}:`, itemError);
-            console.error(`[getAllNews] Error message:`, itemError?.message);
-            console.error(`[getAllNews] Error stack:`, itemError?.stack);
-            return null; // Return null to filter out this item
           }
-        })
-      );
+          // Se tem userId (influencer), buscar dados do usuário
+          else if (newsItem.userId) {
+            const influencerUser = usersMap.get(newsItem.userId);
+            if (influencerUser) {
+              authorName = influencerUser.name;
+              journalistData = {
+                user: {
+                  name: influencerUser.name,
+                },
+              };
+            }
+          }
+
+          return {
+            id: newsItem.id,
+            journalistId: newsItem.journalistId,
+            userId: newsItem.userId,
+            teamId: newsItem.teamId,
+            title: newsItem.title,
+            content: newsItem.content,
+            imageUrl: newsItem.imageUrl,
+            category: newsItem.category,
+            likesCount: newsItem.likesCount,
+            dislikesCount: newsItem.dislikesCount,
+            isPublished: newsItem.isPublished,
+            publishedAt: newsItem.publishedAt,
+            createdAt: newsItem.createdAt,
+            updatedAt: newsItem.updatedAt,
+            team: {
+              id: team.id,
+              name: team.name,
+              logoUrl: team.logoUrl,
+              primaryColor: team.primaryColor,
+              secondaryColor: team.secondaryColor,
+            },
+            journalist: journalistData,
+            author: newsItem.userId ? { name: authorName } : null,
+          };
+        } catch (itemError: any) {
+          console.error(`[getAllNews] Error processing news item ${newsItem.id}:`, itemError);
+          return null;
+        }
+      });
 
       // Filtrar nulls e retornar
-      const filteredNews = enrichedNews.filter((item): item is NonNullable<typeof item> => item !== null);
-      console.log(`[getAllNews] Returning ${filteredNews.length} enriched news items`);
-      return filteredNews;
+      return enrichedNews.filter((item): item is NonNullable<typeof item> => item !== null);
     } catch (error: any) {
       console.error('Error in getAllNews:', error);
-      console.error('Error message:', error?.message);
-      console.error('Error stack:', error?.stack);
       throw error;
     }
   }

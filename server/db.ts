@@ -13,7 +13,13 @@ if (!process.env.DATABASE_URL) {
 }
 
 // Pool for Drizzle (Neon serverless)
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Configuração otimizada para escalabilidade
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  max: 20, // Máximo de conexões no pool
+  idleTimeoutMillis: 30000, // Fechar conexões idle após 30s
+  connectionTimeoutMillis: 2000, // Timeout de conexão
+});
 export const db = drizzle({ client: pool, schema });
 
 // Pool for connect-pg-simple (standard pg pool)

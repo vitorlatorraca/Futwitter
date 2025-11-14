@@ -301,10 +301,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.log(`[GET /api/news] specific team filter - teamId: ${teamId}`);
       }
 
-      const newsItems = await storage.getAllNews(filterTeamId);
+      // Paginação
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
 
-      console.log(`[GET /api/news] Filter: ${filter}, teamId: ${filterTeamId}, Found ${newsItems.length} items`);
-      console.log(`[GET /api/news] News IDs:`, newsItems.map((n: any) => n.id));
+      const newsItems = await storage.getAllNews(filterTeamId, limit, offset);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[GET /api/news] Filter: ${filter}, teamId: ${filterTeamId}, Found ${newsItems.length} items (limit: ${limit}, offset: ${offset})`);
+      }
 
       // Add user interaction info if logged in
       if (req.session.userId) {
