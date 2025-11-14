@@ -340,73 +340,73 @@ export class DatabaseStorage implements IStorage {
             }
             console.log(`[getAllNews] Found team: ${team.name} (id: ${team.id})`);
 
-          let authorName = 'Unknown Author';
-          let journalistData = null;
+            let authorName = 'Unknown Author';
+            let journalistData = null;
 
-          // Se tem journalistId, buscar dados do jornalista
-          if (newsItem.journalistId) {
-            const journalist = await db
-              .select()
-              .from(journalists)
-              .where(eq(journalists.id, newsItem.journalistId))
-              .limit(1);
-            
-            if (journalist.length > 0) {
-              const journalistUser = await this.getUser(journalist[0].userId);
-              if (journalistUser) {
-                authorName = journalistUser.name;
-                journalistData = {
-                  id: journalist[0].id,
-                  user: {
-                    name: journalistUser.name,
-                  },
-                };
+            // Se tem journalistId, buscar dados do jornalista
+            if (newsItem.journalistId) {
+              const journalist = await db
+                .select()
+                .from(journalists)
+                .where(eq(journalists.id, newsItem.journalistId))
+                .limit(1);
+              
+              if (journalist.length > 0) {
+                const journalistUser = await this.getUser(journalist[0].userId);
+                if (journalistUser) {
+                  authorName = journalistUser.name;
+                  journalistData = {
+                    id: journalist[0].id,
+                    user: {
+                      name: journalistUser.name,
+                    },
+                  };
+                }
               }
             }
-          }
-          // Se tem userId (influencer), buscar dados do usuário
-          else if (newsItem.userId) {
-            console.log(`[getAllNews] Processing influencer news, userId: ${newsItem.userId}`);
-            const influencerUser = await this.getUser(newsItem.userId);
-            if (influencerUser) {
-              authorName = influencerUser.name;
-              journalistData = {
-                user: {
-                  name: influencerUser.name,
-                },
-              };
-              console.log(`[getAllNews] Found influencer user: ${influencerUser.name}`);
-            } else {
-              console.log(`[getAllNews] Influencer user not found for userId: ${newsItem.userId}`);
+            // Se tem userId (influencer), buscar dados do usuário
+            else if (newsItem.userId) {
+              console.log(`[getAllNews] Processing influencer news, userId: ${newsItem.userId}`);
+              const influencerUser = await this.getUser(newsItem.userId);
+              if (influencerUser) {
+                authorName = influencerUser.name;
+                journalistData = {
+                  user: {
+                    name: influencerUser.name,
+                  },
+                };
+                console.log(`[getAllNews] Found influencer user: ${influencerUser.name}`);
+              } else {
+                console.log(`[getAllNews] Influencer user not found for userId: ${newsItem.userId}`);
+              }
             }
-          }
 
-          const enrichedNewsItem = {
-            id: newsItem.id,
-            journalistId: newsItem.journalistId,
-            userId: newsItem.userId,
-            teamId: newsItem.teamId,
-            title: newsItem.title,
-            content: newsItem.content,
-            imageUrl: newsItem.imageUrl,
-            category: newsItem.category,
-            likesCount: newsItem.likesCount,
-            dislikesCount: newsItem.dislikesCount,
-            isPublished: newsItem.isPublished,
-            publishedAt: newsItem.publishedAt,
-            createdAt: newsItem.createdAt,
-            updatedAt: newsItem.updatedAt,
-            team: {
-              id: team.id,
-              name: team.name,
-              logoUrl: team.logoUrl,
-              primaryColor: team.primaryColor,
-              secondaryColor: team.secondaryColor,
-            },
-            journalist: journalistData,
-            author: newsItem.userId ? { name: authorName } : null,
-          };
-          
+            const enrichedNewsItem = {
+              id: newsItem.id,
+              journalistId: newsItem.journalistId,
+              userId: newsItem.userId,
+              teamId: newsItem.teamId,
+              title: newsItem.title,
+              content: newsItem.content,
+              imageUrl: newsItem.imageUrl,
+              category: newsItem.category,
+              likesCount: newsItem.likesCount,
+              dislikesCount: newsItem.dislikesCount,
+              isPublished: newsItem.isPublished,
+              publishedAt: newsItem.publishedAt,
+              createdAt: newsItem.createdAt,
+              updatedAt: newsItem.updatedAt,
+              team: {
+                id: team.id,
+                name: team.name,
+                logoUrl: team.logoUrl,
+                primaryColor: team.primaryColor,
+                secondaryColor: team.secondaryColor,
+              },
+              journalist: journalistData,
+              author: newsItem.userId ? { name: authorName } : null,
+            };
+            
             // Validate structure before returning
             if (!enrichedNewsItem.team || !enrichedNewsItem.team.id) {
               console.error(`[getAllNews] Invalid team structure for news ${enrichedNewsItem.id}:`, enrichedNewsItem.team);
