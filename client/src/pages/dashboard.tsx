@@ -167,26 +167,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Debug Info */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="container px-6 py-4">
-          <div className="max-w-2xl mx-auto bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 text-xs">
-            <div className="font-bold text-yellow-500 mb-2">DEBUG INFO:</div>
-            <div className="space-y-1 text-gray-300">
-              <div>isLoading: {String(isLoading)}</div>
-              <div>hasError: {String(!!error)}</div>
-              <div>hasData: {String(!!newsData)}</div>
-              <div>dataType: {newsData ? typeof newsData : 'null'}</div>
-              <div>isArray: {newsData ? String(Array.isArray(newsData)) : 'N/A'}</div>
-              <div>dataLength: {newsData && Array.isArray(newsData) ? newsData.length : 'N/A'}</div>
-              <div>user: {user ? `${user.name} (${user.teamId})` : 'null'}</div>
-              <div>activeFilter: {activeFilter}</div>
-              {error && <div className="text-red-400">Error: {(error as Error).message}</div>}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* News Feed */}
       <div className="container px-6 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
