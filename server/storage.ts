@@ -327,17 +327,18 @@ export class DatabaseStorage implements IStorage {
       // Para cada notícia, buscar os dados relacionados
       const enrichedNews = await Promise.all(
         allNewsItems.map(async (newsItem) => {
-          // Buscar dados do time
-          console.log(`[getAllNews] Looking up team with id: "${newsItem.teamId}"`);
-          const team = await this.getTeam(newsItem.teamId);
-          if (!team) {
-            console.log(`[getAllNews] Team not found for teamId: ${newsItem.teamId}, news title: ${newsItem.title}`);
-            // Tentar buscar todos os times para debug
-            const allTeams = await this.getAllTeams();
-            console.log(`[getAllNews] Available team IDs:`, allTeams.map(t => t.id));
-            return null;
-          }
-          console.log(`[getAllNews] Found team: ${team.name} (id: ${team.id})`);
+          try {
+            // Buscar dados do time
+            console.log(`[getAllNews] Looking up team with id: "${newsItem.teamId}"`);
+            const team = await this.getTeam(newsItem.teamId);
+            if (!team) {
+              console.log(`[getAllNews] Team not found for teamId: ${newsItem.teamId}, news title: ${newsItem.title}`);
+              // Tentar buscar todos os times para debug
+              const allTeams = await this.getAllTeams();
+              console.log(`[getAllNews] Available team IDs:`, allTeams.map(t => t.id));
+              return null;
+            }
+            console.log(`[getAllNews] Found team: ${team.name} (id: ${team.id})`);
 
           let authorName = 'Unknown Author';
           let journalistData = null;
@@ -406,12 +407,19 @@ export class DatabaseStorage implements IStorage {
             author: newsItem.userId ? { name: authorName } : null,
           };
           
-          // Validate structure before returning
-          if (!enrichedNewsItem.team || !enrichedNewsItem.team.id) {
-            console.error(`[getAllNews] Invalid team structure for news ${enrichedNewsItem.id}:`, enrichedNewsItem.team);
+            // Validate structure before returning
+            if (!enrichedNewsItem.team || !enrichedNewsItem.team.id) {
+              console.error(`[getAllNews] Invalid team structure for news ${enrichedNewsItem.id}:`, enrichedNewsItem.team);
+              return null;
+            }
+            
+            return enrichedNewsItem;
+          } catch (itemError: any) {
+            console.error(`[getAllNews] Error processing news item ${newsItem.id}:`, itemError);
+            console.error(`[getAllNews] Error message:`, itemError?.message);
+            console.error(`[getAllNews] Error stack:`, itemError?.stack);
+            return null; // Return null to filter out this item
           }
-          
-          return enrichedNewsItem;
         })
       );
 
