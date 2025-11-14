@@ -298,6 +298,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const newsItems = await storage.getAllNews(filterTeamId);
 
+      console.log(`[GET /api/news] Filter: ${filter}, teamId: ${filterTeamId}, Found ${newsItems.length} items`);
+
       // Add user interaction info if logged in
       if (req.session.userId) {
         for (const newsItem of newsItems) {
@@ -368,11 +370,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: 'Influencers só podem postar notícias para o seu próprio time' });
         }
         // Criar notícia com userId
+        console.log(`[POST /api/news] Creating influencer news - userId: ${user.id}, teamId: ${user.teamId}, title: ${newsData.title}`);
         const newsItem = await storage.createNews({
           ...newsData,
           userId: user.id,
           teamId: user.teamId!, // Forçar o time do influencer
         });
+        console.log(`[POST /api/news] News created successfully - id: ${newsItem.id}, teamId: ${newsItem.teamId}`);
         return res.status(201).json(newsItem);
       }
 

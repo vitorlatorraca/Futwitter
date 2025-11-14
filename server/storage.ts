@@ -321,14 +321,25 @@ export class DatabaseStorage implements IStorage {
         .where(baseConditions)
         .orderBy(desc(news.publishedAt));
 
+      console.log(`[getAllNews] Found ${allNewsItems.length} news items, teamId filter: ${teamId || 'none'}`);
+      console.log(`[getAllNews] News items:`, allNewsItems.map(n => ({ id: n.id, title: n.title, teamId: n.teamId, userId: n.userId, journalistId: n.journalistId })));
+
       // Para cada notícia, buscar os dados relacionados
       const enrichedNews = await Promise.all(
         allNewsItems.map(async (newsItem) => {
           // Buscar dados do time
+          console.log(`[getAllNews] Looking up team with id: "${newsItem.teamId}"`);
           const team = await this.getTeam(newsItem.teamId);
-          if (!team) return null;
+          if (!team) {
+            console.log(`[getAllNews] Team not found for teamId: ${newsItem.teamId}, news title: ${newsItem.title}`);
+            // Tentar buscar todos os times para debug
+            const allTeams = await this.getAllTeams();
+            console.log(`[getAllNews] Available team IDs:`, allTeams.map(t => t.id));
+            return null;
+          }
+          console.log(`[getAllNews] Found team: ${team.name} (id: ${team.id})`);
 
-          let authorName = 'Autor desconhecido';
+          let authorName = 'Unknown Author';
           let journalistData = null;
 
           // Se tem journalistId, buscar dados do jornalista
@@ -354,6 +365,7 @@ export class DatabaseStorage implements IStorage {
           }
           // Se tem userId (influencer), buscar dados do usuário
           else if (newsItem.userId) {
+            console.log(`[getAllNews] Processing influencer news, userId: ${newsItem.userId}`);
             const influencerUser = await this.getUser(newsItem.userId);
             if (influencerUser) {
               authorName = influencerUser.name;
@@ -362,6 +374,9 @@ export class DatabaseStorage implements IStorage {
                   name: influencerUser.name,
                 },
               };
+              console.log(`[getAllNews] Found influencer user: ${influencerUser.name}`);
+            } else {
+              console.log(`[getAllNews] Influencer user not found for userId: ${newsItem.userId}`);
             }
           }
 
@@ -394,7 +409,9 @@ export class DatabaseStorage implements IStorage {
       );
 
       // Filtrar nulls e retornar
-      return enrichedNews.filter((item): item is NonNullable<typeof item> => item !== null);
+      const filteredNews = enrichedNews.filter((item): item is NonNullable<typeof item> => item !== null);
+      console.log(`[getAllNews] Returning ${filteredNews.length} enriched news items`);
+      return filteredNews;
     } catch (error) {
       console.error('Error in getAllNews:', error);
       throw error;
