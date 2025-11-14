@@ -155,16 +155,9 @@ export default function DashboardPage() {
                 {filter.isText ? (
                   filter.label
                 ) : (
-                  <img 
-                    src={(filter as any).logoUrl} 
-                    alt={filter.label}
-                    className="w-8 h-8 rounded-full object-cover"
-                    onError={(e) => {
-                      // Fallback to placeholder if image fails to load
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://via.placeholder.com/64/000000/FFFFFF?text=${filter.label}`;
-                    }}
-                    loading="lazy"
+                  <TeamLogo 
+                    logoUrl={(filter as any).logoUrl}
+                    shortName={filter.label}
                   />
                 )}
               </Button>
