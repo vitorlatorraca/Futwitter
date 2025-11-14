@@ -190,12 +190,62 @@ export default function DashboardPage() {
                 {(error as Error).message || 'Ocorreu um erro ao buscar as notícias'}
               </p>
             </div>
-          ) : newsData && Array.isArray(newsData) && newsData.length > 0 ? (
+          ) : newsData ? (
             (() => {
+              console.log('[Dashboard] newsData exists, type:', typeof newsData, 'isArray:', Array.isArray(newsData));
+              
+              if (!Array.isArray(newsData)) {
+                console.error('[Dashboard] newsData is not an array:', newsData);
+                return (
+                  <div className="text-center py-20">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-6">
+                      <span className="text-4xl">❌</span>
+                    </div>
+                    <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                      Erro de dados
+                    </h3>
+                    <p className="text-gray-400 font-light">
+                      Os dados retornados não são um array. Tipo: {typeof newsData}
+                    </p>
+                    <pre className="mt-4 text-xs text-gray-500 text-left max-w-md mx-auto overflow-auto">
+                      {JSON.stringify(newsData, null, 2).substring(0, 500)}
+                    </pre>
+                  </div>
+                );
+              }
+              
+              if (newsData.length === 0) {
+                console.log('[Dashboard] newsData is empty array');
+                return (
+                  <div className="text-center py-20">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">
+                      <span className="text-4xl">📰</span>
+                    </div>
+                    <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                      Nenhuma notícia ainda
+                    </h3>
+                    <p className="text-gray-400 font-light">
+                      {activeFilter === 'my-team' 
+                        ? 'Não há notícias do seu time no momento'
+                        : 'Não há notícias disponíveis no momento'
+                      }
+                    </p>
+                  </div>
+                );
+              }
+              
               const validNews = newsData.filter((news: any) => {
                 // Filter out any null or invalid news items
-                if (!news || !news.id || !news.team) {
-                  console.warn('[Dashboard] Invalid news item:', news);
+                if (!news || !news.id) {
+                  console.warn('[Dashboard] News missing id:', news);
+                  return false;
+                }
+                if (!news.team) {
+                  console.warn('[Dashboard] News missing team:', news.id, news);
+                  return false;
+                }
+                if (!news.team.id) {
+                  console.warn('[Dashboard] News team missing id:', news.id, news.team);
                   return false;
                 }
                 return true;
@@ -213,14 +263,29 @@ export default function DashboardPage() {
                       Dados inválidos
                     </h3>
                     <p className="text-gray-400 font-light">
-                      As notícias retornadas não têm a estrutura esperada. Verifique o console para mais detalhes.
+                      {newsData.length} notícias retornadas, mas nenhuma tem a estrutura válida.
                     </p>
+                    <details className="mt-4 text-left max-w-md mx-auto">
+                      <summary className="text-xs text-gray-500 cursor-pointer">Ver dados brutos</summary>
+                      <pre className="mt-2 text-xs text-gray-500 overflow-auto max-h-40">
+                        {JSON.stringify(newsData, null, 2)}
+                      </pre>
+                    </details>
                   </div>
                 );
               }
               
+              console.log('[Dashboard] Rendering', validNews.length, 'news items');
+              
               return validNews.map((news: any) => {
-                console.log('[Dashboard] Rendering news:', news.id, 'team.id:', news.team?.id, 'user.teamId:', user?.teamId);
+                console.log('[Dashboard] Rendering news:', {
+                  id: news.id,
+                  title: news.title,
+                  teamId: news.team?.id,
+                  teamName: news.team?.name,
+                  userTeamId: user?.teamId,
+                  canInteract: news.team?.id === user?.teamId,
+                });
                 return (
                   <NewsCard
                     key={news.id}
