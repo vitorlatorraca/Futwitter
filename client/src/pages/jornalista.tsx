@@ -40,7 +40,8 @@ export default function JornalistaPage() {
       return await apiRequest('POST', '/api/news', data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/news'] });
+      // Invalidar todas as queries de notícias (com qualquer filtro)
+      queryClient.invalidateQueries({ queryKey: ['/api/news'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['/api/news/my-news'] });
       toast({
         title: 'Notícia publicada!',

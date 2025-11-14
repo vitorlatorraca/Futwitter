@@ -435,7 +435,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNews(insertNews: InsertNews): Promise<News> {
-    const [newsItem] = await db.insert(news).values(insertNews).returning();
+    console.log(`[createNews] Creating news with data:`, { 
+      teamId: insertNews.teamId, 
+      userId: (insertNews as any).userId, 
+      journalistId: (insertNews as any).journalistId,
+      title: insertNews.title,
+      isPublished: (insertNews as any).isPublished 
+    });
+    const [newsItem] = await db.insert(news).values({
+      ...insertNews,
+      isPublished: (insertNews as any).isPublished !== undefined ? (insertNews as any).isPublished : true,
+    }).returning();
+    console.log(`[createNews] News created:`, { id: newsItem.id, teamId: newsItem.teamId, userId: newsItem.userId, isPublished: newsItem.isPublished });
     return newsItem;
   }
 
