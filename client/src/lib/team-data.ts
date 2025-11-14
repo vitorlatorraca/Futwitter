@@ -1,5 +1,5 @@
 // Team logos mapping - using real team logos from reliable CDN sources
-// Using escudos.club and logodownload.org as sources
+// Using logodownload.org as primary source (more reliable)
 
 export interface TeamData {
   id: string;
@@ -15,7 +15,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'flamengo', 
     name: 'Flamengo', 
     shortName: 'FLA', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/flamengo.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/flamengo-logo-escudo-1.png', 
     primaryColor: '#E31837', 
     secondaryColor: '#000000' 
   },
@@ -23,7 +23,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'palmeiras', 
     name: 'Palmeiras', 
     shortName: 'PAL', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/palmeiras.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/palmeiras-logo-escudo-1.png', 
     primaryColor: '#006437', 
     secondaryColor: '#FFFFFF' 
   },
@@ -31,7 +31,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'corinthians', 
     name: 'Corinthians', 
     shortName: 'COR', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/corinthians.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/corinthians-logo-escudo-1.png', 
     primaryColor: '#000000', 
     secondaryColor: '#FFFFFF' 
   },
@@ -39,7 +39,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'sao-paulo', 
     name: 'São Paulo', 
     shortName: 'SAO', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/sao-paulo.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/sao-paulo-logo-escudo-1.png', 
     primaryColor: '#EC1C24', 
     secondaryColor: '#000000' 
   },
@@ -47,7 +47,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'gremio', 
     name: 'Grêmio', 
     shortName: 'GRE', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/gremio.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/gremio-logo-escudo-1.png', 
     primaryColor: '#0099CC', 
     secondaryColor: '#000000' 
   },
@@ -55,7 +55,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'internacional', 
     name: 'Internacional', 
     shortName: 'INT', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/internacional.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/internacional-logo-escudo-1.png', 
     primaryColor: '#D81920', 
     secondaryColor: '#FFFFFF' 
   },
@@ -63,7 +63,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'atletico-mineiro', 
     name: 'Atlético Mineiro', 
     shortName: 'CAM', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/atletico-mineiro.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/atletico-mineiro-logo-escudo-1.png', 
     primaryColor: '#000000', 
     secondaryColor: '#FFFFFF' 
   },
@@ -71,7 +71,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'fluminense', 
     name: 'Fluminense', 
     shortName: 'FLU', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/fluminense.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/fluminense-logo-escudo-1.png', 
     primaryColor: '#7A1437', 
     secondaryColor: '#006241' 
   },
@@ -79,7 +79,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'botafogo', 
     name: 'Botafogo', 
     shortName: 'BOT', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/botafogo.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/botafogo-logo-escudo-1.png', 
     primaryColor: '#000000', 
     secondaryColor: '#FFFFFF' 
   },
@@ -87,7 +87,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'santos', 
     name: 'Santos', 
     shortName: 'SAN', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/santos.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/santos-logo-escudo-1.png', 
     primaryColor: '#000000', 
     secondaryColor: '#FFFFFF' 
   },
@@ -95,7 +95,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'vasco-da-gama', 
     name: 'Vasco da Gama', 
     shortName: 'VAS', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/vasco.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/vasco-da-gama-logo-escudo-1.png', 
     primaryColor: '#000000', 
     secondaryColor: '#FFFFFF' 
   },
@@ -103,7 +103,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'cruzeiro', 
     name: 'Cruzeiro', 
     shortName: 'CRU', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/cruzeiro.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/cruzeiro-logo-escudo-1.png', 
     primaryColor: '#003A70', 
     secondaryColor: '#FFFFFF' 
   },
@@ -111,7 +111,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'athletico-paranaense', 
     name: 'Athletico Paranaense', 
     shortName: 'CAP', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/athletico-paranaense.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/athletico-paranaense-logo-escudo-1.png', 
     primaryColor: '#E30613', 
     secondaryColor: '#000000' 
   },
@@ -119,7 +119,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'bahia', 
     name: 'Bahia', 
     shortName: 'BAH', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/bahia.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/bahia-logo-escudo-1.png', 
     primaryColor: '#005CA9', 
     secondaryColor: '#E30613' 
   },
@@ -127,7 +127,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'fortaleza', 
     name: 'Fortaleza', 
     shortName: 'FOR', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/fortaleza.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/fortaleza-logo-escudo-1.png', 
     primaryColor: '#E30613', 
     secondaryColor: '#003A70' 
   },
@@ -135,7 +135,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'bragantino', 
     name: 'Bragantino', 
     shortName: 'BRA', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/bragantino.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/bragantino-logo-escudo-1.png', 
     primaryColor: '#FFFFFF', 
     secondaryColor: '#E30613' 
   },
@@ -143,7 +143,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'cuiaba', 
     name: 'Cuiabá', 
     shortName: 'CUI', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/cuiaba.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2021/05/cuiaba-logo-escudo-1.png', 
     primaryColor: '#FFD700', 
     secondaryColor: '#006241' 
   },
@@ -151,7 +151,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'goias', 
     name: 'Goiás', 
     shortName: 'GOI', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/goias.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/goias-logo-escudo-1.png', 
     primaryColor: '#006241', 
     secondaryColor: '#FFFFFF' 
   },
@@ -159,7 +159,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'coritiba', 
     name: 'Coritiba', 
     shortName: 'CFC', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/coritiba.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/coritiba-logo-escudo-1.png', 
     primaryColor: '#006241', 
     secondaryColor: '#FFFFFF' 
   },
@@ -167,7 +167,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'america-mineiro', 
     name: 'América Mineiro', 
     shortName: 'AME', 
-    logoUrl: 'https://escudos.club/wp-content/uploads/2020/01/america-mineiro.png', 
+    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/america-mineiro-logo-escudo-1.png', 
     primaryColor: '#006241', 
     secondaryColor: '#000000' 
   },
