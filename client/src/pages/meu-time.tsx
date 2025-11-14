@@ -3,30 +3,35 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Slider } from '@/components/ui/slider';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
 import { TEAMS_DATA } from '@/lib/team-data';
-import { Trophy, Calendar, TrendingUp, BarChart3, Image as ImageIcon, Loader2, Star, ArrowRightLeft, TrendingDown } from 'lucide-react';
-import { format } from 'date-fns';
+import { 
+  Trophy, 
+  Calendar, 
+  MessageSquare, 
+  Newspaper, 
+  Clock, 
+  MapPin,
+  ChevronRight,
+  Bell,
+  CheckCircle2,
+  AlertCircle,
+  Info
+} from 'lucide-react';
+import { format, isToday, isTomorrow, isPast, startOfMonth, endOfMonth, eachDayOfInterval, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Team, Player, Match, Transfer } from '@shared/schema';
-import { useI18n } from '@/lib/i18n';
+import type { Team, Match, News } from '@shared/schema';
 
 export default function MeuTimePage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const { t } = useI18n();
   const queryClient = useQueryClient();
-  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [playerRatings, setPlayerRatings] = useState<Record<string, number>>({});
-  const [pollVote, setPollVote] = useState<string | null>(null);
 
-  // Get team data using user's teamId
-  const { data: teamData, isLoading: isLoadingTeam } = useQuery<Team & { players: Player[] }>({
+  // Get team data
+  const { data: teamData, isLoading: isLoadingTeam } = useQuery<Team & { players: any[] }>({
     queryKey: ['/api/teams', user?.teamId],
     queryFn: async () => {
       if (!user?.teamId) return null;
@@ -41,30 +46,17 @@ export default function MeuTimePage() {
 
   const teamFromData = teamData ? TEAMS_DATA.find(t => t.name === teamData.name) : null;
 
-  // Get last match with lineup
-  const { data: lastMatch, isLoading: isLoadingLastMatch } = useQuery<any>({
-    queryKey: ['/api/teams', user?.teamId, 'last-match'],
-    queryFn: async () => {
-      if (!user?.teamId) return null;
-      const response = await fetch(`/api/teams/${user.teamId}/last-match`, {
-        credentials: 'include',
-      });
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!user?.teamId,
-  });
-
-  // Get recent matches (last 5)
-  const { data: recentMatches, isLoading: isLoadingRecent } = useQuery<Match[]>({
-    queryKey: ['/api/matches', user?.teamId, 'recent'],
+  // Get team news (latest 5)
+  const { data: teamNews, isLoading: isLoadingNews } = useQuery<News[]>({
+    queryKey: ['/api/news', user?.teamId, 'team-news'],
     queryFn: async () => {
       if (!user?.teamId) return [];
-      const response = await fetch(`/api/matches/${user.teamId}/recent?limit=5`, {
+      const response = await fetch(`/api/news?teamId=${user.teamId}&limit=5`, {
         credentials: 'include',
       });
       if (!response.ok) return [];
-      return response.json();
+      const data = await response.json();
+      return data || [];
     },
     enabled: !!user?.teamId,
   });
@@ -74,7 +66,7 @@ export default function MeuTimePage() {
     queryKey: ['/api/teams', user?.teamId, 'upcoming'],
     queryFn: async () => {
       if (!user?.teamId) return [];
-      const response = await fetch(`/api/teams/${user.teamId}/upcoming?limit=3`, {
+      const response = await fetch(`/api/teams/${user.teamId}/upcoming?limit=10`, {
         credentials: 'include',
       });
       if (!response.ok) return [];
@@ -95,12 +87,12 @@ export default function MeuTimePage() {
     },
   });
 
-  // Get transfers
-  const { data: transfers, isLoading: isLoadingTransfers } = useQuery<Transfer[]>({
-    queryKey: ['/api/teams', user?.teamId, 'transfers'],
+  // Get recent matches for fixture schedule
+  const { data: recentMatches, isLoading: isLoadingRecent } = useQuery<Match[]>({
+    queryKey: ['/api/matches', user?.teamId, 'recent'],
     queryFn: async () => {
       if (!user?.teamId) return [];
-      const response = await fetch(`/api/teams/${user.teamId}/transfers?limit=10`, {
+      const response = await fetch(`/api/matches/${user.teamId}/recent?limit=10`, {
         credentials: 'include',
       });
       if (!response.ok) return [];
@@ -109,307 +101,198 @@ export default function MeuTimePage() {
     enabled: !!user?.teamId,
   });
 
-  const ratingMutation = useMutation({
-    mutationFn: async ({ playerId, matchId, rating }: { playerId: string; matchId: string; rating: number }) => {
-      return await apiRequest('POST', `/api/players/${playerId}/ratings`, { matchId, rating });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/teams', user?.teamId, 'last-match'] });
-      toast({
-        title: 'Avaliação salva!',
-        description: 'Sua nota foi registrada com sucesso',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: error.message || 'Não foi possível salvar a avaliação',
-      });
-    },
-  });
-
-  const handleRatingChange = (playerId: string, value: number[]) => {
-    setPlayerRatings(prev => ({ ...prev, [playerId]: value[0] }));
-  };
-
-  const handleSaveRating = async (playerId: string) => {
-    if (!lastMatch || !playerRatings[playerId]) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Selecione uma nota antes de salvar',
-      });
-      return;
-    }
-
-    await ratingMutation.mutateAsync({
-      playerId,
-      matchId: lastMatch.id,
-      rating: playerRatings[playerId],
-    });
-
-    setSelectedPlayer(null);
-    setPlayerRatings(prev => {
-      const newRatings = { ...prev };
-      delete newRatings[playerId];
-      return newRatings;
-    });
-  };
-
   const teamPosition = standings?.findIndex(t => t.id === user?.teamId) ?? -1;
-  const teamStanding = teamPosition >= 0 ? standings![teamPosition] : null;
+  const nextMatch = upcomingMatches && upcomingMatches.length > 0 ? upcomingMatches[0] : null;
 
-  // Mock data for poll and meme
-  const dailyPoll = {
-    question: "Qual foi o melhor jogador do Corinthians no último jogo?",
-    options: [
-      { id: '1', text: 'Cássio', votes: 45 },
-      { id: '2', text: 'Fagner', votes: 32 },
-      { id: '3', text: 'Yuri Alberto', votes: 28 },
-      { id: '4', text: 'Róger Guedes', votes: 15 },
-    ],
-    totalVotes: 120,
-  };
+  // Mock messages/updates (can be replaced with real API later)
+  const messages = [
+    {
+      id: '1',
+      type: 'info',
+      sender: 'Diretoria',
+      subject: 'Atualização de Contratações',
+      time: '2 horas atrás',
+      icon: Info,
+      color: 'text-blue-400',
+    },
+    {
+      id: '2',
+      type: 'success',
+      sender: 'Comissão Técnica',
+      subject: 'Relatório de Treinamento Semanal',
+      time: '5 horas atrás',
+      icon: CheckCircle2,
+      color: 'text-green-400',
+    },
+    {
+      id: '3',
+      type: 'alert',
+      sender: 'Médico',
+      subject: 'Atualização de Lesões',
+      time: '1 dia atrás',
+      icon: AlertCircle,
+      color: 'text-yellow-400',
+    },
+  ];
 
-  const memeImage = "https://via.placeholder.com/600x400/8b5cf6/ffffff?text=Meme+do+Corinthians";
+  // Calendar data
+  const today = new Date();
+  const monthStart = startOfMonth(today);
+  const monthEnd = endOfMonth(today);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  
+  // Combine recent and upcoming matches for calendar
+  const allMatches = [
+    ...(recentMatches || []).map(m => ({ ...m, isPast: true })),
+    ...(upcomingMatches || []).map(m => ({ ...m, isPast: false })),
+  ].sort((a, b) => new Date(a.matchDate).getTime() - new Date(b.matchDate).getTime());
+
+  if (!user?.teamId) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+        <Navbar />
+        <div className="container px-6 py-20 text-center">
+          <p className="text-gray-400 font-light">Selecione um time para ver esta página</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
       <Navbar />
 
-      <div className="container px-6 py-8 max-w-7xl">
-        {/* Team Header */}
+      <div className="container px-4 sm:px-6 py-6 max-w-[1600px]">
+        {/* Header with Team Info */}
         {isLoadingTeam ? (
-          <Skeleton className="h-48 rounded-2xl bg-white/5 mb-8" />
+          <Skeleton className="h-24 rounded-xl bg-white/5 mb-6" />
         ) : teamData && teamFromData ? (
-          <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-8 md:p-12 mb-8 border border-white/10 shadow-2xl overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/10 via-transparent to-[#6366f1]/10 rounded-3xl pointer-events-none"></div>
-            
-            <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8">
-              <div className="relative">
-                <img
-                  src={teamFromData.logoUrl}
-                  alt={`Escudo ${teamData.name}`}
-                  className="w-32 h-32 md:w-40 md:h-40 object-contain drop-shadow-2xl"
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/20 to-[#6366f1]/20 rounded-full blur-2xl -z-10"></div>
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="font-light text-4xl md:text-5xl text-white mb-4 tracking-tight">
-                  {teamData.name}
-                </h1>
-                {teamStanding && (
-                  <Badge className="mb-6 bg-white/10 border-white/10 text-white/90 font-light text-sm">
-                    {teamPosition + 1}º Lugar - {teamStanding.points} pontos
-                  </Badge>
-                )}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                    <CardContent className="p-4 text-center">
-                      <Trophy className="h-6 w-6 mx-auto mb-2 text-[#8b5cf6]" />
-                      <p className="text-2xl font-light text-white">{teamData.points}</p>
-                      <p className="text-sm text-gray-400 font-light">Pontos</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                    <CardContent className="p-4 text-center">
-                      <TrendingUp className="h-6 w-6 mx-auto mb-2 text-green-400" />
-                      <p className="text-2xl font-light text-white">{teamData.wins}</p>
-                      <p className="text-sm text-gray-400 font-light">Vitórias</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                    <CardContent className="p-4 text-center">
-                      <BarChart3 className="h-6 w-6 mx-auto mb-2 text-yellow-400" />
-                      <p className="text-2xl font-light text-white">{teamData.draws}</p>
-                      <p className="text-sm text-gray-400 font-light">Empates</p>
-                    </CardContent>
-                  </Card>
-                  <Card className="bg-white/5 backdrop-blur-xl border-white/10">
-                    <CardContent className="p-4 text-center">
-                      <TrendingUp className="h-6 w-6 mx-auto mb-2 text-red-400 rotate-180" />
-                      <p className="text-2xl font-light text-white">{teamData.losses}</p>
-                      <p className="text-sm text-gray-400 font-light">Derrotas</p>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
+          <div className="flex items-center gap-4 mb-6 pb-4 border-b border-white/10">
+            <img
+              src={teamFromData.logoUrl}
+              alt={teamData.name}
+              className="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-contain"
+            />
+            <div className="flex-1">
+              <h1 className="text-xl sm:text-2xl font-light text-white tracking-tight">
+                {teamData.name}
+              </h1>
+              {teamPosition >= 0 && standings && (
+                <p className="text-sm text-gray-400 font-light">
+                  {teamPosition + 1}º lugar na Série A • {standings[teamPosition]?.points || 0} pontos
+                </p>
+              )}
             </div>
+            <Badge className="bg-white/10 border-white/10 text-white/90 font-light">
+              {format(today, "dd 'de' MMMM", { locale: ptBR })}
+            </Badge>
           </div>
         ) : null}
 
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Last Match Lineup */}
-            {isLoadingLastMatch ? (
-              <Skeleton className="h-96 rounded-2xl bg-white/5" />
-            ) : lastMatch ? (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-                <CardContent className="p-6 relative z-10">
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h2 className="text-2xl font-light text-white mb-2 tracking-tight">Escalação do Último Jogo</h2>
-                      <p className="text-gray-400 font-light">
-                        {lastMatch.opponent} • {format(new Date(lastMatch.matchDate), "dd 'de' MMMM", { locale: ptBR })}
-                      </p>
-                      {lastMatch.teamScore !== null && lastMatch.opponentScore !== null && (
-                        <p className="text-xl font-light text-white mt-2">
-                          Corinthians {lastMatch.teamScore} x {lastMatch.opponentScore} {lastMatch.opponent}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {lastMatch.players
-                      .filter((p: any) => p.wasStarter)
-                      .map((player: any) => (
-                        <div
-                          key={player.id}
-                          className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 flex-1">
-                              <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                                {player.photoUrl ? (
-                                  <img src={player.photoUrl} alt={player.name} className="w-full h-full object-cover rounded-full" />
-                                ) : (
-                                  <span className="text-gray-400 font-light">{player.jerseyNumber}</span>
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <p className="text-white font-light text-lg">{player.name}</p>
-                                <div className="flex items-center gap-3 mt-1 flex-wrap">
-                                  {player.averageRating ? (
-                                    <>
-                                      <Star className="h-4 w-4 fill-[#8b5cf6] text-[#8b5cf6]" />
-                                      <span className="text-sm text-gray-400 font-light">
-                                        {t('myTeam.lastMatch.crowdAverage')}: {player.averageRating.toFixed(1)}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <span className="text-sm text-gray-500 font-light">{t('myTeam.lastMatch.noRatings')}</span>
-                                  )}
-                                  {player.sofascoreRating && (
-                                    <>
-                                      <span className="text-gray-500">•</span>
-                                      <span className="text-sm text-[#6366f1] font-light">
-                                        SofaScore: {player.sofascoreRating.toFixed(1)}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                              {selectedPlayer === player.id ? (
-                                <div className="flex items-center gap-3">
-                                  <div className="w-32">
-                                    <Slider
-                                      min={0}
-                                      max={10}
-                                      step={0.5}
-                                      value={[playerRatings[player.id] || player.userRating || 5]}
-                                      onValueChange={(value) => handleRatingChange(player.id, value)}
-                                      className="py-2"
-                                    />
-                                    <div className="text-center text-white font-light mt-1">
-                                      {(playerRatings[player.id] || player.userRating || 5).toFixed(1)}
-                                    </div>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    onClick={() => handleSaveRating(player.id)}
-                                    disabled={ratingMutation.isPending}
-                                    className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 font-light"
-                                  >
-                                    {ratingMutation.isPending ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      'Salvar'
-                                    )}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                      setSelectedPlayer(null);
-                                      setPlayerRatings(prev => {
-                                        const newRatings = { ...prev };
-                                        delete newRatings[player.id];
-                                        return newRatings;
-                                      });
-                                    }}
-                                    className="text-white/80 hover:text-white hover:bg-white/5 border-0 font-light"
-                                  >
-                                    Cancelar
-                                  </Button>
-                                </div>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedPlayer(player.id);
-                                    if (player.userRating) {
-                                      setPlayerRatings(prev => ({ ...prev, [player.id]: player.userRating }));
-                                    }
-                                  }}
-                                  className="bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20 font-light"
-                                >
-                                  {player.userRating ? `Sua nota: ${player.userRating.toFixed(1)}` : 'Avaliar'}
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl">
-                <CardContent className="p-6 text-center">
-                  <p className="text-gray-400 font-light">Nenhum jogo recente encontrado</p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Recent Matches */}
-            {isLoadingRecent ? (
-              <Skeleton className="h-64 rounded-2xl bg-white/5" />
-            ) : recentMatches && recentMatches.length > 0 ? (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-                <CardContent className="p-6 relative z-10">
-                  <h2 className="text-2xl font-light text-white mb-6 tracking-tight flex items-center gap-3">
-                    <div className="w-1 h-8 bg-gradient-to-b from-[#8b5cf6] to-[#6366f1] rounded-full"></div>
-                    Últimos 5 Jogos
+        {/* Main 3-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-6">
+          {/* LEFT COLUMN - Messages */}
+          <div className="lg:col-span-3">
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl h-full">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-light text-white flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-[#8b5cf6]" />
+                    Mensagens
                   </h2>
-                  <div className="space-y-3">
-                    {recentMatches.map((match) => (
+                  <Badge variant="outline" className="bg-white/5 border-white/10 text-white/60 text-xs font-light">
+                    {messages.length}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="space-y-1">
+                  {messages.map((msg) => {
+                    const Icon = msg.icon;
+                    return (
                       <div
-                        key={match.id}
-                        className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all"
+                        key={msg.id}
+                        className="p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all cursor-pointer group"
                       >
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <p className="text-white font-light">
-                              {match.isHomeMatch ? teamData?.name : match.opponent} x {match.isHomeMatch ? match.opponent : teamData?.name}
+                        <div className="flex items-start gap-3">
+                          <Icon className={`h-4 w-4 ${msg.color} flex-shrink-0 mt-0.5`} />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-400 font-light mb-1">{msg.sender}</p>
+                            <p className="text-sm text-white font-light truncate group-hover:text-white/90">
+                              {msg.subject}
                             </p>
-                            <p className="text-sm text-gray-400 font-light mt-1">
-                              {format(new Date(match.matchDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                            </p>
+                            <p className="text-xs text-gray-500 font-light mt-1">{msg.time}</p>
                           </div>
-                          {match.teamScore !== null && match.opponentScore !== null ? (
-                            <div className="text-2xl font-light text-white">
-                              {match.isHomeMatch ? match.teamScore : match.opponentScore} x {match.isHomeMatch ? match.opponentScore : match.teamScore}
-                            </div>
-                          ) : (
-                            <Badge className="bg-white/10 border-white/10 text-white/90 font-light">Agendado</Badge>
+                          <ChevronRight className="h-4 w-4 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="ghost"
+                  className="w-full mt-3 text-white/60 hover:text-white hover:bg-white/5 border-0 font-light text-sm"
+                >
+                  Ver todas as mensagens
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* CENTER COLUMN - News & Next Match */}
+          <div className="lg:col-span-6 space-y-4">
+            {/* Team News */}
+            {isLoadingNews ? (
+              <Skeleton className="h-64 rounded-xl bg-white/5" />
+            ) : teamNews && teamNews.length > 0 ? (
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-lg font-light text-white flex items-center gap-2">
+                      <Newspaper className="h-5 w-5 text-[#8b5cf6]" />
+                      Notícias do Time
+                    </h2>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-white/60 hover:text-white hover:bg-white/5 border-0 font-light text-xs"
+                    >
+                      Ver todas <ChevronRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-4">
+                    {teamNews.slice(0, 2).map((news: any) => (
+                      <div
+                        key={news.id}
+                        className="p-4 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-start gap-3">
+                          {news.imageUrl && (
+                            <img
+                              src={news.imageUrl}
+                              alt={news.title}
+                              className="w-20 h-20 rounded-lg object-cover flex-shrink-0"
+                            />
                           )}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-sm font-medium text-white mb-1 line-clamp-2 group-hover:text-white/90">
+                              {news.title}
+                            </h3>
+                            <p className="text-xs text-gray-400 font-light line-clamp-2">
+                              {news.content}
+                            </p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <p className="text-xs text-gray-500 font-light">
+                                {news.journalist?.user?.name || (news as any).author?.name || 'Autor'}
+                              </p>
+                              <span className="text-gray-600">•</span>
+                              <p className="text-xs text-gray-500 font-light">
+                                {format(new Date(news.publishedAt), "dd 'de' MMM", { locale: ptBR })}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -418,109 +301,164 @@ export default function MeuTimePage() {
               </Card>
             ) : null}
 
-            {/* Transfers Section */}
-            {isLoadingTransfers ? (
-              <Skeleton className="h-64 rounded-2xl bg-white/5" />
-            ) : transfers && transfers.length > 0 ? (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-                <CardContent className="p-6 relative z-10">
-                  <h2 className="text-2xl font-light text-white mb-6 tracking-tight flex items-center gap-3">
-                    <ArrowRightLeft className="h-6 w-6 text-[#8b5cf6]" />
-                    {t('myTeam.transfers.title')}
+            {/* Next Match Highlight */}
+            {isLoadingUpcoming ? (
+              <Skeleton className="h-48 rounded-xl bg-white/5" />
+            ) : nextMatch ? (
+              <Card className="bg-gradient-to-br from-[#8b5cf6]/20 via-[#6366f1]/10 to-transparent backdrop-blur-xl border border-[#8b5cf6]/30 rounded-xl shadow-xl">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-xs text-gray-400 font-light mb-1">Próximo Jogo</p>
+                      <h3 className="text-xl font-light text-white mb-2">
+                        {nextMatch.isHomeMatch ? teamData?.name : nextMatch.opponent} x{' '}
+                        {nextMatch.isHomeMatch ? nextMatch.opponent : teamData?.name}
+                      </h3>
+                      <div className="flex items-center gap-4 text-sm text-gray-400 font-light">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-4 w-4" />
+                          {format(new Date(nextMatch.matchDate), "dd 'de' MMMM", { locale: ptBR })}
+                        </div>
+                        {nextMatch.stadium && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            {nextMatch.stadium}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {format(new Date(nextMatch.matchDate), 'HH:mm')}
+                        </div>
+                      </div>
+                    </div>
+                    {nextMatch.isHomeMatch && teamFromData ? (
+                      <img
+                        src={teamFromData.logoUrl}
+                        alt={teamData?.name}
+                        className="w-16 h-16 rounded-full object-contain"
+                      />
+                    ) : null}
+                  </div>
+                  <Badge className="bg-white/10 border-white/20 text-white/90 font-light">
+                    {nextMatch.isHomeMatch ? 'Em Casa' : 'Fora'}
+                  </Badge>
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+
+          {/* RIGHT COLUMN - Fixture Schedule & Standings */}
+          <div className="lg:col-span-3 space-y-4">
+            {/* Fixture Schedule */}
+            {isLoadingRecent || isLoadingUpcoming ? (
+              <Skeleton className="h-64 rounded-xl bg-white/5" />
+            ) : allMatches && allMatches.length > 0 ? (
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
+                <CardHeader className="pb-3">
+                  <h2 className="text-lg font-light text-white flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-[#8b5cf6]" />
+                    Calendário de Jogos
                   </h2>
-                  <div className="space-y-4">
-                    {transfers.map((transfer) => {
-                      const isIncoming = transfer.transferType === 'IN' || transfer.transferType === 'LOAN_IN';
-                      const isOutgoing = transfer.transferType === 'OUT' || transfer.transferType === 'LOAN_OUT';
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                    {allMatches.slice(0, 8).map((match) => {
+                      const matchDate = new Date(match.matchDate);
+                      const isHome = match.isHomeMatch;
+                      const hasScore = match.teamScore !== null && match.opponentScore !== null;
                       
                       return (
                         <div
-                          key={transfer.id}
-                          className="bg-white/5 rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all"
+                          key={match.id}
+                          className={`p-3 rounded-lg border transition-all ${
+                            isToday(matchDate)
+                              ? 'bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 border-[#8b5cf6]/30'
+                              : 'bg-white/5 border-white/10 hover:bg-white/10'
+                          }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 flex-1">
-                              {transfer.playerPhotoUrl ? (
-                                <img
-                                  src={transfer.playerPhotoUrl}
-                                  alt={transfer.playerName}
-                                  className="w-12 h-12 rounded-full object-cover border border-white/10"
-                                />
-                              ) : (
-                                <div className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                                  <span className="text-gray-400 text-xs">⚽</span>
-                                </div>
-                              )}
-                              <div className="flex-1">
-                                <p className="text-white font-light">{transfer.playerName}</p>
-                                <div className="flex items-center gap-2 mt-1">
-                                  {isIncoming ? (
-                                    <>
-                                      {transfer.fromTeamLogoUrl && (
-                                        <img
-                                          src={transfer.fromTeamLogoUrl}
-                                          alt={transfer.fromTeam || ''}
-                                          className="w-4 h-4 rounded-full object-cover"
-                                        />
-                                      )}
-                                      <span className="text-xs text-gray-400 font-light">
-                                        {transfer.fromTeam || t('myTeam.transfers.unknownTeam')}
-                                      </span>
-                                      <ArrowRightLeft className="h-3 w-3 text-green-400" />
-                                      {transfer.toTeamLogoUrl && (
-                                        <img
-                                          src={transfer.toTeamLogoUrl}
-                                          alt={transfer.toTeam || teamData?.name || ''}
-                                          className="w-4 h-4 rounded-full object-cover"
-                                        />
-                                      )}
-                                      <span className="text-xs text-green-400 font-light">
-                                        {transfer.toTeam || teamData?.name || ''}
-                                      </span>
-                                    </>
-                                  ) : isOutgoing ? (
-                                    <>
-                                      {transfer.fromTeamLogoUrl && (
-                                        <img
-                                          src={transfer.fromTeamLogoUrl}
-                                          alt={transfer.fromTeam || teamData?.name || ''}
-                                          className="w-4 h-4 rounded-full object-cover"
-                                        />
-                                      )}
-                                      <span className="text-xs text-red-400 font-light">
-                                        {transfer.fromTeam || teamData?.name || ''}
-                                      </span>
-                                      <ArrowRightLeft className="h-3 w-3 text-red-400" />
-                                      {transfer.toTeamLogoUrl && (
-                                        <img
-                                          src={transfer.toTeamLogoUrl}
-                                          alt={transfer.toTeam || ''}
-                                          className="w-4 h-4 rounded-full object-cover"
-                                        />
-                                      )}
-                                      <span className="text-xs text-gray-400 font-light">
-                                        {transfer.toTeam || t('myTeam.transfers.unknownTeam')}
-                                      </span>
-                                    </>
-                                  ) : null}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              {transfer.transferFee && (
-                                <p className="text-sm font-light text-white">{transfer.transferFee}</p>
-                              )}
-                              <p className="text-xs text-gray-400 font-light mt-1">
-                                {format(new Date(transfer.transferDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                              </p>
-                              {transfer.season && (
-                                <Badge className="mt-1 bg-white/10 border-white/10 text-white/80 font-light text-xs">
-                                  {transfer.season}
-                                </Badge>
-                              )}
-                            </div>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs text-gray-400 font-light">
+                              {format(matchDate, "EEE dd/MM", { locale: ptBR })}
+                            </p>
+                            <Badge
+                              variant="outline"
+                              className={`text-xs font-light ${
+                                isHome
+                                  ? 'bg-green-500/20 border-green-500/30 text-green-400'
+                                  : 'bg-blue-500/20 border-blue-500/30 text-blue-400'
+                              }`}
+                            >
+                              {isHome ? 'C' : 'F'}
+                            </Badge>
                           </div>
+                          <p className="text-sm text-white font-light truncate mb-1">
+                            {isHome ? teamData?.name : match.opponent} x{' '}
+                            {isHome ? match.opponent : teamData?.name}
+                          </p>
+                          {hasScore ? (
+                            <p className="text-xs text-gray-400 font-light">
+                              {isHome ? match.teamScore : match.opponentScore} x{' '}
+                              {isHome ? match.opponentScore : match.teamScore}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-500 font-light">
+                              {format(matchDate, 'HH:mm')}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {/* Standings */}
+            {isLoadingStandings ? (
+              <Skeleton className="h-64 rounded-xl bg-white/5" />
+            ) : standings && standings.length > 0 ? (
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
+                <CardHeader className="pb-3">
+                  <h2 className="text-lg font-light text-white flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-[#8b5cf6]" />
+                    Classificação
+                  </h2>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-1 max-h-96 overflow-y-auto">
+                    {standings.slice(0, 13).map((team, index) => {
+                      const isUserTeam = team.id === user?.teamId;
+                      return (
+                        <div
+                          key={team.id}
+                          className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
+                            isUserTeam
+                              ? 'bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 border border-[#8b5cf6]/30'
+                              : 'hover:bg-white/5'
+                          }`}
+                        >
+                          <span className="text-xs font-light text-gray-400 w-6">
+                            {index + 1}º
+                          </span>
+                          <img
+                            src={team.logoUrl}
+                            alt={team.name}
+                            className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                          />
+                          <span
+                            className={`text-xs font-light flex-1 truncate ${
+                              isUserTeam ? 'text-white' : 'text-gray-300'
+                            }`}
+                          >
+                            {team.shortName}
+                          </span>
+                          <span
+                            className={`text-xs font-light ${
+                              isUserTeam ? 'text-white' : 'text-gray-400'
+                            }`}
+                          >
+                            {team.points}
+                          </span>
                         </div>
                       );
                     })}
@@ -529,123 +467,69 @@ export default function MeuTimePage() {
               </Card>
             ) : null}
           </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Standings */}
-            {isLoadingStandings ? (
-              <Skeleton className="h-64 rounded-2xl bg-white/5" />
-            ) : standings && standings.length > 0 ? (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-                <CardContent className="p-6 relative z-10">
-                  <h2 className="text-xl font-light text-white mb-4 tracking-tight flex items-center gap-3">
-                    <Trophy className="h-5 w-5 text-[#8b5cf6]" />
-                    Classificação
-                  </h2>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
-                    {standings.slice(0, 10).map((team, index) => (
-                      <div
-                        key={team.id}
-                        className={`flex items-center gap-3 p-2 rounded-lg ${
-                          team.id === user?.teamId
-                            ? 'bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 border border-[#8b5cf6]/30'
-                            : 'bg-white/5 hover:bg-white/10'
-                        } transition-all`}
-                      >
-                        <span className="text-sm font-light text-gray-400 w-6">{index + 1}º</span>
-                        <img src={team.logoUrl} alt={team.name} className="w-6 h-6 rounded-full object-cover" />
-                        <span className="text-sm font-light text-white flex-1 truncate">{team.shortName}</span>
-                        <span className="text-sm font-light text-white">{team.points}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {/* Upcoming Matches */}
-            {isLoadingUpcoming ? (
-              <Skeleton className="h-48 rounded-2xl bg-white/5" />
-            ) : upcomingMatches && upcomingMatches.length > 0 ? (
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-                <CardContent className="p-6 relative z-10">
-                  <h2 className="text-xl font-light text-white mb-4 tracking-tight flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-[#8b5cf6]" />
-                    Próximos Jogos
-                  </h2>
-                  <div className="space-y-3">
-                    {upcomingMatches.map((match) => (
-                      <div
-                        key={match.id}
-                        className="bg-white/5 rounded-xl p-4 border border-white/10"
-                      >
-                        <p className="text-white font-light text-sm mb-1">
-                          {match.isHomeMatch ? teamData?.name : match.opponent} x {match.isHomeMatch ? match.opponent : teamData?.name}
-                        </p>
-                        <p className="text-xs text-gray-400 font-light">
-                          {format(new Date(match.matchDate), "dd 'de' MMMM", { locale: ptBR })}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : null}
-
-            {/* Daily Poll */}
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-              <CardContent className="p-6 relative z-10">
-                <h2 className="text-xl font-light text-white mb-4 tracking-tight flex items-center gap-3">
-                  <BarChart3 className="h-5 w-5 text-[#8b5cf6]" />
-                  Enquete do Dia
-                </h2>
-                <p className="text-sm text-gray-300 font-light mb-4">
-                  {teamData ? dailyPoll.question.replace('Corinthians', teamData.name) : dailyPoll.question}
-                </p>
-                <div className="space-y-2">
-                  {dailyPoll.options.map((option) => {
-                    const percentage = (option.votes / dailyPoll.totalVotes) * 100;
-                    return (
-                      <div key={option.id} className="space-y-1">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-white/80 font-light">{option.text}</span>
-                          <span className="text-gray-400 font-light">{percentage.toFixed(0)}%</span>
-                        </div>
-                        <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] transition-all"
-                            style={{ width: `${percentage}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Meme Section */}
-            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-              <CardContent className="p-0 relative z-10">
-                <div className="p-4 flex items-center gap-3 border-b border-white/10">
-                  <ImageIcon className="h-5 w-5 text-[#8b5cf6]" />
-                  <h2 className="text-xl font-light text-white tracking-tight">Meme do Dia</h2>
-                </div>
-                <div className="aspect-video bg-white/5 flex items-center justify-center">
-                  <img
-                    src={memeImage}
-                    alt={`Meme do ${teamData?.name || 'Time'}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
         </div>
+
+        {/* Calendar Section (Bottom) */}
+        <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
+          <CardHeader className="pb-3">
+            <h2 className="text-lg font-light text-white flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-[#8b5cf6]" />
+              Calendário {format(today, 'MMMM yyyy', { locale: ptBR })}
+            </h2>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-7 gap-2 mb-2">
+              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
+                <div key={day} className="text-center text-xs text-gray-400 font-light py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-2">
+              {daysInMonth.map((day) => {
+                const dayMatches = allMatches.filter((match) => {
+                  const matchDate = new Date(match.matchDate);
+                  return (
+                    matchDate.getDate() === day.getDate() &&
+                    matchDate.getMonth() === day.getMonth() &&
+                    matchDate.getFullYear() === day.getFullYear()
+                  );
+                });
+
+                const isCurrentDay = isToday(day);
+                const isPastDay = isPast(day) && !isToday(day);
+
+                return (
+                  <div
+                    key={day.toISOString()}
+                    className={`aspect-square p-1 rounded-lg border transition-all ${
+                      isCurrentDay
+                        ? 'bg-gradient-to-br from-[#8b5cf6]/30 to-[#6366f1]/30 border-[#8b5cf6]/50'
+                        : isPastDay
+                        ? 'bg-white/5 border-white/10'
+                        : 'bg-white/5 border-white/10 hover:bg-white/10'
+                    }`}
+                  >
+                    <div className="flex flex-col h-full">
+                      <span
+                        className={`text-xs font-light mb-1 ${
+                          isCurrentDay ? 'text-white' : 'text-gray-400'
+                        }`}
+                      >
+                        {day.getDate()}
+                      </span>
+                      {dayMatches.length > 0 && (
+                        <div className="flex-1 flex items-center justify-center">
+                          <div className="w-2 h-2 rounded-full bg-[#8b5cf6]"></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
