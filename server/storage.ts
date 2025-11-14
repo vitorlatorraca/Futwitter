@@ -419,8 +419,10 @@ export class DatabaseStorage implements IStorage {
       const filteredNews = enrichedNews.filter((item): item is NonNullable<typeof item> => item !== null);
       console.log(`[getAllNews] Returning ${filteredNews.length} enriched news items`);
       return filteredNews;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in getAllNews:', error);
+      console.error('Error message:', error?.message);
+      console.error('Error stack:', error?.stack);
       throw error;
     }
   }
