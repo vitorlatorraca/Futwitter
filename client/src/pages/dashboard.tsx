@@ -16,33 +16,62 @@ export default function DashboardPage() {
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<string>('my-team');
 
-  const { data: newsData, isLoading, error } = useQuery<News[]>({
+  const { data: newsData, isLoading, error, refetch } = useQuery<News[]>({
     queryKey: ['/api/news', activeFilter, user?.teamId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      params.append('filter', activeFilter);
-      
-      if (activeFilter !== 'my-team' && activeFilter !== 'all') {
-        params.append('teamId', activeFilter);
+      try {
+        const params = new URLSearchParams();
+        params.append('filter', activeFilter);
+        
+        if (activeFilter !== 'my-team' && activeFilter !== 'all') {
+          params.append('teamId', activeFilter);
+        }
+        
+        const url = `/api/news?${params.toString()}`;
+        console.log('[Dashboard] Fetching from URL:', url);
+        console.log('[Dashboard] User:', user);
+        console.log('[Dashboard] Active filter:', activeFilter);
+        
+        const response = await fetch(url, {
+          credentials: 'include',
+        });
+        
+        console.log('[Dashboard] Response status:', response.status);
+        console.log('[Dashboard] Response ok:', response.ok);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[Dashboard] Response error:', errorText);
+          throw new Error(`Failed to fetch news: ${response.status} ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('[Dashboard] Fetched news:', data);
+        console.log('[Dashboard] News count:', data?.length);
+        console.log('[Dashboard] Is array:', Array.isArray(data));
+        console.log('[Dashboard] User teamId:', user?.teamId);
+        console.log('[Dashboard] Active filter:', activeFilter);
+        
+        if (data && data.length > 0) {
+          console.log('[Dashboard] First news item structure:', {
+            id: data[0].id,
+            hasTeam: !!data[0].team,
+            teamId: data[0].team?.id,
+            teamName: data[0].team?.name,
+            hasJournalist: !!data[0].journalist,
+            hasAuthor: !!(data[0] as any).author,
+          });
+        }
+        
+        return data || [];
+      } catch (err: any) {
+        console.error('[Dashboard] Query error:', err);
+        throw err;
       }
-      
-      const response = await fetch(`/api/news?${params.toString()}`, {
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch news');
-      }
-      
-      const data = await response.json();
-      console.log('[Dashboard] Fetched news:', data);
-      console.log('[Dashboard] News count:', data?.length);
-      console.log('[Dashboard] User teamId:', user?.teamId);
-      console.log('[Dashboard] Active filter:', activeFilter);
-      
-      return data;
     },
     enabled: !!user,
+    staleTime: 0, // Force refetch every time
+    cacheTime: 0, // Don't cache
   });
 
   const interactionMutation = useMutation({
@@ -80,9 +109,11 @@ export default function DashboardPage() {
   // Force refetch when filter or user changes
   useEffect(() => {
     if (user) {
-      queryClient.invalidateQueries({ queryKey: ['/api/news'] });
+      console.log('[Dashboard] Invalidating queries due to filter/user change');
+      queryClient.invalidateQueries({ queryKey: ['/api/news'], exact: false });
+      refetch();
     }
-  }, [activeFilter, user?.teamId, queryClient, user]);
+  }, [activeFilter, user?.teamId, queryClient, user, refetch]);
 
   const filters = [
     { id: 'my-team', label: 'Meu Time', testId: 'filter-my-team', isText: true },
@@ -160,16 +191,35 @@ export default function DashboardPage() {
               </p>
             </div>
           ) : newsData && Array.isArray(newsData) && newsData.length > 0 ? (
-            newsData
-              .filter((news: any) => {
+            (() => {
+              const validNews = newsData.filter((news: any) => {
                 // Filter out any null or invalid news items
                 if (!news || !news.id || !news.team) {
                   console.warn('[Dashboard] Invalid news item:', news);
                   return false;
                 }
                 return true;
-              })
-              .map((news: any) => {
+              });
+              
+              console.log('[Dashboard] Valid news count:', validNews.length, 'out of', newsData.length);
+              
+              if (validNews.length === 0) {
+                return (
+                  <div className="text-center py-20">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-6">
+                      <span className="text-4xl">⚠️</span>
+                    </div>
+                    <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                      Dados inválidos
+                    </h3>
+                    <p className="text-gray-400 font-light">
+                      As notícias retornadas não têm a estrutura esperada. Verifique o console para mais detalhes.
+                    </p>
+                  </div>
+                );
+              }
+              
+              return validNews.map((news: any) => {
                 console.log('[Dashboard] Rendering news:', news.id, 'team.id:', news.team?.id, 'user.teamId:', user?.teamId);
                 return (
                   <NewsCard
@@ -179,7 +229,8 @@ export default function DashboardPage() {
                     onInteract={handleInteraction}
                   />
                 );
-              })
+              });
+            })()
           ) : (
             <div className="text-center py-20">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">
