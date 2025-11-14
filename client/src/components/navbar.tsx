@@ -2,7 +2,7 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LanguageSelector } from '@/components/language-selector';
 import { Menu, LogOut } from 'lucide-react';
@@ -66,6 +66,9 @@ export function Navbar() {
           <LanguageSelector />
           <div className="hidden md:flex items-center gap-2">
             <Avatar className="h-8 w-8 border border-white/10">
+              {user.avatarUrl && (
+                <AvatarImage src={user.avatarUrl} alt={user.name} />
+              )}
               <AvatarFallback className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white text-sm font-medium">
                 {user.name.slice(0, 2).toUpperCase()}
               </AvatarFallback>
@@ -93,6 +96,9 @@ export function Navbar() {
               <div className="flex flex-col gap-4 mt-8">
                 <div className="flex items-center gap-3 pb-4 border-b border-white/10">
                   <Avatar className="h-10 w-10 border border-white/10">
+                    {user.avatarUrl && (
+                      <AvatarImage src={user.avatarUrl} alt={user.name} />
+                    )}
                     <AvatarFallback className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white">
                       {user.name.slice(0, 2).toUpperCase()}
                     </AvatarFallback>

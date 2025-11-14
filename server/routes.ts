@@ -552,6 +552,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/profile/avatar', requireAuth, async (req, res) => {
+    try {
+      const { avatarUrl } = req.body;
+      const userId = req.session.userId!;
+
+      if (!avatarUrl || typeof avatarUrl !== 'string') {
+        return res.status(400).json({ message: 'URL do avatar é obrigatória' });
+      }
+
+      // Validate URL format (base64 data URL or http/https URL)
+      const isBase64 = avatarUrl.startsWith('data:image/');
+      const isHttpUrl = avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://');
+      
+      if (!isBase64 && !isHttpUrl) {
+        return res.status(400).json({ message: 'Formato de URL inválido' });
+      }
+
+      // Validate base64 image size (max 2MB)
+      if (isBase64) {
+        const base64Data = avatarUrl.split(',')[1];
+        const sizeInBytes = (base64Data.length * 3) / 4;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+        
+        if (sizeInMB > 2) {
+          return res.status(400).json({ message: 'Imagem muito grande. Tamanho máximo: 2MB' });
+        }
+      }
+
+      const updatedUser = await storage.updateUser(userId, { avatarUrl });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Update avatar error:', error);
+      res.status(500).json({ message: 'Erro ao atualizar avatar' });
+    }
+  });
+
   // ============================================
   // BADGE ROUTES
   // ============================================

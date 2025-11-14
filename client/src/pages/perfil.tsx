@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { User, Lock, BarChart3, Award, Loader2, Star, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { User, Lock, BarChart3, Award, Loader2, Star, CheckCircle, XCircle, Clock, Upload, Camera, X } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -28,6 +28,15 @@ export default function PerfilPage() {
     name: user?.name || '',
     email: user?.email || '',
   });
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl || null);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [tempAvatarPreview, setTempAvatarPreview] = useState<string | null>(null); // Preview temporário antes de confirmar
+
+  // Sync avatar preview when user changes
+  useEffect(() => {
+    setAvatarPreview(user?.avatarUrl || null);
+    setTempAvatarPreview(null); // Limpar preview temporário quando user mudar
+  }, [user?.avatarUrl]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -55,6 +64,100 @@ export default function PerfilPage() {
       });
     },
   });
+
+  const avatarMutation = useMutation({
+    mutationFn: async (avatarUrl: string) => {
+      return await apiRequest('PUT', '/api/profile/avatar', { avatarUrl });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      setTempAvatarPreview(null); // Limpar preview temporário após salvar
+      toast({
+        title: 'Foto atualizada!',
+        description: 'Sua foto de perfil foi atualizada com sucesso',
+      });
+      setIsUploadingAvatar(false);
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message || 'Não foi possível atualizar a foto',
+      });
+      setIsUploadingAvatar(false);
+    },
+  });
+
+  const handleAvatarSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Por favor, selecione uma imagem válida',
+      });
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'A imagem deve ter no máximo 2MB',
+      });
+      return;
+    }
+
+    // Convert to base64 for preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setTempAvatarPreview(base64String); // Mostrar preview temporário
+    };
+    reader.onerror = () => {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao ler a imagem',
+      });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleConfirmAvatar = () => {
+    if (!tempAvatarPreview) return;
+    setIsUploadingAvatar(true);
+    avatarMutation.mutate(tempAvatarPreview);
+  };
+
+  const handleCancelAvatar = () => {
+    setTempAvatarPreview(null);
+  };
+
+  const handleRemoveAvatar = async () => {
+    setIsUploadingAvatar(true);
+    try {
+      await apiRequest('PUT', '/api/profile/avatar', { avatarUrl: '' });
+      setAvatarPreview(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      toast({
+        title: 'Foto removida!',
+        description: 'Sua foto de perfil foi removida',
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: error.message || 'Não foi possível remover a foto',
+      });
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const passwordMutation = useMutation({
     mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
@@ -192,6 +295,105 @@ export default function PerfilPage() {
           </TabsList>
 
           <TabsContent value="info" className="space-y-6">
+            {/* Avatar Upload Section */}
+            <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
+              <CardHeader>
+                <CardTitle className="text-white font-light text-2xl flex items-center gap-2">
+                  <Camera className="h-5 w-5 text-[#8b5cf6]" />
+                  Foto de Perfil
+                </CardTitle>
+                <CardDescription className="text-gray-400 font-light">
+                  Adicione uma foto para personalizar seu perfil
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-6">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden">
+                      {tempAvatarPreview || avatarPreview ? (
+                        <img
+                          src={tempAvatarPreview || avatarPreview || ''}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center">
+                          <span className="text-2xl font-medium text-white">
+                            {user?.name.slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {avatarPreview && !tempAvatarPreview && (
+                      <button
+                        onClick={handleRemoveAvatar}
+                        disabled={isUploadingAvatar}
+                        className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center border-2 border-white/20 transition-colors"
+                        title="Remover foto"
+                      >
+                        <X className="h-3 w-3 text-white" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="avatar-upload" className="text-gray-300 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Upload className="h-4 w-4" />
+                          <span>Escolher foto</span>
+                        </div>
+                      </Label>
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarSelect}
+                        disabled={isUploadingAvatar}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-gray-500 font-light">
+                        Formatos aceitos: JPG, PNG, GIF. Tamanho máximo: 2MB
+                      </p>
+                    </div>
+                    {tempAvatarPreview && (
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={handleConfirmAvatar}
+                          disabled={isUploadingAvatar}
+                          size="sm"
+                          className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                        >
+                          {isUploadingAvatar ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Salvando...
+                            </>
+                          ) : (
+                            'Confirmar'
+                          )}
+                        </Button>
+                        <Button
+                          onClick={handleCancelAvatar}
+                          disabled={isUploadingAvatar}
+                          variant="outline"
+                          size="sm"
+                          className="font-light bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20"
+                        >
+                          Cancelar
+                        </Button>
+                      </div>
+                    )}
+                    {isUploadingAvatar && !tempAvatarPreview && (
+                      <div className="flex items-center gap-2 text-sm text-gray-400">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Enviando...</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
               <CardHeader>
                 <CardTitle className="text-white font-light text-2xl">{t('profile.info.title')}</CardTitle>
