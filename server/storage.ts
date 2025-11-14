@@ -67,7 +67,7 @@ export interface IStorage {
   createMatch(match: InsertMatch): Promise<Match>;
 
   // News
-  getAllNews(teamId?: string): Promise<any[]>;
+  getAllNews(teamId?: string, limit?: number, offset?: number): Promise<any[]>;
   getNewsByJournalist(journalistId: string): Promise<News[]>;
   getNewsByUser(userId: string): Promise<News[]>;
   createNews(news: InsertNews): Promise<News>;

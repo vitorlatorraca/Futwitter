@@ -9,15 +9,16 @@
 
 ## ⚠️ Problemas de Escalabilidade Identificados
 
-### 1. **Problema N+1 na Query getAllNews** (CRÍTICO)
-- **Problema**: Para cada notícia, faz queries separadas para buscar time, jornalista e usuário
-- **Impacto**: Com 100 notícias = 100+ queries adicionais
-- **Solução**: Usar JOINs ou buscar dados em batch
+### 1. **Problema N+1 na Query getAllNews** ✅ RESOLVIDO
+- ~~**Problema**: Para cada notícia, faz queries separadas para buscar time, jornalista e usuário~~
+- ~~**Impacto**: Com 100 notícias = 100+ queries adicionais~~
+- ✅ **Solução Implementada**: Agora usa batch queries (busca todos os dados relacionados de uma vez)
+- **Melhoria**: De 100+ queries para apenas 4 queries (1 notícias + 1 times + 1 jornalistas + 1 usuários)
 
-### 2. **Sem Paginação**
-- **Problema**: Busca todas as notícias de uma vez
-- **Impacto**: Com muitas notícias, pode travar o servidor
-- **Solução**: Implementar paginação (limit/offset)
+### 2. **Sem Paginação** ✅ RESOLVIDO
+- ~~**Problema**: Busca todas as notícias de uma vez~~
+- ✅ **Solução Implementada**: Paginação com limit (padrão: 50) e offset
+- **API**: `/api/news?limit=50&offset=0`
 
 ### 3. **Sem Cache**
 - **Problema**: Cada requisição refaz todas as queries
