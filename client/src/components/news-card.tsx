@@ -85,6 +85,10 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
             src={news.team.logoUrl}
             alt={`Escudo ${news.team.name}`}
             className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border-2 border-white/10 flex-shrink-0"
+            onError={(e) => {
+              // Fallback to placeholder if image fails to load
+              (e.target as HTMLImageElement).src = `https://via.placeholder.com/100/000000/FFFFFF?text=${news.team.name.slice(0, 2)}`;
+            }}
           />
           <div className="flex-1 min-w-0">
             <p className="font-medium text-xs sm:text-sm text-white truncate">
