@@ -133,8 +133,8 @@ export default function DashboardPage() {
 
       {/* Filter Bar */}
       <div className="sticky top-16 z-40 bg-black/40 backdrop-blur-xl border-b border-white/10">
-        <div className="container px-6 py-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide justify-center">
+        <div className="container px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide justify-start sm:justify-center">
             {filters.map((filter) => (
               <Button
                 key={filter.id}
@@ -168,8 +168,8 @@ export default function DashboardPage() {
       </div>
 
       {/* News Feed */}
-      <div className="container px-6 py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="container px-3 sm:px-6 py-4 sm:py-8">
+        <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           {isLoading ? (
             <>
               {[1, 2, 3].map((i) => (
