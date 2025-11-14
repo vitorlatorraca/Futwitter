@@ -10,6 +10,36 @@ import { apiRequest } from '@/lib/queryClient';
 import { TEAMS_DATA } from '@/lib/team-data';
 import type { News } from '@shared/schema';
 
+// Team Logo Component with fallback
+function TeamLogo({ logoUrl, shortName }: { logoUrl: string; shortName: string }) {
+  const [imgError, setImgError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(logoUrl);
+
+  return (
+    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+      {!imgError ? (
+        <img 
+          src={imgSrc} 
+          alt={shortName}
+          className="w-full h-full object-cover"
+          onError={() => {
+            setImgError(true);
+            // Try alternative URL format
+            const altUrl = logoUrl.replace('logodownload.org', 'escudos.club').replace('/2017/02/', '/2020/01/').replace('-logo-escudo-1.png', '.png');
+            if (altUrl !== imgSrc) {
+              setImgSrc(altUrl);
+              setImgError(false);
+            }
+          }}
+          loading="lazy"
+        />
+      ) : (
+        <span className="text-xs font-medium text-white">{shortName}</span>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
