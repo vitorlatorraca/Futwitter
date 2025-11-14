@@ -390,6 +390,7 @@ export class DatabaseStorage implements IStorage {
                   id: journalist.id,
                   user: {
                     name: journalistUser.name,
+                    avatarUrl: journalistUser.avatarUrl,
                   },
                 };
               }
@@ -403,6 +404,7 @@ export class DatabaseStorage implements IStorage {
               journalistData = {
                 user: {
                   name: influencerUser.name,
+                  avatarUrl: influencerUser.avatarUrl,
                 },
               };
             }
@@ -431,7 +433,10 @@ export class DatabaseStorage implements IStorage {
               secondaryColor: team.secondaryColor,
             },
             journalist: journalistData,
-            author: newsItem.userId ? { name: authorName } : null,
+            author: newsItem.userId ? { 
+              name: authorName,
+              avatarUrl: usersMap.get(newsItem.userId)?.avatarUrl || null
+            } : null,
           };
         } catch (itemError: any) {
           console.error(`[getAllNews] Error processing news item ${newsItem.id}:`, itemError);

@@ -28,7 +28,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!response.ok) {
         throw new Error('Erro ao buscar usuário');
       }
-      return response.json();
+      const userData = await response.json();
+      console.log('🔄 AuthContext - User data recebido:', userData);
+      console.log('🔄 AuthContext - Avatar URL:', userData?.avatarUrl);
+      return userData;
     },
     retry: false,
   });

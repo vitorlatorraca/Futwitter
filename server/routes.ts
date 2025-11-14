@@ -96,7 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Award signup badge
       await storage.checkAndAwardBadges(user.id);
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Registration error:', error);
       res.status(400).json({ message: error.message || 'Erro ao criar conta' });
@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       req.session.userType = user.userType;
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Login error:', error);
       console.error('Error stack:', error.stack);
@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Get me error:', error);
       console.error('Error stack:', error.stack);

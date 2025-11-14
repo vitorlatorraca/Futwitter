@@ -69,8 +69,21 @@ export default function PerfilPage() {
     mutationFn: async (avatarUrl: string) => {
       return await apiRequest('PUT', '/api/profile/avatar', { avatarUrl });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+    onSuccess: async (updatedUser) => {
+      console.log('✅ Avatar mutation success - updatedUser:', updatedUser);
+      console.log('✅ Avatar URL recebido:', updatedUser?.avatarUrl);
+      
+      // Atualizar o cache diretamente com os dados atualizados
+      queryClient.setQueryData(['/api/auth/me'], updatedUser);
+      console.log('✅ Cache atualizado com setQueryData');
+      
+      // Forçar um refetch para garantir que está sincronizado
+      await queryClient.refetchQueries({ 
+        queryKey: ['/api/auth/me'],
+        type: 'active' 
+      });
+      console.log('✅ Refetch concluído');
+      
       setTempAvatarPreview(null); // Limpar preview temporário após salvar
       toast({
         title: 'Foto atualizada!',
@@ -141,9 +154,11 @@ export default function PerfilPage() {
   const handleRemoveAvatar = async () => {
     setIsUploadingAvatar(true);
     try {
-      await apiRequest('PUT', '/api/profile/avatar', { avatarUrl: '' });
-      setAvatarPreview(null);
+      const updatedUser = await apiRequest('PUT', '/api/profile/avatar', { avatarUrl: '' });
+      // Atualizar o cache diretamente
+      queryClient.setQueryData(['/api/auth/me'], updatedUser);
       queryClient.invalidateQueries({ queryKey: ['/api/auth/me'] });
+      setAvatarPreview(null);
       toast({
         title: 'Foto removida!',
         description: 'Sua foto de perfil foi removida',
