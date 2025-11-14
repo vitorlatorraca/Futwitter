@@ -317,9 +317,9 @@ export class DatabaseStorage implements IStorage {
       // Buscar todas as notícias primeiro
       const allNewsItems = await db
         .select()
-        .from(news)
+      .from(news)
         .where(baseConditions)
-        .orderBy(desc(news.publishedAt));
+      .orderBy(desc(news.publishedAt));
 
       console.log(`[getAllNews] Found ${allNewsItems.length} news items, teamId filter: ${teamId || 'none'}`);
       console.log(`[getAllNews] News items:`, allNewsItems.map(n => ({ id: n.id, title: n.title, teamId: n.teamId, userId: n.userId, journalistId: n.journalistId })));
@@ -380,7 +380,7 @@ export class DatabaseStorage implements IStorage {
             }
           }
 
-          return {
+          const enrichedNewsItem = {
             id: newsItem.id,
             journalistId: newsItem.journalistId,
             userId: newsItem.userId,
@@ -405,6 +405,13 @@ export class DatabaseStorage implements IStorage {
             journalist: journalistData,
             author: newsItem.userId ? { name: authorName } : null,
           };
+          
+          // Validate structure before returning
+          if (!enrichedNewsItem.team || !enrichedNewsItem.team.id) {
+            console.error(`[getAllNews] Invalid team structure for news ${enrichedNewsItem.id}:`, enrichedNewsItem.team);
+          }
+          
+          return enrichedNewsItem;
         })
       );
 
