@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/navbar';
@@ -64,6 +64,25 @@ export default function DashboardPage() {
   const handleInteraction = (newsId: string, type: 'LIKE' | 'DISLIKE') => {
     interactionMutation.mutate({ newsId, type });
   };
+
+  // Debug: Log data when it changes
+  useEffect(() => {
+    if (newsData) {
+      console.log('[Dashboard] newsData changed:', newsData);
+      console.log('[Dashboard] newsData length:', newsData.length);
+      if (newsData.length > 0) {
+        console.log('[Dashboard] First news item:', newsData[0]);
+        console.log('[Dashboard] First news team:', newsData[0]?.team);
+      }
+    }
+  }, [newsData]);
+
+  // Force refetch when filter or user changes
+  useEffect(() => {
+    if (user) {
+      queryClient.invalidateQueries({ queryKey: ['/api/news'] });
+    }
+  }, [activeFilter, user?.teamId, queryClient, user]);
 
   const filters = [
     { id: 'my-team', label: 'Meu Time', testId: 'filter-my-team', isText: true },
