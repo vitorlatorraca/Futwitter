@@ -10,8 +10,9 @@ import type { News } from '@shared/schema';
 
 interface NewsCardProps {
   news: News & {
-    team: { name: string; logoUrl: string; primaryColor: string };
-    journalist: { user: { name: string } };
+    team: { id?: string; name: string; logoUrl: string; primaryColor: string };
+    journalist?: { user: { name: string } } | null;
+    author?: { name: string } | null;
     userInteraction?: 'LIKE' | 'DISLIKE' | null;
   };
   canInteract: boolean;

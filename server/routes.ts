@@ -285,20 +285,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { teamId, filter } = req.query;
       
+      console.log(`[GET /api/news] Request received - filter: ${filter}, teamId: ${teamId}, sessionUserId: ${req.session.userId}`);
+      
       let filterTeamId: string | undefined;
       
       if (filter === 'my-team' && req.session.userId) {
         const user = await storage.getUser(req.session.userId);
         filterTeamId = user?.teamId || undefined;
+        console.log(`[GET /api/news] my-team filter - user teamId: ${user?.teamId}`);
       } else if (filter === 'all') {
         filterTeamId = undefined;
+        console.log(`[GET /api/news] all filter - no teamId filter`);
       } else if (teamId) {
         filterTeamId = teamId as string;
+        console.log(`[GET /api/news] specific team filter - teamId: ${teamId}`);
       }
 
       const newsItems = await storage.getAllNews(filterTeamId);
 
       console.log(`[GET /api/news] Filter: ${filter}, teamId: ${filterTeamId}, Found ${newsItems.length} items`);
+      console.log(`[GET /api/news] News IDs:`, newsItems.map((n: any) => n.id));
 
       // Add user interaction info if logged in
       if (req.session.userId) {

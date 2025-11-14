@@ -16,7 +16,7 @@ export default function DashboardPage() {
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<string>('my-team');
 
-  const { data: newsData, isLoading } = useQuery<News[]>({
+  const { data: newsData, isLoading, error } = useQuery<News[]>({
     queryKey: ['/api/news', activeFilter, user?.teamId],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -34,7 +34,13 @@ export default function DashboardPage() {
         throw new Error('Failed to fetch news');
       }
       
-      return response.json();
+      const data = await response.json();
+      console.log('[Dashboard] Fetched news:', data);
+      console.log('[Dashboard] News count:', data?.length);
+      console.log('[Dashboard] User teamId:', user?.teamId);
+      console.log('[Dashboard] Active filter:', activeFilter);
+      
+      return data;
     },
     enabled: !!user,
   });
@@ -122,15 +128,30 @@ export default function DashboardPage() {
                 </div>
               ))}
             </>
+          ) : error ? (
+            <div className="text-center py-20">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-6">
+                <span className="text-4xl">⚠️</span>
+              </div>
+              <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                Erro ao carregar notícias
+              </h3>
+              <p className="text-gray-400 font-light">
+                {(error as Error).message || 'Ocorreu um erro ao buscar as notícias'}
+              </p>
+            </div>
           ) : newsData && newsData.length > 0 ? (
-            newsData.map((news: any) => (
-              <NewsCard
-                key={news.id}
-                news={news}
-                canInteract={news.team.id === user?.teamId}
-                onInteract={handleInteraction}
-              />
-            ))
+            newsData.map((news: any) => {
+              console.log('[Dashboard] Rendering news:', news.id, 'team.id:', news.team?.id, 'user.teamId:', user?.teamId);
+              return (
+                <NewsCard
+                  key={news.id}
+                  news={news}
+                  canInteract={news.team?.id === user?.teamId}
+                  onInteract={handleInteraction}
+                />
+              );
+            })
           ) : (
             <div className="text-center py-20">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">
