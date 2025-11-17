@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/navbar';
@@ -10,33 +10,98 @@ import { apiRequest } from '@/lib/queryClient';
 import { TEAMS_DATA } from '@/lib/team-data';
 import type { News } from '@shared/schema';
 
+// Team Logo Component with fallback
+function TeamLogo({ logoUrl, shortName }: { logoUrl: string; shortName: string }) {
+  const [imgError, setImgError] = useState(false);
+  const [imgSrc, setImgSrc] = useState(logoUrl);
+
+  return (
+    <div className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
+      {!imgError ? (
+        <img 
+          src={imgSrc} 
+          alt={shortName}
+          className="w-full h-full object-cover"
+          onError={() => {
+            setImgError(true);
+            // Try alternative URL format
+            const altUrl = logoUrl.replace('logodownload.org', 'escudos.club').replace('/2017/02/', '/2020/01/').replace('-logo-escudo-1.png', '.png');
+            if (altUrl !== imgSrc) {
+              setImgSrc(altUrl);
+              setImgError(false);
+            }
+          }}
+          loading="lazy"
+        />
+      ) : (
+        <span className="text-xs font-medium text-white">{shortName}</span>
+      )}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<string>('my-team');
 
-  const { data: newsData, isLoading } = useQuery<News[]>({
+  const { data: newsData, isLoading, error, refetch } = useQuery<News[]>({
     queryKey: ['/api/news', activeFilter, user?.teamId],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      params.append('filter', activeFilter);
-      
-      if (activeFilter !== 'my-team' && activeFilter !== 'all') {
-        params.append('teamId', activeFilter);
+      try {
+        const params = new URLSearchParams();
+        params.append('filter', activeFilter);
+        
+        if (activeFilter !== 'my-team' && activeFilter !== 'all') {
+          params.append('teamId', activeFilter);
+        }
+        
+        const url = `/api/news?${params.toString()}`;
+        console.log('[Dashboard] Fetching from URL:', url);
+        console.log('[Dashboard] User:', user);
+        console.log('[Dashboard] Active filter:', activeFilter);
+        
+        const response = await fetch(url, {
+          credentials: 'include',
+        });
+        
+        console.log('[Dashboard] Response status:', response.status);
+        console.log('[Dashboard] Response ok:', response.ok);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('[Dashboard] Response error:', errorText);
+          throw new Error(`Failed to fetch news: ${response.status} ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('[Dashboard] Fetched news:', data);
+        console.log('[Dashboard] News count:', data?.length);
+        console.log('[Dashboard] Is array:', Array.isArray(data));
+        console.log('[Dashboard] User teamId:', user?.teamId);
+        console.log('[Dashboard] Active filter:', activeFilter);
+        
+        if (data && data.length > 0) {
+          console.log('[Dashboard] First news item structure:', {
+            id: data[0].id,
+            hasTeam: !!data[0].team,
+            teamId: data[0].team?.id,
+            teamName: data[0].team?.name,
+            hasJournalist: !!data[0].journalist,
+            hasAuthor: !!(data[0] as any).author,
+          });
+        }
+        
+        return data || [];
+      } catch (err: any) {
+        console.error('[Dashboard] Query error:', err);
+        throw err;
       }
-      
-      const response = await fetch(`/api/news?${params.toString()}`, {
-        credentials: 'include',
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch news');
-      }
-      
-      return response.json();
     },
     enabled: !!user,
+    staleTime: 0, // Force refetch every time
+    cacheTime: 0, // Don't cache
   });
 
   const interactionMutation = useMutation({
@@ -59,6 +124,27 @@ export default function DashboardPage() {
     interactionMutation.mutate({ newsId, type });
   };
 
+  // Debug: Log data when it changes
+  useEffect(() => {
+    if (newsData) {
+      console.log('[Dashboard] newsData changed:', newsData);
+      console.log('[Dashboard] newsData length:', newsData.length);
+      if (newsData.length > 0) {
+        console.log('[Dashboard] First news item:', newsData[0]);
+        console.log('[Dashboard] First news team:', newsData[0]?.team);
+      }
+    }
+  }, [newsData]);
+
+  // Force refetch when filter or user changes
+  useEffect(() => {
+    if (user) {
+      console.log('[Dashboard] Invalidating queries due to filter/user change');
+      queryClient.invalidateQueries({ queryKey: ['/api/news'], exact: false });
+      refetch();
+    }
+  }, [activeFilter, user?.teamId, queryClient, user, refetch]);
+
   const filters = [
     { id: 'my-team', label: 'Meu Time', testId: 'filter-my-team', isText: true },
     { id: 'all', label: 'Todos', testId: 'filter-all', isText: true },
@@ -77,8 +163,8 @@ export default function DashboardPage() {
 
       {/* Filter Bar */}
       <div className="sticky top-16 z-40 bg-black/40 backdrop-blur-xl border-b border-white/10">
-        <div className="container px-6 py-4">
-          <div className="flex gap-2 overflow-x-auto scrollbar-hide justify-center">
+        <div className="container px-3 sm:px-6 py-3 sm:py-4">
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide justify-start sm:justify-center">
             {filters.map((filter) => (
               <Button
                 key={filter.id}
@@ -99,10 +185,9 @@ export default function DashboardPage() {
                 {filter.isText ? (
                   filter.label
                 ) : (
-                  <img 
-                    src={(filter as any).logoUrl} 
-                    alt={filter.label}
-                    className="w-8 h-8 rounded-full object-cover"
+                  <TeamLogo 
+                    logoUrl={(filter as any).logoUrl}
+                    shortName={filter.label}
                   />
                 )}
               </Button>
@@ -112,8 +197,8 @@ export default function DashboardPage() {
       </div>
 
       {/* News Feed */}
-      <div className="container px-6 py-8">
-        <div className="max-w-2xl mx-auto space-y-6">
+      <div className="container px-3 sm:px-6 py-4 sm:py-8">
+        <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           {isLoading ? (
             <>
               {[1, 2, 3].map((i) => (
@@ -122,15 +207,124 @@ export default function DashboardPage() {
                 </div>
               ))}
             </>
-          ) : newsData && newsData.length > 0 ? (
-            newsData.map((news: any) => (
-              <NewsCard
-                key={news.id}
-                news={news}
-                canInteract={news.team.id === user?.teamId}
-                onInteract={handleInteraction}
-              />
-            ))
+          ) : error ? (
+            <div className="text-center py-20">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-6">
+                <span className="text-4xl">⚠️</span>
+              </div>
+              <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                Erro ao carregar notícias
+              </h3>
+              <p className="text-gray-400 font-light">
+                {(error as Error).message || 'Ocorreu um erro ao buscar as notícias'}
+              </p>
+            </div>
+          ) : newsData ? (
+            (() => {
+              console.log('[Dashboard] newsData exists, type:', typeof newsData, 'isArray:', Array.isArray(newsData));
+              
+              if (!Array.isArray(newsData)) {
+                console.error('[Dashboard] newsData is not an array:', newsData);
+                return (
+                  <div className="text-center py-20">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-500/10 border border-red-500/20 mb-6">
+                      <span className="text-4xl">❌</span>
+                    </div>
+                    <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                      Erro de dados
+                    </h3>
+                    <p className="text-gray-400 font-light">
+                      Os dados retornados não são um array. Tipo: {typeof newsData}
+                    </p>
+                    <pre className="mt-4 text-xs text-gray-500 text-left max-w-md mx-auto overflow-auto">
+                      {JSON.stringify(newsData, null, 2).substring(0, 500)}
+                    </pre>
+                  </div>
+                );
+              }
+              
+              if (newsData.length === 0) {
+                console.log('[Dashboard] newsData is empty array');
+                return (
+                  <div className="text-center py-20">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">
+                      <span className="text-4xl">📰</span>
+                    </div>
+                    <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                      Nenhuma notícia ainda
+                    </h3>
+                    <p className="text-gray-400 font-light">
+                      {activeFilter === 'my-team' 
+                        ? 'Não há notícias do seu time no momento'
+                        : 'Não há notícias disponíveis no momento'
+                      }
+                    </p>
+                  </div>
+                );
+              }
+              
+              const validNews = newsData.filter((news: any) => {
+                // Filter out any null or invalid news items
+                if (!news || !news.id) {
+                  console.warn('[Dashboard] News missing id:', news);
+                  return false;
+                }
+                if (!news.team) {
+                  console.warn('[Dashboard] News missing team:', news.id, news);
+                  return false;
+                }
+                if (!news.team.id) {
+                  console.warn('[Dashboard] News team missing id:', news.id, news.team);
+                  return false;
+                }
+                return true;
+              });
+              
+              console.log('[Dashboard] Valid news count:', validNews.length, 'out of', newsData.length);
+              
+              if (validNews.length === 0) {
+                return (
+                  <div className="text-center py-20">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-yellow-500/10 border border-yellow-500/20 mb-6">
+                      <span className="text-4xl">⚠️</span>
+                    </div>
+                    <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+                      Dados inválidos
+                    </h3>
+                    <p className="text-gray-400 font-light">
+                      {newsData.length} notícias retornadas, mas nenhuma tem a estrutura válida.
+                    </p>
+                    <details className="mt-4 text-left max-w-md mx-auto">
+                      <summary className="text-xs text-gray-500 cursor-pointer">Ver dados brutos</summary>
+                      <pre className="mt-2 text-xs text-gray-500 overflow-auto max-h-40">
+                        {JSON.stringify(newsData, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                );
+              }
+              
+              console.log('[Dashboard] Rendering', validNews.length, 'news items');
+              
+              return validNews.map((news: any) => {
+                console.log('[Dashboard] Rendering news:', {
+                  id: news.id,
+                  title: news.title,
+                  teamId: news.team?.id,
+                  teamName: news.team?.name,
+                  userTeamId: user?.teamId,
+                  canInteract: news.team?.id === user?.teamId,
+                });
+                return (
+                  <NewsCard
+                    key={news.id}
+                    news={news}
+                    canInteract={news.team?.id === user?.teamId}
+                    onInteract={handleInteraction}
+                  />
+                );
+              });
+            })()
           ) : (
             <div className="text-center py-20">
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">

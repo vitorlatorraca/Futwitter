@@ -35,7 +35,7 @@ function ProtectedRoute({ component: Component }: { component: () => JSX.Element
     return <Redirect to="/login" />;
   }
 
-  // Check if user has selected a team
+  // Check if user has selected a teams
   if (!user.teamId && window.location.pathname !== '/selecionar-time') {
     return <Redirect to="/selecionar-time" />;
   }

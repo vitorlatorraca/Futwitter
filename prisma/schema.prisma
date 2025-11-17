@@ -1,0 +1,312 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserType {
+  FAN
+  JOURNALIST
+  ADMIN
+}
+
+enum PlayerPosition {
+  GOALKEEPER
+  DEFENDER
+  MIDFIELDER
+  FORWARD
+}
+
+enum NewsCategory {
+  NEWS
+  ANALYSIS
+  BACKSTAGE
+  MARKET
+}
+
+enum InteractionType {
+  LIKE
+  DISLIKE
+}
+
+enum JournalistStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  password     String
+  userType     UserType @default(FAN)
+  teamId       String?
+  isInfluencer Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  team        Team?            @relation(fields: [teamId], references: [id])
+  journalist  Journalist?
+  newsItems   News[]           @relation("InfluencerNews")
+  interactions NewsInteraction[]
+  ratings     PlayerRating[]
+  comments    Comment[]
+  badges      UserBadge[]
+  influencerRequest InfluencerRequest?
+
+  @@index([email])
+  @@index([teamId])
+}
+
+model Journalist {
+  id               String          @id @default(uuid())
+  userId           String          @unique
+  organization     String
+  professionalId   String
+  portfolioUrl     String?
+  status           JournalistStatus @default(PENDING)
+  verificationDate DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  news  News[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Team {
+  id              String   @id
+  name            String   @unique
+  shortName       String
+  logoUrl         String
+  primaryColor    String
+  secondaryColor  String
+  currentPosition Int?
+  points          Int      @default(0)
+  wins            Int      @default(0)
+  draws           Int      @default(0)
+  losses          Int      @default(0)
+  goalsFor        Int      @default(0)
+  goalsAgainst    Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users    User[]
+  players  Player[]
+  news     News[]
+  matches  Match[]
+  transfers Transfer[]
+
+  @@index([name])
+}
+
+model Player {
+  id            String         @id @default(uuid())
+  teamId        String
+  name          String
+  photoUrl      String?
+  position      PlayerPosition
+  jerseyNumber  Int
+  birthDate     DateTime?
+  nationality   String?
+  sofascoreRating Float?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  team              Team            @relation(fields: [teamId], references: [id])
+  ratings           PlayerRating[]
+  matchParticipations MatchPlayer[]
+
+  @@index([teamId])
+}
+
+model Match {
+  id              String   @id @default(uuid())
+  teamId          String
+  opponent        String
+  opponentLogoUrl String?
+  isHomeMatch     Boolean
+  teamScore       Int?
+  opponentScore   Int?
+  matchDate       DateTime
+  stadium         String?
+  championshipRound Int?
+  status          String   @default("SCHEDULED")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  team                Team            @relation(fields: [teamId], references: [id])
+  playerParticipations MatchPlayer[]
+  playerRatings       PlayerRating[]
+
+  @@index([teamId])
+  @@index([matchDate])
+}
+
+model MatchPlayer {
+  id            String   @id @default(uuid())
+  matchId       String
+  playerId      String
+  participated Boolean  @default(true)
+  wasStarter    Boolean  @default(false)
+  minutesPlayed Int?
+  createdAt     DateTime @default(now())
+
+  match  Match  @relation(fields: [matchId], references: [id])
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@index([matchId])
+  @@index([playerId])
+}
+
+model News {
+  id            String      @id @default(uuid())
+  journalistId String?
+  userId        String?     @relation("InfluencerNews", fields: [userId], references: [id])
+  teamId        String
+  title         String
+  content       String
+  imageUrl      String?
+  category      NewsCategory @default(NEWS)
+  likesCount    Int         @default(0)
+  dislikesCount Int         @default(0)
+  isPublished   Boolean     @default(true)
+  publishedAt   DateTime    @default(now())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  journalist  Journalist?      @relation(fields: [journalistId], references: [id])
+  user        User?           @relation("InfluencerNews")
+  team        Team            @relation(fields: [teamId], references: [id])
+  interactions NewsInteraction[]
+
+  @@index([teamId])
+  @@index([journalistId])
+  @@index([userId])
+  @@index([publishedAt])
+}
+
+model NewsInteraction {
+  id             String         @id @default(uuid())
+  userId         String
+  newsId         String
+  interactionType InteractionType
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  news News @relation(fields: [newsId], references: [id])
+
+  @@unique([userId, newsId])
+  @@index([newsId])
+  @@index([userId])
+}
+
+model PlayerRating {
+  id        String   @id @default(uuid())
+  userId    String
+  playerId  String
+  matchId   String
+  rating    Float
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id])
+  player Player @relation(fields: [playerId], references: [id])
+  match  Match  @relation(fields: [matchId], references: [id])
+
+  @@unique([userId, playerId, matchId])
+  @@index([playerId])
+  @@index([matchId])
+}
+
+model Comment {
+  id         String   @id @default(uuid())
+  userId     String
+  content    String
+  isApproved Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  icon        String
+  condition   String
+  threshold   Int
+  createdAt   DateTime @default(now())
+
+  userBadges UserBadge[]
+
+  @@index([condition])
+}
+
+model UserBadge {
+  id       String   @id @default(uuid())
+  userId  String
+  badgeId String
+  earnedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+
+  @@unique([userId, badgeId])
+  @@index([userId])
+}
+
+model Transfer {
+  id             String   @id @default(uuid())
+  teamId         String
+  playerName     String
+  playerPhotoUrl String?
+  fromTeam       String?
+  fromTeamLogoUrl String?
+  toTeam         String?
+  toTeamLogoUrl  String?
+  transferType   String
+  transferFee    String?
+  transferDate   DateTime
+  season         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@index([teamId])
+  @@index([transferDate])
+}
+
+model InfluencerRequest {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  reason     String?
+  status     String   @default("PENDING")
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+

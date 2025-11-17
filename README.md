@@ -1,79 +1,82 @@
 # ⚽ Brasileirão DataFlow
 
-Plataforma social para fãs do futebol brasileiro (Brasileirão) interagirem com seus times favoritos, avaliar jogadores, ler jornalismo exclusivo e se conectar com outros torcedores.
+Social platform for Brazilian football (Brasileirão) fans to interact with their favorite teams, rate players, read exclusive journalism, and connect with other supporters.
 
-## 🚀 Início Rápido
+## 🚀 Quick Start
 
-### Comando para rodar o projeto localmente:
+### Command to run the project locally:
 
 ```bash
 npm run dev
 ```
 
-> **Nota:** No Windows (CMD), use `npm run dev:win`
+> **Note:** On Windows (CMD), use `npm run dev:win`
 
-O servidor estará disponível em **http://localhost:5000**
+The server will be available at **http://localhost:5000**
 
 ---
 
-## 📋 Pré-requisitos
+## 📋 Prerequisites
 
-Antes de começar, certifique-se de ter instalado:
+Before starting, make sure you have installed:
 
-- **Node.js** (versão 18 ou superior) - [Download aqui](https://nodejs.org/)
-- **npm** (vem com o Node.js)
-- **PostgreSQL** - Você pode usar:
-  - [Neon](https://neon.tech) (recomendado - banco PostgreSQL serverless gratuito)
-  - PostgreSQL local
-  - Qualquer serviço de PostgreSQL
+- **Node.js** (version 18 or higher) - [Download here](https://nodejs.org/)
+- **npm** (comes with Node.js)
+- **PostgreSQL** - You can use:
+  - [Neon](https://neon.tech) (recommended - free serverless PostgreSQL database)
+  - Local PostgreSQL
+  - Any PostgreSQL service
 
-## 🔧 Instalação e Configuração
+## 🔧 Installation and Configuration
 
-### 1. Clone o repositório
+### 1. Clone the repository
 
 ```bash
-git clone <url-do-repositorio>
+git clone <repository-url>
 cd BrasileiraoDataFlow
 ```
 
-### 2. Instale as dependências
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure as variáveis de ambiente
+### 3. Configure environment variables
 
-Crie um arquivo `.env` na raiz do projeto:
+Create a `.env` file in the project root:
 
 ```env
-DATABASE_URL=postgresql://usuario:senha@host:porta/database
+DATABASE_URL=postgresql://user:password@host:port/database
 PORT=5000
+SESSION_SECRET=your-secret-key-here-change-in-production
 ```
 
-**Exemplos:**
+**Examples:**
 
-**Neon (recomendado):**
+**Neon (recommended):**
 ```env
-DATABASE_URL=postgresql://usuario:senha@ep-xxx-xxx.region.aws.neon.tech/database?sslmode=require
+DATABASE_URL=postgresql://user:password@ep-xxx-xxx.region.aws.neon.tech/database?sslmode=require
 PORT=5000
+SESSION_SECRET=your-secret-key-here
 ```
 
-**PostgreSQL local:**
+**Local PostgreSQL:**
 ```env
-DATABASE_URL=postgresql://postgres:senha@localhost:5432/brasileirao
+DATABASE_URL=postgresql://postgres:password@localhost:5432/brasileirao
 PORT=5000
+SESSION_SECRET=your-secret-key-here
 ```
 
-### 4. Configure o banco de dados
+### 4. Configure the database
 
-Execute as migrações do banco de dados:
+Run database migrations:
 
 ```bash
 npm run db:push
 ```
 
-### 5. Inicie o servidor de desenvolvimento
+### 5. Start the development server
 
 **Windows (PowerShell):**
 ```bash
@@ -90,118 +93,118 @@ npm run dev:win
 npm run dev
 ```
 
-Acesse: **http://localhost:5000**
+Access: **http://localhost:5000**
 
 ---
 
-## 📝 Scripts Disponíveis
+## 📝 Available Scripts
 
-| Comando | Descrição |
-|---------|-----------|
-| `npm run dev` | Inicia o servidor de desenvolvimento (com hot-reload) |
-| `npm run dev:win` | Versão para Windows (CMD) |
-| `npm run build` | Cria build de produção |
-| `npm run start` | Inicia o servidor em modo produção (requer build primeiro) |
-| `npm run check` | Verifica erros de TypeScript |
-| `npm run db:push` | Aplica as migrações do banco de dados |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Starts the development server (with hot-reload) |
+| `npm run dev:win` | Version for Windows (CMD) |
+| `npm run build` | Creates production build |
+| `npm run start` | Starts the server in production mode (requires build first) |
+| `npm run check` | Checks TypeScript errors |
+| `npm run db:push` | Applies database migrations |
 
 ---
 
-## 🗄️ Estrutura do Projeto
+## 🗄️ Project Structure
 
 ```
 BrasileiraoDataFlow/
-├── client/              # Frontend React
+├── client/              # React Frontend
 │   ├── src/
-│   │   ├── pages/       # Páginas da aplicação
-│   │   ├── components/  # Componentes React
-│   │   └── lib/         # Utilitários e contextos
+│   │   ├── pages/       # Application pages
+│   │   ├── components/  # React components
+│   │   └── lib/         # Utilities and contexts
 │   └── index.html
-├── server/              # Backend Express
-│   ├── index.ts         # Servidor principal
-│   ├── routes.ts        # Rotas da API
-│   ├── db.ts            # Configuração do banco
-│   └── storage.ts       # Camada de acesso aos dados
-├── shared/              # Código compartilhado
-│   └── schema.ts        # Schema do banco (Drizzle)
-├── package.json         # Dependências e scripts
-└── vite.config.ts       # Configuração do Vite
+├── server/              # Express Backend
+│   ├── index.ts         # Main server
+│   ├── routes.ts        # API routes
+│   ├── db.ts            # Database configuration
+│   └── storage.ts       # Data access layer
+├── shared/              # Shared code
+│   └── schema.ts        # Database schema (Drizzle)
+├── package.json         # Dependencies and scripts
+└── vite.config.ts       # Vite configuration
 ```
 
 ---
 
-## 🛠️ Tecnologias Utilizadas
+## 🛠️ Technologies Used
 
 ### Frontend
-- **React 18** - Biblioteca JavaScript para interfaces
-- **TypeScript** - Superset JavaScript com tipagem estática
-- **Vite** - Build tool e dev server
-- **Tailwind CSS** - Framework CSS utility-first
-- **Shadcn/ui** - Componentes UI baseados em Radix UI
-- **Wouter** - Roteamento cliente-side
-- **TanStack Query** - Gerenciamento de estado do servidor
+- **React 18** - JavaScript library for interfaces
+- **TypeScript** - JavaScript superset with static typing
+- **Vite** - Build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **Shadcn/ui** - UI components based on Radix UI
+- **Wouter** - Client-side routing
+- **TanStack Query** - Server state management
 
 ### Backend
-- **Express.js** - Framework web para Node.js
-- **TypeScript** - Tipagem estática
-- **Passport.js** - Autenticação
-- **Bcrypt** - Hash de senhas
+- **Express.js** - Web framework for Node.js
+- **TypeScript** - Static typing
+- **Passport.js** - Authentication
+- **Bcrypt** - Password hashing
 
-### Banco de Dados
-- **PostgreSQL** - Banco de dados relacional
-- **Drizzle ORM** - ORM type-safe
-- **Neon** - PostgreSQL serverless (opcional)
-
----
-
-## 🔧 Solução de Problemas
-
-### Erro: "DATABASE_URL must be set"
-- Certifique-se de ter criado o arquivo `.env` na raiz do projeto
-- Verifique se a URL do banco está correta
-
-### Erro ao rodar `npm run dev` no Windows
-- Use `npm run dev:win` no CMD
-- Ou certifique-se de que `cross-env` está instalado: `npm install --save-dev cross-env`
-
-### Porta já em uso
-- Altere a porta no arquivo `.env`: `PORT=3000`
-- Ou pare o processo que está usando a porta 5000
-
-### Erro de conexão com o banco
-- Verifique se o banco de dados está rodando
-- Confirme se a URL de conexão está correta
-- Para Neon, certifique-se de usar `?sslmode=require` na URL
+### Database
+- **PostgreSQL** - Relational database
+- **Drizzle ORM** - Type-safe ORM
+- **Neon** - Serverless PostgreSQL (optional)
 
 ---
 
-## 📚 Funcionalidades
+## 🔧 Troubleshooting
 
-- ✅ Autenticação de usuários (cadastro e login)
-- ✅ Seleção de time favorito
-- ✅ Dashboard personalizado
-- ✅ Avaliação de jogadores
-- ✅ Notícias e jornalismo exclusivo
-- ✅ Perfil de usuário
-- ✅ Sistema de roles (FAN, JOURNALIST, ADMIN)
+### Error: "DATABASE_URL must be set"
+- Make sure you created the `.env` file in the project root
+- Verify that the database URL is correct
 
----
+### Error running `npm run dev` on Windows
+- Use `npm run dev:win` in CMD
+- Or make sure `cross-env` is installed: `npm install --save-dev cross-env`
 
-## 🎯 Próximos Passos
+### Port already in use
+- Change the port in the `.env` file: `PORT=3000`
+- Or stop the process using port 5000
 
-Após rodar o projeto:
-
-1. Acesse http://localhost:5000
-2. Crie uma conta ou faça login
-3. Selecione seu time favorito
-4. Explore o dashboard e as funcionalidades
+### Database connection error
+- Verify that the database is running
+- Confirm that the connection URL is correct
+- For Neon, make sure to use `?sslmode=require` in the URL
 
 ---
 
-## 📄 Licença
+## 📚 Features
+
+- ✅ User authentication (signup and login)
+- ✅ Favorite team selection
+- ✅ Personalized dashboard
+- ✅ Player ratings
+- ✅ News and exclusive journalism
+- ✅ User profile
+- ✅ Role system (FAN, JOURNALIST, ADMIN, INFLUENCER)
+
+---
+
+## 🎯 Next Steps
+
+After running the project:
+
+1. Access http://localhost:5000
+2. Create an account or login
+3. Select your favorite team
+4. Explore the dashboard and features
+
+---
+
+## 📄 License
 
 MIT
 
 ---
 
-Desenvolvido com ⚽ para os fãs do Brasileirão!
+Developed with ⚽ for Brasileirão fans!

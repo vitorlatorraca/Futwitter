@@ -10,8 +10,9 @@ import type { News } from '@shared/schema';
 
 interface NewsCardProps {
   news: News & {
-    team: { name: string; logoUrl: string; primaryColor: string };
-    journalist: { user: { name: string } };
+    team: { id?: string; name: string; logoUrl: string; primaryColor: string };
+    journalist?: { user: { name: string; avatarUrl?: string | null } } | null;
+    author?: { name: string; avatarUrl?: string | null } | null;
     userInteraction?: 'LIKE' | 'DISLIKE' | null;
   };
   canInteract: boolean;
@@ -26,6 +27,12 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
+  // Safety check
+  if (!news || !news.team) {
+    console.error('[NewsCard] Invalid news data:', news);
+    return null;
+  }
+
   const categoryLabel = CATEGORY_LABELS[news.category] || news.category;
 
   const InteractionButton = ({ type, count, icon: Icon }: { type: 'LIKE' | 'DISLIKE', count: number, icon: any }) => {
@@ -72,20 +79,43 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
       {/* Gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
       
-      <CardHeader className="p-6 pb-4 relative z-10">
-        <div className="flex items-center gap-3">
-          <img
-            src={news.team.logoUrl}
-            alt={`Escudo ${news.team.name}`}
-            className="w-10 h-10 rounded-full object-cover border-2 border-white/10"
-          />
+      <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4 relative z-10">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Avatar do autor - prioriza author para influencers, depois journalist */}
+          {(() => {
+            const authorName = news.author?.name || news.journalist?.user?.name || 'Autor desconhecido';
+            const authorAvatarUrl = news.author?.avatarUrl || news.journalist?.user?.avatarUrl;
+            return (
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white/10 overflow-hidden bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center flex-shrink-0" key={`avatar-${authorAvatarUrl ? authorAvatarUrl.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '') : 'none'}`}>
+                {authorAvatarUrl ? (
+                  <img 
+                    src={authorAvatarUrl}
+                    alt={authorName}
+                    className="w-full h-full object-cover"
+                    onLoad={() => {
+                      console.log('✅ NewsCard - Avatar carregado:', authorName);
+                    }}
+                    onError={(e) => {
+                      console.error('❌ NewsCard - Erro ao carregar avatar:', authorAvatarUrl?.substring(0, 50));
+                      e.currentTarget.style.display = 'none';
+                    }}
+                    key={`img-${authorAvatarUrl?.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '') || 'none'}`}
+                  />
+                ) : (
+                  <span className="text-white text-xs sm:text-sm font-medium">
+                    {authorName.slice(0, 2).toUpperCase()}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm text-white truncate">
-              {news.journalist?.user?.name || (news as any).author?.name || 'Autor desconhecido'}
+            <p className="font-medium text-xs sm:text-sm text-white truncate">
+              {news.author?.name || news.journalist?.user?.name || 'Autor desconhecido'}
             </p>
             <p className="text-xs text-gray-400 truncate font-light">{news.team.name}</p>
           </div>
-          <Badge className="bg-white/10 border-white/10 text-white/90 font-light text-xs">{categoryLabel}</Badge>
+          <Badge className="bg-white/10 border-white/10 text-white/90 font-light text-xs flex-shrink-0">{categoryLabel}</Badge>
         </div>
       </CardHeader>
 
@@ -100,12 +130,12 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
         </div>
       )}
 
-      <CardContent className="p-6 space-y-4 relative z-10">
+      <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4 relative z-10">
         <div>
-          <h3 className="font-light text-2xl text-white mb-3 leading-tight tracking-tight">
+          <h3 className="font-light text-lg sm:text-2xl text-white mb-2 sm:mb-3 leading-tight tracking-tight">
             {news.title}
           </h3>
-          <p className="text-gray-300 leading-relaxed line-clamp-3 font-light">
+          <p className="text-sm sm:text-base text-gray-300 leading-relaxed line-clamp-3 font-light">
             {news.content}
           </p>
         </div>
@@ -115,7 +145,7 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
         </div>
       </CardContent>
 
-      <CardFooter className="p-6 pt-0 flex gap-2 relative z-10">
+      <CardFooter className="p-4 sm:p-6 pt-0 flex gap-2 relative z-10">
         <InteractionButton type="LIKE" count={news.likesCount} icon={ThumbsUp} />
         <InteractionButton type="DISLIKE" count={news.dislikesCount} icon={ThumbsDown} />
       </CardFooter>

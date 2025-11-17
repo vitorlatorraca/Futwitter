@@ -2,11 +2,10 @@ import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LanguageSelector } from '@/components/language-selector';
 import { Menu, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -15,6 +14,17 @@ export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!user) return null;
+  
+  // Debug: verificar se avatarUrl está presente
+  useEffect(() => {
+    console.log('📊 Navbar renderizado - User completo:', user);
+    if (user && user.avatarUrl) {
+      console.log('✅ Navbar - User avatarUrl presente:', user.avatarUrl.substring(0, 80) + '...');
+      console.log('✅ Navbar - Avatar URL length:', user.avatarUrl.length);
+    } else {
+      console.log('❌ Navbar - User avatarUrl ausente:', user?.avatarUrl || 'null/undefined');
+    }
+  }, [user, user?.avatarUrl]);
 
   const navLinks = [
     { label: t('nav.feed'), href: '/dashboard', testId: 'link-feed' },
@@ -65,11 +75,28 @@ export function Navbar() {
         <div className="flex items-center gap-3">
           <LanguageSelector />
           <div className="hidden md:flex items-center gap-2">
-            <Avatar className="h-8 w-8 border border-white/10">
-              <AvatarFallback className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white text-sm font-medium">
-                {user.name.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <div className="h-8 w-8 rounded-full border border-white/10 overflow-hidden bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center" key={`avatar-${user.avatarUrl ? user.avatarUrl.substring(0, 100).replace(/[^a-zA-Z0-9]/g, '') : 'none'}`}>
+              {user.avatarUrl ? (
+                <img 
+                  src={user.avatarUrl} 
+                  alt={user.name}
+                  className="w-full h-full object-cover"
+                  onLoad={() => {
+                    console.log('✅ Avatar imagem carregada com sucesso!');
+                  }}
+                  onError={(e) => {
+                    console.error('❌ Erro ao carregar avatar:', user.avatarUrl?.substring(0, 100));
+                    console.error('❌ Erro completo:', e);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                  key={`img-${user.avatarUrl?.substring(0, 50) || 'none'}`}
+                />
+              ) : (
+                <span className="text-white text-sm font-medium">
+                  {user.name.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+            </div>
             <span className="text-sm font-light text-white/80 hidden lg:inline">{user.name}</span>
           </div>
           <Button
@@ -92,11 +119,27 @@ export function Navbar() {
             <SheetContent side="right" className="w-64 bg-[#0a0a0a] border-white/10">
               <div className="flex flex-col gap-4 mt-8">
                 <div className="flex items-center gap-3 pb-4 border-b border-white/10">
-                  <Avatar className="h-10 w-10 border border-white/10">
-                    <AvatarFallback className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white">
-                      {user.name.slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="h-10 w-10 rounded-full border border-white/10 overflow-hidden bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center" key={`avatar-mobile-${user.avatarUrl ? user.avatarUrl.substring(0, 100).replace(/[^a-zA-Z0-9]/g, '') : 'none'}`}>
+                    {user.avatarUrl ? (
+                      <img 
+                        src={user.avatarUrl} 
+                        alt={user.name}
+                        className="w-full h-full object-cover"
+                        onLoad={() => {
+                          console.log('✅ Avatar mobile imagem carregada com sucesso!');
+                        }}
+                        onError={(e) => {
+                          console.error('❌ Erro ao carregar avatar mobile:', user.avatarUrl?.substring(0, 100));
+                          e.currentTarget.style.display = 'none';
+                        }}
+                        key={`img-mobile-${user.avatarUrl?.substring(0, 50) || 'none'}`}
+                      />
+                    ) : (
+                      <span className="text-white text-sm font-medium">
+                        {user.name.slice(0, 2).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
                   <div>
                     <p className="font-medium text-sm text-white">{user.name}</p>
                     <p className="text-xs text-gray-400 font-light">{user.email}</p>

@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq, and, desc, or, sql, isNotNull } from "drizzle-orm";
+import { eq, and, desc, or, sql, isNotNull, inArray } from "drizzle-orm";
 import {
   users,
   journalists,
@@ -67,7 +67,7 @@ export interface IStorage {
   createMatch(match: InsertMatch): Promise<Match>;
 
   // News
-  getAllNews(teamId?: string): Promise<any[]>;
+  getAllNews(teamId?: string, limit?: number, offset?: number): Promise<any[]>;
   getNewsByJournalist(journalistId: string): Promise<News[]>;
   getNewsByUser(userId: string): Promise<News[]>;
   createNews(news: InsertNews): Promise<News>;
@@ -307,46 +307,90 @@ export class DatabaseStorage implements IStorage {
   }
 
   // News
-  async getAllNews(teamId?: string): Promise<any[]> {
+  async getAllNews(teamId?: string, limit: number = 50, offset: number = 0): Promise<any[]> {
     try {
       // Construir condições base
       const baseConditions = teamId 
         ? and(eq(news.isPublished, true), eq(news.teamId, teamId))
         : eq(news.isPublished, true);
 
-      // Buscar todas as notícias primeiro
+      // Buscar notícias com paginação
       const allNewsItems = await db
         .select()
         .from(news)
         .where(baseConditions)
-        .orderBy(desc(news.publishedAt));
+        .orderBy(desc(news.publishedAt))
+        .limit(limit)
+        .offset(offset);
 
-      // Para cada notícia, buscar os dados relacionados
-      const enrichedNews = await Promise.all(
-        allNewsItems.map(async (newsItem) => {
-          // Buscar dados do time
-          const team = await this.getTeam(newsItem.teamId);
-          if (!team) return null;
+      if (allNewsItems.length === 0) {
+        return [];
+      }
 
-          let authorName = 'Autor desconhecido';
+      // OTIMIZAÇÃO: Buscar todos os dados relacionados em batch (evita N+1)
+      // 1. Coletar todos os IDs únicos
+      const teamIds = [...new Set(allNewsItems.map(n => n.teamId))];
+      const journalistIds = [...new Set(allNewsItems.map(n => n.journalistId).filter(Boolean))];
+      const userIds = [...new Set(allNewsItems.map(n => n.userId).filter(Boolean))];
+
+      // 2. Buscar todos os times de uma vez (batch query - evita N+1)
+      const allTeamsMap = new Map<string, any>();
+      if (teamIds.length > 0) {
+        const allTeams = await db
+          .select()
+          .from(teams)
+          .where(inArray(teams.id, teamIds));
+        allTeams.forEach(team => allTeamsMap.set(team.id, team));
+      }
+
+      // 3. Buscar todos os jornalistas de uma vez (batch query)
+      const journalistsMap = new Map<string, any>();
+      const journalistUserIds: string[] = [];
+      if (journalistIds.length > 0) {
+        const allJournalists = await db
+          .select()
+          .from(journalists)
+          .where(inArray(journalists.id, journalistIds));
+        allJournalists.forEach(j => {
+          journalistsMap.set(j.id, j);
+          journalistUserIds.push(j.userId);
+        });
+      }
+
+      // 4. Buscar todos os usuários de uma vez (batch query - jornalistas + influencers)
+      const allUserIds = [...new Set([...journalistUserIds, ...userIds])];
+      const usersMap = new Map<string, any>();
+      if (allUserIds.length > 0) {
+        const allUsers = await db
+          .select()
+          .from(users)
+          .where(inArray(users.id, allUserIds));
+        allUsers.forEach(user => usersMap.set(user.id, user));
+      }
+
+      // 5. Construir resultado enriquecido
+      const enrichedNews = allNewsItems.map((newsItem) => {
+        try {
+          const team = allTeamsMap.get(newsItem.teamId);
+          if (!team) {
+            return null;
+          }
+
+          let authorName = 'Unknown Author';
           let journalistData = null;
 
           // Se tem journalistId, buscar dados do jornalista
           if (newsItem.journalistId) {
-            const journalist = await db
-              .select()
-              .from(journalists)
-              .where(eq(journalists.id, newsItem.journalistId))
-              .limit(1);
-            
-            if (journalist.length > 0) {
-              const journalistUser = await this.getUser(journalist[0].userId);
+            const journalist = journalistsMap.get(newsItem.journalistId);
+            if (journalist) {
+              const journalistUser = usersMap.get(journalist.userId);
               if (journalistUser) {
                 authorName = journalistUser.name;
                 journalistData = {
-                  id: journalist[0].id,
+                  id: journalist.id,
                   user: {
                     name: journalistUser.name,
+                    avatarUrl: journalistUser.avatarUrl,
                   },
                 };
               }
@@ -354,12 +398,13 @@ export class DatabaseStorage implements IStorage {
           }
           // Se tem userId (influencer), buscar dados do usuário
           else if (newsItem.userId) {
-            const influencerUser = await this.getUser(newsItem.userId);
+            const influencerUser = usersMap.get(newsItem.userId);
             if (influencerUser) {
               authorName = influencerUser.name;
               journalistData = {
                 user: {
                   name: influencerUser.name,
+                  avatarUrl: influencerUser.avatarUrl,
                 },
               };
             }
@@ -388,14 +433,20 @@ export class DatabaseStorage implements IStorage {
               secondaryColor: team.secondaryColor,
             },
             journalist: journalistData,
-            author: newsItem.userId ? { name: authorName } : null,
+            author: newsItem.userId ? { 
+              name: authorName,
+              avatarUrl: usersMap.get(newsItem.userId)?.avatarUrl || null
+            } : null,
           };
-        })
-      );
+        } catch (itemError: any) {
+          console.error(`[getAllNews] Error processing news item ${newsItem.id}:`, itemError);
+          return null;
+        }
+      });
 
       // Filtrar nulls e retornar
       return enrichedNews.filter((item): item is NonNullable<typeof item> => item !== null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in getAllNews:', error);
       throw error;
     }
@@ -418,7 +469,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNews(insertNews: InsertNews): Promise<News> {
-    const [newsItem] = await db.insert(news).values(insertNews).returning();
+    console.log(`[createNews] Creating news with data:`, { 
+      teamId: insertNews.teamId, 
+      userId: (insertNews as any).userId, 
+      journalistId: (insertNews as any).journalistId,
+      title: insertNews.title,
+      isPublished: (insertNews as any).isPublished 
+    });
+    const [newsItem] = await db.insert(news).values({
+      ...insertNews,
+      isPublished: (insertNews as any).isPublished !== undefined ? (insertNews as any).isPublished : true,
+    }).returning();
+    console.log(`[createNews] News created:`, { id: newsItem.id, teamId: newsItem.teamId, userId: newsItem.userId, isPublished: newsItem.isPublished });
     return newsItem;
   }
 

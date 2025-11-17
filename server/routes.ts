@@ -96,7 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Award signup badge
       await storage.checkAndAwardBadges(user.id);
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Registration error:', error);
       res.status(400).json({ message: error.message || 'Erro ao criar conta' });
@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.userId = user.id;
       req.session.userType = user.userType;
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Login error:', error);
       console.error('Error stack:', error.stack);
@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer });
+      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Get me error:', error);
       console.error('Error stack:', error.stack);
@@ -285,18 +285,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { teamId, filter } = req.query;
       
+      console.log(`[GET /api/news] Request received - filter: ${filter}, teamId: ${teamId}, sessionUserId: ${req.session.userId}`);
+      
       let filterTeamId: string | undefined;
       
       if (filter === 'my-team' && req.session.userId) {
         const user = await storage.getUser(req.session.userId);
         filterTeamId = user?.teamId || undefined;
+        console.log(`[GET /api/news] my-team filter - user teamId: ${user?.teamId}`);
       } else if (filter === 'all') {
         filterTeamId = undefined;
+        console.log(`[GET /api/news] all filter - no teamId filter`);
       } else if (teamId) {
         filterTeamId = teamId as string;
+        console.log(`[GET /api/news] specific team filter - teamId: ${teamId}`);
       }
 
-      const newsItems = await storage.getAllNews(filterTeamId);
+      // Paginação
+      const limit = parseInt(req.query.limit as string) || 50;
+      const offset = parseInt(req.query.offset as string) || 0;
+
+      const newsItems = await storage.getAllNews(filterTeamId, limit, offset);
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[GET /api/news] Filter: ${filter}, teamId: ${filterTeamId}, Found ${newsItems.length} items (limit: ${limit}, offset: ${offset})`);
+      }
 
       // Add user interaction info if logged in
       if (req.session.userId) {
@@ -307,9 +320,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       res.json(newsItems);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get news error:', error);
-      res.status(500).json({ message: 'Erro ao buscar notícias' });
+      console.error('Error stack:', error?.stack);
+      console.error('Error message:', error?.message);
+      res.status(500).json({ 
+        message: 'Erro ao buscar notícias',
+        error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+      });
     }
   });
 
@@ -368,11 +387,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.status(403).json({ message: 'Influencers só podem postar notícias para o seu próprio time' });
         }
         // Criar notícia com userId
+        console.log(`[POST /api/news] Creating influencer news - userId: ${user.id}, teamId: ${user.teamId}, title: ${newsData.title}`);
         const newsItem = await storage.createNews({
           ...newsData,
           userId: user.id,
           teamId: user.teamId!, // Forçar o time do influencer
         });
+        console.log(`[POST /api/news] News created successfully - id: ${newsItem.id}, teamId: ${newsItem.teamId}`);
         return res.status(201).json(newsItem);
       }
 
@@ -528,6 +549,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Change password error:', error);
       res.status(500).json({ message: 'Erro ao alterar senha' });
+    }
+  });
+
+  app.put('/api/profile/avatar', requireAuth, async (req, res) => {
+    try {
+      const { avatarUrl } = req.body;
+      const userId = req.session.userId!;
+
+      if (!avatarUrl || typeof avatarUrl !== 'string') {
+        return res.status(400).json({ message: 'URL do avatar é obrigatória' });
+      }
+
+      // Validate URL format (base64 data URL or http/https URL)
+      const isBase64 = avatarUrl.startsWith('data:image/');
+      const isHttpUrl = avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://');
+      
+      if (!isBase64 && !isHttpUrl) {
+        return res.status(400).json({ message: 'Formato de URL inválido' });
+      }
+
+      // Validate base64 image size (max 2MB)
+      if (isBase64) {
+        const base64Data = avatarUrl.split(',')[1];
+        const sizeInBytes = (base64Data.length * 3) / 4;
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+        
+        if (sizeInMB > 2) {
+          return res.status(400).json({ message: 'Imagem muito grande. Tamanho máximo: 2MB' });
+        }
+      }
+
+      const updatedUser = await storage.updateUser(userId, { avatarUrl });
+
+      if (!updatedUser) {
+        return res.status(404).json({ message: 'Usuário não encontrado' });
+      }
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Update avatar error:', error);
+      res.status(500).json({ message: 'Erro ao atualizar avatar' });
     }
   });
 
