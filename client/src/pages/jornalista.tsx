@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/navbar';
@@ -25,9 +25,11 @@ export default function JornalistaPage() {
   const [formData, setFormData] = useState({
     teamId: user?.isInfluencer && user?.teamId ? user.teamId : '',
     category: 'NEWS',
+    contentType: 'TEXT' as 'TEXT' | 'VIDEO',
     title: '',
     content: '',
     imageUrl: '',
+    videoUrl: '',
   });
 
   const { data: myNews } = useQuery<News[]>({
@@ -75,9 +77,11 @@ export default function JornalistaPage() {
     setFormData({
       teamId: user?.isInfluencer && user?.teamId ? user.teamId : '',
       category: 'NEWS',
+      contentType: 'TEXT' as 'TEXT' | 'VIDEO',
       title: '',
       content: '',
       imageUrl: '',
+      videoUrl: '',
     });
     setIsCreating(false);
     setEditingNews(null);
@@ -100,8 +104,41 @@ export default function JornalistaPage() {
       return;
     }
 
-    createMutation.mutate(submitData);
+    // Validação específica para vídeo
+    if (submitData.contentType === 'VIDEO' && !submitData.videoUrl) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Para notícias de vídeo, é necessário fornecer uma URL de vídeo',
+      });
+      return;
+    }
+
+    // Limpar campos não utilizados baseado no tipo
+    const finalData = {
+      ...submitData,
+      contentType: submitData.contentType,
+      videoUrl: submitData.contentType === 'VIDEO' ? submitData.videoUrl : undefined,
+      imageUrl: submitData.contentType === 'TEXT' ? submitData.imageUrl : undefined,
+    };
+
+    createMutation.mutate(finalData);
   };
+
+  // Load news data when editing
+  useEffect(() => {
+    if (editingNews) {
+      setFormData({
+        teamId: editingNews.teamId || '',
+        category: editingNews.category || 'NEWS',
+        contentType: ((editingNews as any).contentType || 'TEXT') as 'TEXT' | 'VIDEO',
+        title: editingNews.title || '',
+        content: editingNews.content || '',
+        imageUrl: editingNews.imageUrl || '',
+        videoUrl: (editingNews as any).videoUrl || '',
+      });
+    }
+  }, [editingNews]);
 
   const categoryLabels: Record<string, string> = {
     NEWS: 'Notícia',
@@ -238,6 +275,40 @@ export default function JornalistaPage() {
                 </div>
 
                 <div className="space-y-2">
+                  <Label htmlFor="contentType" className="text-white/80 font-light">Tipo de Conteúdo *</Label>
+                  <Select 
+                    value={formData.contentType} 
+                    onValueChange={(value: 'TEXT' | 'VIDEO') => setFormData({ ...formData, contentType: value, videoUrl: value === 'VIDEO' ? formData.videoUrl : '', imageUrl: value === 'TEXT' ? formData.imageUrl : '' })}
+                  >
+                    <SelectTrigger 
+                      data-testid="select-content-type"
+                      className="bg-white/5 border-white/10 text-white hover:bg-white/10"
+                    >
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a1a1a] border-white/10">
+                      <SelectItem 
+                        value="TEXT"
+                        className="text-white hover:bg-white/10 focus:bg-white/10"
+                      >
+                        📝 Notícia de Texto
+                      </SelectItem>
+                      <SelectItem 
+                        value="VIDEO"
+                        className="text-white hover:bg-white/10 focus:bg-white/10"
+                      >
+                        🎥 Vídeo (Tipo TikTok)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-400 font-light">
+                    {formData.contentType === 'VIDEO' 
+                      ? 'Escolha vídeo para criar conteúdo tipo TikTok (formato vertical)' 
+                      : 'Escolha texto para notícias tradicionais com imagem'}
+                  </p>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="title" className="text-white/80 font-light">Título * (máx. 200 caracteres)</Label>
                   <Input
                     id="title"
@@ -270,18 +341,36 @@ export default function JornalistaPage() {
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="imageUrl" className="text-white/80 font-light">URL da Imagem (opcional)</Label>
-                  <Input
-                    id="imageUrl"
-                    type="url"
-                    value={formData.imageUrl}
-                    onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                    placeholder="https://..."
-                    data-testid="input-image-url"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 font-light"
-                  />
-                </div>
+                {formData.contentType === 'TEXT' ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="imageUrl" className="text-white/80 font-light">URL da Imagem (opcional)</Label>
+                    <Input
+                      id="imageUrl"
+                      type="url"
+                      value={formData.imageUrl}
+                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+                      placeholder="https://..."
+                      data-testid="input-image-url"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 font-light"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label htmlFor="videoUrl" className="text-white/80 font-light">URL do Vídeo *</Label>
+                    <Input
+                      id="videoUrl"
+                      type="url"
+                      value={formData.videoUrl}
+                      onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                      placeholder="https://..."
+                      data-testid="input-video-url"
+                      className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-purple-500/50 font-light"
+                    />
+                    <p className="text-xs text-gray-400 font-light">
+                      Forneça uma URL direta para o arquivo de vídeo (formato MP4 recomendado, formato vertical 9:16)
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex gap-3 pt-2">
                   <Button 
@@ -323,6 +412,12 @@ export default function JornalistaPage() {
                             className="bg-purple-500/20 text-purple-300 border-purple-500/30 font-light"
                           >
                             {categoryLabels[news.category]}
+                          </Badge>
+                          <Badge 
+                            variant="outline" 
+                            className="bg-blue-500/20 text-blue-300 border-blue-500/30 font-light"
+                          >
+                            {(news as any).contentType === 'VIDEO' ? '🎥 Vídeo' : '📝 Texto'}
                           </Badge>
                           <span className="text-xs text-gray-400 font-light">
                             {news.team?.name}

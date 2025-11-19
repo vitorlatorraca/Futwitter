@@ -315,13 +315,71 @@ export class DatabaseStorage implements IStorage {
         : eq(news.isPublished, true);
 
       // Buscar notícias com paginação
-      const allNewsItems = await db
-        .select()
-        .from(news)
-        .where(baseConditions)
-        .orderBy(desc(news.publishedAt))
-        .limit(limit)
-        .offset(offset);
+      // Usar SQL direto para compatibilidade com banco que pode não ter as colunas novas
+      let allNewsItems: any[];
+      try {
+        allNewsItems = await db
+          .select()
+          .from(news)
+          .where(baseConditions)
+          .orderBy(desc(news.publishedAt))
+          .limit(limit)
+          .offset(offset);
+      } catch (error: any) {
+        // Se falhar por causa de colunas que não existem, usar SQL direto
+        if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
+          console.log('[getAllNews] Colunas novas não existem, usando query compatível...');
+          const whereClause = teamId 
+            ? sql`is_published = true AND team_id = ${teamId}`
+            : sql`is_published = true`;
+          
+          const result = await db.execute(sql`
+            SELECT 
+              id, journalist_id, user_id, team_id, title, content, image_url,
+              NULL::text as video_url,
+              'TEXT'::text as content_type,
+              category, likes_count, dislikes_count, is_published, 
+              published_at, created_at, updated_at
+            FROM news
+            WHERE ${whereClause}
+            ORDER BY published_at DESC
+            LIMIT ${limit}
+            OFFSET ${offset}
+          `);
+          
+          // Converter resultado para formato esperado (snake_case -> camelCase)
+          // Neon serverless pode retornar de formas diferentes
+          let rows: any[];
+          if (Array.isArray(result)) {
+            rows = result;
+          } else if ((result as any).rows) {
+            rows = (result as any).rows;
+          } else {
+            rows = [];
+          }
+          
+          allNewsItems = rows.map((row: any) => ({
+            id: row.id,
+            journalistId: row.journalist_id,
+            userId: row.user_id,
+            teamId: row.team_id,
+            title: row.title,
+            content: row.content,
+            imageUrl: row.image_url,
+            videoUrl: null,
+            contentType: 'TEXT',
+            category: row.category,
+            likesCount: row.likes_count,
+            dislikesCount: row.dislikes_count,
+            isPublished: row.is_published,
+            publishedAt: row.published_at,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+          }));
+        } else {
+          throw error;
+        }
+      }
 
       if (allNewsItems.length === 0) {
         return [];
@@ -418,6 +476,8 @@ export class DatabaseStorage implements IStorage {
             title: newsItem.title,
             content: newsItem.content,
             imageUrl: newsItem.imageUrl,
+            videoUrl: (newsItem as any).videoUrl || null, // Campo novo, pode não existir
+            contentType: (newsItem as any).contentType || 'TEXT', // Campo novo, default TEXT
             category: newsItem.category,
             likesCount: newsItem.likesCount,
             dislikesCount: newsItem.dislikesCount,
@@ -453,19 +513,75 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNewsByJournalist(journalistId: string): Promise<News[]> {
-    return await db
-      .select()
-      .from(news)
-      .where(eq(news.journalistId, journalistId))
-      .orderBy(desc(news.publishedAt));
+    try {
+      return await db
+        .select()
+        .from(news)
+        .where(eq(news.journalistId, journalistId))
+        .orderBy(desc(news.publishedAt));
+    } catch (error: any) {
+      if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
+        // Fallback: usar query sem colunas novas
+        const result = await db.execute(sql`
+          SELECT * FROM news 
+          WHERE journalist_id = ${journalistId}
+          ORDER BY published_at DESC
+        `);
+        const rows = Array.isArray(result) ? result : ((result as any).rows || []);
+        return rows.map((row: any) => ({
+          ...row,
+          journalistId: row.journalist_id,
+          userId: row.user_id,
+          teamId: row.team_id,
+          imageUrl: row.image_url,
+          videoUrl: null,
+          contentType: 'TEXT',
+          likesCount: row.likes_count,
+          dislikesCount: row.dislikes_count,
+          isPublished: row.is_published,
+          publishedAt: row.published_at,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+      }
+      throw error;
+    }
   }
 
   async getNewsByUser(userId: string): Promise<News[]> {
-    return await db
-      .select()
-      .from(news)
-      .where(eq(news.userId, userId))
-      .orderBy(desc(news.publishedAt));
+    try {
+      return await db
+        .select()
+        .from(news)
+        .where(eq(news.userId, userId))
+        .orderBy(desc(news.publishedAt));
+    } catch (error: any) {
+      if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
+        // Fallback: usar query sem colunas novas
+        const result = await db.execute(sql`
+          SELECT * FROM news 
+          WHERE user_id = ${userId}
+          ORDER BY published_at DESC
+        `);
+        const rows = Array.isArray(result) ? result : ((result as any).rows || []);
+        return rows.map((row: any) => ({
+          ...row,
+          journalistId: row.journalist_id,
+          userId: row.user_id,
+          teamId: row.team_id,
+          imageUrl: row.image_url,
+          videoUrl: null,
+          contentType: 'TEXT',
+          likesCount: row.likes_count,
+          dislikesCount: row.dislikes_count,
+          isPublished: row.is_published,
+          publishedAt: row.published_at,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+      }
+      throw error;
+    }
   }
 
   async createNews(insertNews: InsertNews): Promise<News> {
@@ -474,14 +590,39 @@ export class DatabaseStorage implements IStorage {
       userId: (insertNews as any).userId, 
       journalistId: (insertNews as any).journalistId,
       title: insertNews.title,
+      contentType: (insertNews as any).contentType,
       isPublished: (insertNews as any).isPublished 
     });
-    const [newsItem] = await db.insert(news).values({
+    
+    // Preparar dados para inserção (remover campos undefined)
+    const newsData: any = {
       ...insertNews,
       isPublished: (insertNews as any).isPublished !== undefined ? (insertNews as any).isPublished : true,
-    }).returning();
-    console.log(`[createNews] News created:`, { id: newsItem.id, teamId: newsItem.teamId, userId: newsItem.userId, isPublished: newsItem.isPublished });
-    return newsItem;
+    };
+    
+    // Adicionar campos novos apenas se existirem
+    if ((insertNews as any).contentType) {
+      newsData.contentType = (insertNews as any).contentType;
+    }
+    if ((insertNews as any).videoUrl) {
+      newsData.videoUrl = (insertNews as any).videoUrl;
+    }
+    
+    try {
+      const [newsItem] = await db.insert(news).values(newsData).returning();
+      console.log(`[createNews] News created:`, { id: newsItem.id, teamId: newsItem.teamId, userId: newsItem.userId, isPublished: newsItem.isPublished });
+      return newsItem;
+    } catch (error: any) {
+      // Se falhar por causa de colunas que não existem, usar SQL direto
+      if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
+        console.log('[createNews] Colunas novas não existem, usando insert compatível...');
+        // Remover campos novos do insert
+        const { contentType, videoUrl, ...newsDataWithoutNewFields } = newsData;
+        const [newsItem] = await db.insert(news).values(newsDataWithoutNewFields).returning();
+        return { ...newsItem, contentType: 'TEXT', videoUrl: null } as any;
+      }
+      throw error;
+    }
   }
 
   async updateNews(id: string, data: Partial<News>): Promise<News | undefined> {

@@ -278,53 +278,56 @@ export default function PerfilPage() {
 
       <Navbar />
 
-      <div className="container px-6 py-8 max-w-4xl relative z-10">
-        <h1 className="font-light text-4xl md:text-5xl text-white mb-8 tracking-tight">{t('profile.title')}</h1>
+      <div className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 max-w-4xl relative z-10">
+        <h1 className="font-light text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white mb-4 sm:mb-6 md:mb-8 tracking-tight">{t('profile.title')}</h1>
 
-        <Tabs defaultValue="info" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-1">
+        <Tabs defaultValue="info" className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-0.5 sm:p-1">
             <TabsTrigger 
               value="info" 
-              className="gap-2 font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
               data-testid="tab-info"
             >
-              <User className="h-4 w-4" />
+              <User className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{t('profile.tabs.info')}</span>
+              <span className="sm:hidden">Info</span>
             </TabsTrigger>
             <TabsTrigger 
               value="stats" 
-              className="gap-2 font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
               data-testid="tab-stats"
             >
-              <BarChart3 className="h-4 w-4" />
+              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{t('profile.tabs.stats')}</span>
+              <span className="sm:hidden">Stats</span>
             </TabsTrigger>
             <TabsTrigger 
               value="badges" 
-              className="gap-2 font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
               data-testid="tab-badges"
             >
-              <Award className="h-4 w-4" />
+              <Award className="h-3 w-3 sm:h-4 sm:w-4" />
               <span className="hidden sm:inline">{t('profile.tabs.badges')}</span>
+              <span className="sm:hidden">Badges</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="space-y-6">
             {/* Avatar Upload Section */}
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
-              <CardHeader>
-                <CardTitle className="text-white font-light text-2xl flex items-center gap-2">
-                  <Camera className="h-5 w-5 text-[#8b5cf6]" />
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-white font-light text-xl sm:text-2xl flex items-center gap-2">
+                  <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-[#8b5cf6]" />
                   Foto de Perfil
                 </CardTitle>
-                <CardDescription className="text-gray-400 font-light">
+                <CardDescription className="text-gray-400 font-light text-sm sm:text-base">
                   Adicione uma foto para personalizar seu perfil
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-6">
-                  <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden">
+              <CardContent className="space-y-4 px-4 sm:px-6">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/5 border-2 border-white/10 flex items-center justify-center overflow-hidden">
                       {tempAvatarPreview || avatarPreview ? (
                         <img
                           src={tempAvatarPreview || avatarPreview || ''}
@@ -333,7 +336,7 @@ export default function PerfilPage() {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center">
-                          <span className="text-2xl font-medium text-white">
+                          <span className="text-xl sm:text-2xl font-medium text-white">
                             {user?.name.slice(0, 2).toUpperCase()}
                           </span>
                         </div>
@@ -343,14 +346,14 @@ export default function PerfilPage() {
                       <button
                         onClick={handleRemoveAvatar}
                         disabled={isUploadingAvatar}
-                        className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center border-2 border-white/20 transition-colors"
+                        className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-500 hover:bg-red-600 flex items-center justify-center border-2 border-white/20 transition-colors"
                         title="Remover foto"
                       >
-                        <X className="h-3 w-3 text-white" />
+                        <X className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-white" />
                       </button>
                     )}
                   </div>
-                  <div className="flex-1 space-y-3">
+                  <div className="flex-1 w-full sm:w-auto space-y-3">
                     <div className="space-y-2">
                       <Label htmlFor="avatar-upload" className="text-gray-300 cursor-pointer">
                         <div className="flex items-center gap-2">
@@ -410,11 +413,11 @@ export default function PerfilPage() {
             </Card>
 
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
-              <CardHeader>
-                <CardTitle className="text-white font-light text-2xl">{t('profile.info.title')}</CardTitle>
-                <CardDescription className="text-gray-400 font-light">{t('profile.info.subtitle')}</CardDescription>
+              <CardHeader className="px-4 sm:px-6">
+                <CardTitle className="text-white font-light text-xl sm:text-2xl">{t('profile.info.title')}</CardTitle>
+                <CardDescription className="text-gray-400 font-light text-sm sm:text-base">{t('profile.info.subtitle')}</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 px-4 sm:px-6">
                 <div className="space-y-2">
                   <Label htmlFor="name" className="text-gray-300">{t('profile.info.name')}</Label>
                   <Input
@@ -664,40 +667,40 @@ export default function PerfilPage() {
           </TabsContent>
 
           <TabsContent value="stats">
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
               <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
-                <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-light text-white mb-2">{mockStats.ratingsCount}</div>
-                  <p className="text-sm text-gray-400 font-light">{t('profile.stats.ratings')}</p>
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="text-3xl sm:text-4xl font-light text-white mb-2">{mockStats.ratingsCount}</div>
+                  <p className="text-xs sm:text-sm text-gray-400 font-light">{t('profile.stats.ratings')}</p>
                 </CardContent>
               </Card>
               <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
-                <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-light text-white mb-2">{mockStats.newsLiked}</div>
-                  <p className="text-sm text-gray-400 font-light">{t('profile.stats.newsLiked')}</p>
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="text-3xl sm:text-4xl font-light text-white mb-2">{mockStats.newsLiked}</div>
+                  <p className="text-xs sm:text-sm text-gray-400 font-light">{t('profile.stats.newsLiked')}</p>
                 </CardContent>
               </Card>
-              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
-                <CardContent className="p-6 text-center">
-                  <div className="text-4xl font-light text-white mb-2">{mockStats.daysActive}</div>
-                  <p className="text-sm text-gray-400 font-light">{t('profile.stats.daysActive')}</p>
+              <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20 sm:col-span-2 md:col-span-1">
+                <CardContent className="p-4 sm:p-6 text-center">
+                  <div className="text-3xl sm:text-4xl font-light text-white mb-2">{mockStats.daysActive}</div>
+                  <p className="text-xs sm:text-sm text-gray-400 font-light">{t('profile.stats.daysActive')}</p>
                 </CardContent>
               </Card>
             </div>
           </TabsContent>
 
           <TabsContent value="badges">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {badges.map((badge: any) => (
                 <Card 
                   key={badge.id} 
                   className={`bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20 ${!badge.unlocked ? 'opacity-50' : ''}`}
                 >
-                  <CardContent className="p-6 flex items-center gap-4">
-                    <div className="text-4xl">{badge.icon}</div>
-                    <div className="flex-1">
-                      <h3 className="font-light text-white mb-1">{badge.name}</h3>
-                      <p className="text-sm text-gray-400 font-light mb-2">{badge.description}</p>
+                  <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+                    <div className="text-3xl sm:text-4xl flex-shrink-0">{badge.icon}</div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-light text-white mb-1 text-sm sm:text-base">{badge.name}</h3>
+                      <p className="text-xs sm:text-sm text-gray-400 font-light mb-2">{badge.description}</p>
                       <Badge 
                         variant={badge.unlocked ? 'default' : 'secondary'}
                         className={badge.unlocked 

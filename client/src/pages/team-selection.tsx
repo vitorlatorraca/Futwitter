@@ -61,18 +61,18 @@ export default function TeamSelectionPage() {
   const team = TEAMS_DATA.find(t => t.id === selectedTeam);
 
   return (
-    <div className="min-h-screen bg-muted/30 py-12 px-4">
+    <div className="min-h-screen bg-muted/30 py-8 sm:py-12 px-3 sm:px-4">
       <div className="container max-w-5xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="font-display font-bold text-3xl md:text-4xl mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl mb-3 sm:mb-4">
             Escolha seu time do coração
           </h1>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-sm sm:text-base md:text-lg">
             Atenção: Você não poderá mudar depois! Escolha com carinho ⚽
           </p>
         </div>
 
-        <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-4 md:gap-6">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-10 gap-3 sm:gap-4 md:gap-6">
           {TEAMS_DATA.map((team) => (
             <button
               key={team.id}
