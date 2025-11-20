@@ -13,25 +13,25 @@ export default function LandingPage() {
       <PublicNavbar />
       
       {/* Hero Section - Minimal & Aesthetic */}
-      <section className="max-w-5xl mx-auto px-6 py-24 md:py-32">
-        <div className="text-center mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8">
-            <Zap className="h-4 w-4 text-[#8b5cf6]" />
-            <span className="text-sm text-gray-400">Plataforma Social para Futebol Brasileiro</span>
+      <section className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20 md:py-24 lg:py-32">
+        <div className="text-center mb-12 sm:mb-16 md:mb-20">
+          <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-6 sm:mb-8">
+            <Zap className="h-3 w-3 sm:h-4 sm:w-4 text-[#8b5cf6]" />
+            <span className="text-xs sm:text-sm text-gray-400">Plataforma Social para Futebol Brasileiro</span>
           </div>
           
-          <h1 className="text-6xl md:text-7xl font-light text-white mb-8 leading-tight tracking-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white mb-6 sm:mb-8 leading-tight tracking-tight px-2">
             {t('landing.hero.title')}
           </h1>
-          <p className="text-xl md:text-2xl text-gray-400 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+          <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-gray-400 mb-8 sm:mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4">
             {t('landing.hero.subtitle')}
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <Link href="/cadastro" data-testid="link-signup">
               <Button 
                 size="lg" 
-                className="text-base font-medium px-8 py-6 h-auto bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                className="w-full sm:w-auto text-sm sm:text-base font-medium px-6 sm:px-8 py-5 sm:py-6 h-auto bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
               >
                 {t('landing.cta.signup')}
               </Button>
@@ -40,7 +40,7 @@ export default function LandingPage() {
               <Button 
                 size="lg" 
                 variant="outline"
-                className="text-base font-medium px-8 py-6 h-auto border border-white/20 text-white hover:bg-white/5 hover:border-white/30 rounded-lg backdrop-blur-sm transition-all duration-300"
+                className="w-full sm:w-auto text-sm sm:text-base font-medium px-6 sm:px-8 py-5 sm:py-6 h-auto border border-white/20 text-white hover:bg-white/5 hover:border-white/30 rounded-lg backdrop-blur-sm transition-all duration-300"
               >
                 {t('landing.cta.login')}
               </Button>
@@ -50,29 +50,29 @@ export default function LandingPage() {
       </section>
 
       {/* Story Section - Minimal & Aesthetic */}
-      <section className="max-w-4xl mx-auto px-6 py-20">
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl font-light text-white mb-4 text-center tracking-tight">
+      <section className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16 md:py-20">
+        <div className="mb-8 sm:mb-10 md:mb-12">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-light text-white mb-3 sm:mb-4 text-center tracking-tight px-2">
             A História do Projeto
           </h2>
-          <div className="w-24 h-px bg-gradient-to-r from-transparent via-[#8b5cf6] to-transparent mx-auto"></div>
+          <div className="w-16 sm:w-20 md:w-24 h-px bg-gradient-to-r from-transparent via-[#8b5cf6] to-transparent mx-auto"></div>
         </div>
         
         <div className="relative">
           {/* Glassmorphism Card */}
-          <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 md:p-12 border border-white/10 shadow-2xl">
+          <div className="relative bg-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 lg:p-12 border border-white/10 shadow-2xl">
             {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/10 via-transparent to-[#6366f1]/10 rounded-3xl pointer-events-none"></div>
             
             <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-1 h-8 bg-gradient-to-b from-[#8b5cf6] to-[#6366f1] rounded-full"></div>
-                <h3 className="text-2xl md:text-3xl font-light text-white">
+              <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                <div className="w-0.5 sm:w-1 h-6 sm:h-8 bg-gradient-to-b from-[#8b5cf6] to-[#6366f1] rounded-full"></div>
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-light text-white">
                   O Início
                 </h3>
               </div>
               
-              <div className="space-y-6 text-lg text-gray-300 leading-relaxed font-light">
+              <div className="space-y-4 sm:space-y-5 md:space-y-6 text-sm sm:text-base md:text-lg text-gray-300 leading-relaxed font-light">
                 <p className="text-gray-300/90">
                   O <span className="text-white font-medium">Brasileirão DataFlow</span> nasceu da paixão pelo futebol brasileiro e da vontade de criar uma plataforma 
                   que unisse torcedores, jornalistas e fãs em um só lugar. A ideia era combinar o melhor do Instagram 

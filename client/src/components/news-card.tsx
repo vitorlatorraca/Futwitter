@@ -44,15 +44,15 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
         size="sm"
         onClick={() => canInteract && onInteract(news.id, type)}
         disabled={!canInteract}
-        className={`gap-2 font-light transition-all duration-300 ${
+        className={`gap-1 sm:gap-1.5 font-light transition-all duration-200 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3 ${
           isActive
-            ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
-            : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
+            ? 'bg-white/10 border-white/15 text-white'
+            : 'bg-white/3 border-white/5 text-white/50 hover:bg-white/8 hover:text-white/70 hover:border-white/8'
         }`}
         data-testid={`button-${type.toLowerCase()}-${news.id}`}
       >
-        <Icon className="h-4 w-4" />
-        <span className="font-medium">{count}</span>
+        <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
+        <span className="font-light text-[10px] sm:text-xs">{count}</span>
       </Button>
     );
 
@@ -75,18 +75,15 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
   };
 
   return (
-    <Card className="overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover:border-white/20 transition-all duration-300 shadow-2xl" data-testid={`news-card-${news.id}`}>
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
-      
-      <CardHeader className="p-4 sm:p-6 pb-3 sm:pb-4 relative z-10">
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Avatar do autor - prioriza author para influencers, depois journalist */}
+    <Card className="overflow-hidden bg-white/2 backdrop-blur-md border border-white/5 rounded-lg sm:rounded-xl hover:border-white/10 hover:bg-white/3 transition-all duration-300" data-testid={`news-card-${news.id}`}>
+      <CardHeader className="p-3 sm:p-4 md:p-5 pb-2 sm:pb-3 relative z-10">
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Avatar do autor - ultra minimalista mobile */}
           {(() => {
             const authorName = news.author?.name || news.journalist?.user?.name || 'Autor desconhecido';
             const authorAvatarUrl = news.author?.avatarUrl || news.journalist?.user?.avatarUrl;
             return (
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white/10 overflow-hidden bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center flex-shrink-0" key={`avatar-${authorAvatarUrl ? authorAvatarUrl.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '') : 'none'}`}>
+              <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0" key={`avatar-${authorAvatarUrl ? authorAvatarUrl.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '') : 'none'}`}>
                 {authorAvatarUrl ? (
                   <img 
                     src={authorAvatarUrl}
@@ -102,7 +99,7 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
                     key={`img-${authorAvatarUrl?.substring(0, 50).replace(/[^a-zA-Z0-9]/g, '') || 'none'}`}
                   />
                 ) : (
-                  <span className="text-white text-xs sm:text-sm font-medium">
+                  <span className="text-white/70 text-[9px] sm:text-[10px] md:text-xs font-light">
                     {authorName.slice(0, 2).toUpperCase()}
                   </span>
                 )}
@@ -110,12 +107,12 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
             );
           })()}
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-xs sm:text-sm text-white truncate">
+            <p className="text-[11px] sm:text-xs md:text-sm text-white/85 truncate font-light">
               {news.author?.name || news.journalist?.user?.name || 'Autor desconhecido'}
             </p>
-            <p className="text-xs text-gray-400 truncate font-light">{news.team.name}</p>
+            <p className="text-[9px] sm:text-[10px] md:text-xs text-white/35 truncate font-light">{news.team.name}</p>
           </div>
-          <Badge className="bg-white/10 border-white/10 text-white/90 font-light text-xs flex-shrink-0">{categoryLabel}</Badge>
+          <span className="text-[9px] sm:text-[10px] text-white/25 font-light hidden md:inline">{categoryLabel}</span>
         </div>
       </CardHeader>
 
@@ -126,26 +123,27 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
             alt={news.title}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
         </div>
       )}
 
-      <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4 relative z-10">
+      <CardContent className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3 relative z-10">
         <div>
-          <h3 className="font-light text-lg sm:text-2xl text-white mb-2 sm:mb-3 leading-tight tracking-tight">
+          <h3 className="font-light text-sm sm:text-base md:text-lg text-white/90 mb-1.5 sm:mb-2 leading-tight tracking-tight">
             {news.title}
           </h3>
-          <p className="text-sm sm:text-base text-gray-300 leading-relaxed line-clamp-3 font-light">
+          <p className="text-xs sm:text-sm text-white/55 leading-relaxed line-clamp-3 font-light">
             {news.content}
           </p>
         </div>
 
-        <div className="flex items-center gap-2 text-xs text-gray-400 font-light">
-          <span>{format(new Date(news.publishedAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</span>
+        <div className="flex items-center gap-2 text-[9px] sm:text-[10px] md:text-xs text-white/25 font-light">
+          <span className="hidden md:inline">{format(new Date(news.publishedAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</span>
+          <span className="md:hidden">{format(new Date(news.publishedAt), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 sm:p-6 pt-0 flex gap-2 relative z-10">
+      <CardFooter className="p-3 sm:p-4 md:p-5 pt-0 flex gap-1.5 sm:gap-2 relative z-10">
         <InteractionButton type="LIKE" count={news.likesCount} icon={ThumbsUp} />
         <InteractionButton type="DISLIKE" count={news.dislikesCount} icon={ThumbsDown} />
       </CardFooter>

@@ -11,6 +11,7 @@ import { z } from "zod";
 export const userTypeEnum = pgEnum("user_type", ["FAN", "JOURNALIST", "ADMIN"]);
 export const playerPositionEnum = pgEnum("player_position", ["GOALKEEPER", "DEFENDER", "MIDFIELDER", "FORWARD"]);
 export const newsCategoryEnum = pgEnum("news_category", ["NEWS", "ANALYSIS", "BACKSTAGE", "MARKET"]);
+export const newsContentTypeEnum = pgEnum("news_content_type", ["TEXT", "VIDEO"]);
 export const interactionTypeEnum = pgEnum("interaction_type", ["LIKE", "DISLIKE"]);
 export const journalistStatusEnum = pgEnum("journalist_status", ["PENDING", "APPROVED", "REJECTED", "SUSPENDED"]);
 
@@ -110,6 +111,8 @@ export const news = pgTable("news", {
   title: varchar("title", { length: 200 }).notNull(),
   content: text("content").notNull(),
   imageUrl: text("image_url"),
+  videoUrl: text("video_url"), // URL do vídeo para notícias tipo TikTok (opcional)
+  contentType: newsContentTypeEnum("content_type").default("TEXT"), // TEXT ou VIDEO (opcional para compatibilidade)
   category: newsCategoryEnum("category").notNull().default("NEWS"),
   likesCount: integer("likes_count").notNull().default(0),
   dislikesCount: integer("dislikes_count").notNull().default(0),
@@ -357,6 +360,7 @@ export const selectMatchSchema = createSelectSchema(matches);
 export const insertNewsSchema = createInsertSchema(news, {
   title: z.string().min(10, "Título deve ter pelo menos 10 caracteres").max(200, "Título não pode ter mais de 200 caracteres"),
   content: z.string().min(50, "Conteúdo deve ter pelo menos 50 caracteres").max(1000, "Conteúdo não pode ter mais de 1000 caracteres"),
+  videoUrl: z.string().url("URL do vídeo inválida").optional().or(z.literal("")),
 }).omit({ id: true, journalistId: true, userId: true, createdAt: true, updatedAt: true, likesCount: true, dislikesCount: true, publishedAt: true });
 
 export const selectNewsSchema = createSelectSchema(news);

@@ -68,19 +68,19 @@ export default function SignupPage() {
         <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#6366f1]/20 rounded-full blur-3xl"></div>
         
         {/* Glassmorphism Card */}
-        <div className="relative bg-white/5 backdrop-blur-xl rounded-3xl p-10 border border-white/10 shadow-2xl">
+        <div className="relative bg-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/10 via-transparent to-[#6366f1]/10 rounded-3xl pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/10 via-transparent to-[#6366f1]/10 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
           
           <div className="relative z-10">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] mb-4">
-                <UserPlus className="h-8 w-8 text-white" />
+            <div className="text-center mb-6 sm:mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] mb-3 sm:mb-4">
+                <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
               </div>
-              <h1 className="text-3xl md:text-4xl font-light text-white mb-2 tracking-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-light text-white mb-2 tracking-tight">
                 Crie sua conta
               </h1>
-              <p className="text-gray-400 font-light">
+              <p className="text-sm sm:text-base text-gray-400 font-light">
                 Junte-se a milhares de torcedores apaixonados
               </p>
             </div>
