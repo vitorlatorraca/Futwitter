@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from './queryClient';
+import { resolveApiUrl } from './api';
 import type { User } from '@shared/schema';
 
 interface AuthContextType {
@@ -19,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ['/api/auth/me'],
     queryFn: async () => {
-      const response = await fetch('/api/auth/me', {
+      const response = await fetch(resolveApiUrl('/api/auth/me'), {
         credentials: 'include',
       });
       if (response.status === 401) {

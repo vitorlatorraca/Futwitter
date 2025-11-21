@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { resolveApiUrl } from '@/lib/api';
 import { TEAMS_DATA } from '@/lib/team-data';
 import type { News } from '@shared/schema';
 
@@ -64,7 +65,7 @@ export default function DashboardPage() {
         console.log('[Dashboard] User:', user);
         console.log('[Dashboard] Active filter:', activeFilter);
         
-        const response = await fetch(url, {
+        const response = await fetch(resolveApiUrl(url), {
           credentials: 'include',
         });
         
