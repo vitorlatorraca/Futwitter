@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { TEAMS_DATA } from '@/lib/team-data';
+import { resolveApiUrl } from '@/lib/api';
 import { 
   Trophy, 
   Calendar, 
@@ -66,7 +67,7 @@ export default function MeuTimePage() {
     queryKey: ['/api/teams', user?.teamId],
     queryFn: async () => {
       if (!user?.teamId) return null;
-      const response = await fetch(`/api/teams/${user.teamId}`, {
+      const response = await fetch(resolveApiUrl(`/api/teams/${user.teamId}`), {
         credentials: 'include',
       });
       if (!response.ok) return null;
@@ -82,7 +83,7 @@ export default function MeuTimePage() {
     queryKey: ['/api/news', user?.teamId, 'team-news'],
     queryFn: async () => {
       if (!user?.teamId) return [];
-      const response = await fetch(`/api/news?teamId=${user.teamId}&limit=5`, {
+      const response = await fetch(resolveApiUrl(`/api/news?teamId=${user.teamId}&limit=5`), {
         credentials: 'include',
       });
       if (!response.ok) return [];
@@ -97,7 +98,7 @@ export default function MeuTimePage() {
     queryKey: ['/api/teams', user?.teamId, 'upcoming'],
     queryFn: async () => {
       if (!user?.teamId) return [];
-      const response = await fetch(`/api/teams/${user.teamId}/upcoming?limit=10`, {
+      const response = await fetch(resolveApiUrl(`/api/teams/${user.teamId}/upcoming?limit=10`), {
         credentials: 'include',
       });
       if (!response.ok) return [];
@@ -110,7 +111,7 @@ export default function MeuTimePage() {
   const { data: standings, isLoading: isLoadingStandings } = useQuery<Team[]>({
     queryKey: ['/api/standings'],
     queryFn: async () => {
-      const response = await fetch('/api/standings', {
+      const response = await fetch(resolveApiUrl('/api/standings'), {
         credentials: 'include',
       });
       if (!response.ok) return [];
@@ -123,7 +124,7 @@ export default function MeuTimePage() {
     queryKey: ['/api/matches', user?.teamId, 'recent'],
     queryFn: async () => {
       if (!user?.teamId) return [];
-      const response = await fetch(`/api/matches/${user.teamId}/recent?limit=10`, {
+      const response = await fetch(resolveApiUrl(`/api/matches/${user.teamId}/recent?limit=10`), {
         credentials: 'include',
       });
       if (!response.ok) return [];

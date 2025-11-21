@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import { resolveApiUrl } from '@/lib/api';
 import { Shield, Users, CheckCircle, XCircle, Loader2, Search, Star, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -44,7 +45,7 @@ export default function AdminPage() {
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ['/api/admin/users'],
     queryFn: async () => {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch(resolveApiUrl('/api/admin/users'), {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Erro ao buscar usuários');
@@ -56,7 +57,7 @@ export default function AdminPage() {
   const { data: influencerRequests, isLoading: isLoadingRequests } = useQuery({
     queryKey: ['/api/admin/influencer-requests', requestStatusFilter],
     queryFn: async () => {
-      const response = await fetch(`/api/admin/influencer-requests?status=${requestStatusFilter}`, {
+      const response = await fetch(resolveApiUrl(`/api/admin/influencer-requests?status=${requestStatusFilter}`), {
         credentials: 'include',
       });
       if (!response.ok) throw new Error('Erro ao buscar solicitações');

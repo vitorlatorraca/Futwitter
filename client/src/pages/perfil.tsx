@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/lib/auth-context';
+import { resolveApiUrl } from '@/lib/api';
 import { useI18n } from '@/lib/i18n';
 import { Navbar } from '@/components/navbar';
 import { Button } from '@/components/ui/button';
@@ -237,7 +238,7 @@ export default function PerfilPage() {
   const { data: influencerRequest } = useQuery({
     queryKey: ['/api/influencer/request/my'],
     queryFn: async () => {
-      const response = await fetch('/api/influencer/request/my', {
+      const response = await fetch(resolveApiUrl('/api/influencer/request/my'), {
         credentials: 'include',
       });
       if (!response.ok) return null;
