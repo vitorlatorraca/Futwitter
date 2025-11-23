@@ -31,7 +31,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'corinthians', 
     name: 'Corinthians', 
     shortName: 'COR', 
-    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/corinthians-logo-escudo-1.png', 
+    logoUrl: '/assets/corinthians/corinthians.png', 
     primaryColor: '#000000', 
     secondaryColor: '#FFFFFF' 
   },
@@ -119,7 +119,7 @@ export const TEAMS_DATA: TeamData[] = [
     id: 'bahia', 
     name: 'Bahia', 
     shortName: 'BAH', 
-    logoUrl: 'https://logodownload.org/wp-content/uploads/2017/02/bahia-logo-escudo-1.png', 
+    logoUrl: '/assets/bahia/bahia.png', 
     primaryColor: '#005CA9', 
     secondaryColor: '#E30613' 
   },

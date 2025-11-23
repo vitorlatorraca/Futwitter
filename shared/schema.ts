@@ -390,9 +390,9 @@ export const insertTransferSchema = createInsertSchema(transfers).omit({ id: tru
 export const selectTransferSchema = createSelectSchema(transfers);
 
 // Influencer request schemas
-export const insertInfluencerRequestSchema = createInsertSchema(influencerRequests, {
+export const insertInfluencerRequestSchema = z.object({
   reason: z.string().max(500, "Motivo não pode ter mais de 500 caracteres").optional(),
-}).omit({ id: true, status: true, reviewedBy: true, reviewedAt: true, createdAt: true, updatedAt: true });
+});
 export const selectInfluencerRequestSchema = createSelectSchema(influencerRequests);
 
 // ============================================

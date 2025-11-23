@@ -32,3 +32,4 @@ CREATE INDEX IF NOT EXISTS idx_news_video_url ON news(video_url) WHERE video_url
 
 
 
+
