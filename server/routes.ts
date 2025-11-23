@@ -677,6 +677,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/influencer/request', requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
+
       const requestData = insertInfluencerRequestSchema.parse(req.body);
 
       // Verificar se já existe uma solicitação
@@ -693,11 +697,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const request = await storage.createInfluencerRequest({
         ...requestData,
         userId,
-      });
+      } as any);
 
       res.status(201).json(request);
     } catch (error: any) {
       console.error('Create influencer request error:', error);
+      if (error.issues) {
+        // Zod validation error
+        return res.status(400).json({ message: 'Dados inválidos', errors: error.issues });
+      }
       res.status(400).json({ message: error.message || 'Erro ao criar solicitação' });
     }
   });
@@ -705,11 +713,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/influencer/request/my', requireAuth, async (req, res) => {
     try {
       const userId = req.session.userId!;
+      if (!userId) {
+        return res.status(401).json({ message: 'Usuário não autenticado' });
+      }
       const request = await storage.getInfluencerRequestByUserId(userId);
       res.json(request || null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Get my influencer request error:', error);
-      res.status(500).json({ message: 'Erro ao buscar solicitação' });
+      res.status(500).json({ message: error.message || 'Erro ao buscar solicitação' });
     }
   });
 
