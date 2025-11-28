@@ -11,8 +11,8 @@
     "dev:5003": "set NODE_ENV=development&& set PORT=5003&& tsx server/index.ts",
     "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "cross-env NODE_ENV=production node dist/index.js",
-    "start:dev": "tsx server/index.ts",
+    "start": "tsx server/index.ts",
+    "start:prod": "cross-env NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "db:push": "drizzle-kit push",
     "db:view": "tsx view-database.ts",
@@ -113,5 +113,8 @@
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
