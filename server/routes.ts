@@ -5,7 +5,7 @@ import ConnectPgSimple from "connect-pg-simple";
 import { sessionPool } from "./db";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
-import { insertUserSchema, insertNewsSchema, insertPlayerRatingSchema, insertInfluencerRequestSchema } from "@shared/schema";
+import { insertUserSchema, insertNewsSchema, insertPlayerRatingSchema, insertInfluencerRequestSchema } from "../shared/schema";
 
 const PgSession = ConnectPgSimple(session);
 
@@ -22,7 +22,7 @@ async function requireJournalistOrInfluencer(req: any, res: any, next: any) {
   if (req.session.userType === 'JOURNALIST') {
     return next();
   }
-  
+
   // Check if user is an influencer
   if (req.session.userId) {
     const user = await storage.getUser(req.session.userId);
@@ -30,7 +30,7 @@ async function requireJournalistOrInfluencer(req: any, res: any, next: any) {
       return next();
     }
   }
-  
+
   return res.status(403).json({ message: 'Acesso negado. Apenas jornalistas ou influencers.' });
 }
 
@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { teamId } = req.params;
       const lastMatch = await storage.getLastMatch(teamId);
-      
+
       if (!lastMatch) {
         return res.json(null);
       }
@@ -284,11 +284,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/news', async (req, res) => {
     try {
       const { teamId, filter } = req.query;
-      
+
       console.log(`[GET /api/news] Request received - filter: ${filter}, teamId: ${teamId}, sessionUserId: ${req.session.userId}`);
-      
+
       let filterTeamId: string | undefined;
-      
+
       if (filter === 'my-team' && req.session.userId) {
         const user = await storage.getUser(req.session.userId);
         filterTeamId = user?.teamId || undefined;
@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Get news error:', error);
       console.error('Error stack:', error?.stack);
       console.error('Error message:', error?.message);
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'Erro ao buscar notícias',
         error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
         stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
@@ -564,7 +564,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate URL format (base64 data URL or http/https URL)
       const isBase64 = avatarUrl.startsWith('data:image/');
       const isHttpUrl = avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://');
-      
+
       if (!isBase64 && !isHttpUrl) {
         return res.status(400).json({ message: 'Formato de URL inválido' });
       }
@@ -574,7 +574,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const base64Data = avatarUrl.split(',')[1];
         const sizeInBytes = (base64Data.length * 3) / 4;
         const sizeInMB = sizeInBytes / (1024 * 1024);
-        
+
         if (sizeInMB > 2) {
           return res.status(400).json({ message: 'Imagem muito grande. Tamanho máximo: 2MB' });
         }
@@ -656,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedUser = await storage.updateUserInfluencerStatus(id, isInfluencer);
-      
+
       if (!updatedUser) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
@@ -746,7 +746,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const updatedRequest = await storage.updateInfluencerRequestStatus(id, status, adminId);
-      
+
       if (!updatedRequest) {
         return res.status(404).json({ message: 'Solicitação não encontrada' });
       }

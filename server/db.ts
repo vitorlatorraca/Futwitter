@@ -2,7 +2,7 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import { Pool as PgPool } from 'pg';
 import ws from "ws";
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 
 neonConfig.webSocketConstructor = ws;
 
@@ -14,7 +14,7 @@ if (!process.env.DATABASE_URL) {
 
 // Pool for Drizzle (Neon serverless)
 // Configuração otimizada para escalabilidade
-export const pool = new Pool({ 
+export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20, // Máximo de conexões no pool
   idleTimeoutMillis: 30000, // Fechar conexões idle após 30s

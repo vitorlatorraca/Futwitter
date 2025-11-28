@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { news, journalists, users } from "@shared/schema";
+import { news, journalists, users } from "../shared/schema";
 import { eq } from "drizzle-orm";
 
 async function seedNews() {

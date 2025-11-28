@@ -37,7 +37,7 @@ import {
   type InsertTransfer,
   type InfluencerRequest,
   type InsertInfluencerRequest,
-} from "@shared/schema";
+} from "../shared/schema";
 
 export interface IStorage {
   // Users
@@ -301,7 +301,7 @@ export class DatabaseStorage implements IStorage {
       ));
 
     if (ratings.length === 0) return null;
-    
+
     const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
     return sum / ratings.length;
   }
@@ -310,7 +310,7 @@ export class DatabaseStorage implements IStorage {
   async getAllNews(teamId?: string, limit: number = 50, offset: number = 0): Promise<any[]> {
     try {
       // Construir condições base
-      const baseConditions = teamId 
+      const baseConditions = teamId
         ? and(eq(news.isPublished, true), eq(news.teamId, teamId))
         : eq(news.isPublished, true);
 
@@ -329,10 +329,10 @@ export class DatabaseStorage implements IStorage {
         // Se falhar por causa de colunas que não existem, usar SQL direto
         if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
           console.log('[getAllNews] Colunas novas não existem, usando query compatível...');
-          const whereClause = teamId 
+          const whereClause = teamId
             ? sql`is_published = true AND team_id = ${teamId}`
             : sql`is_published = true`;
-          
+
           const result = await db.execute(sql`
             SELECT 
               id, journalist_id, user_id, team_id, title, content, image_url,
@@ -346,7 +346,7 @@ export class DatabaseStorage implements IStorage {
             LIMIT ${limit}
             OFFSET ${offset}
           `);
-          
+
           // Converter resultado para formato esperado (snake_case -> camelCase)
           // Neon serverless pode retornar de formas diferentes
           let rows: any[];
@@ -357,7 +357,7 @@ export class DatabaseStorage implements IStorage {
           } else {
             rows = [];
           }
-          
+
           allNewsItems = rows.map((row: any) => ({
             id: row.id,
             journalistId: row.journalist_id,
@@ -493,7 +493,7 @@ export class DatabaseStorage implements IStorage {
               secondaryColor: team.secondaryColor,
             },
             journalist: journalistData,
-            author: newsItem.userId ? { 
+            author: newsItem.userId ? {
               name: authorName,
               avatarUrl: usersMap.get(newsItem.userId)?.avatarUrl || null
             } : null,
@@ -585,21 +585,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNews(insertNews: InsertNews): Promise<News> {
-    console.log(`[createNews] Creating news with data:`, { 
-      teamId: insertNews.teamId, 
-      userId: (insertNews as any).userId, 
+    console.log(`[createNews] Creating news with data:`, {
+      teamId: insertNews.teamId,
+      userId: (insertNews as any).userId,
       journalistId: (insertNews as any).journalistId,
       title: insertNews.title,
       contentType: (insertNews as any).contentType,
-      isPublished: (insertNews as any).isPublished 
+      isPublished: (insertNews as any).isPublished
     });
-    
+
     // Preparar dados para inserção (remover campos undefined)
     const newsData: any = {
       ...insertNews,
       isPublished: (insertNews as any).isPublished !== undefined ? (insertNews as any).isPublished : true,
     };
-    
+
     // Adicionar campos novos apenas se existirem
     if ((insertNews as any).contentType) {
       newsData.contentType = (insertNews as any).contentType;
@@ -607,7 +607,7 @@ export class DatabaseStorage implements IStorage {
     if ((insertNews as any).videoUrl) {
       newsData.videoUrl = (insertNews as any).videoUrl;
     }
-    
+
     try {
       const [newsItem] = await db.insert(news).values(newsData).returning();
       console.log(`[createNews] News created:`, { id: newsItem.id, teamId: newsItem.teamId, userId: newsItem.userId, isPublished: newsItem.isPublished });
@@ -684,8 +684,8 @@ export class DatabaseStorage implements IStorage {
     // Update the news table with new counts
     await db
       .update(news)
-      .set({ 
-        likesCount, 
+      .set({
+        likesCount,
         dislikesCount,
         updatedAt: new Date()
       })
@@ -711,7 +711,7 @@ export class DatabaseStorage implements IStorage {
       // Update existing rating
       const [updated] = await db
         .update(playerRatings)
-        .set({ 
+        .set({
           rating: insertRating.rating,
           comment: insertRating.comment,
           updatedAt: new Date()
@@ -740,7 +740,7 @@ export class DatabaseStorage implements IStorage {
   async getPlayerAverageRating(playerId: string): Promise<number | null> {
     const ratings = await this.getPlayerRatings(playerId);
     if (ratings.length === 0) return null;
-    
+
     const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
     return sum / ratings.length;
   }
@@ -760,7 +760,7 @@ export class DatabaseStorage implements IStorage {
       .from(userBadges)
       .innerJoin(badges, eq(userBadges.badgeId, badges.id))
       .where(eq(userBadges.userId, userId));
-    
+
     return result;
   }
 
@@ -780,7 +780,7 @@ export class DatabaseStorage implements IStorage {
       .insert(userBadges)
       .values({ userId, badgeId })
       .returning();
-    
+
     return userBadge;
   }
 
@@ -795,7 +795,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(playerRatings)
       .where(eq(playerRatings.userId, userId));
-    
+
     const interactionsCount = await db
       .select()
       .from(newsInteractions)
