@@ -472,6 +472,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // ============================================
+  // NEWS VIEWS ROUTES
+  // ============================================
+
+  app.post('/api/news/:id/view', async (req, res) => {
+    try {
+      const newsId = req.params.id;
+      await storage.incrementNewsViews(newsId);
+      const updatedNews = await storage.getNewsById(newsId);
+      res.json({ viewsCount: updatedNews?.viewsCount || 0 });
+    } catch (error) {
+      console.error('Increment views error:', error);
+      res.status(500).json({ message: 'Error incrementing views' });
+    }
+  });
+
+  // ============================================
+  // NEWS COMMENTS ROUTES
+  // ============================================
+
+  app.get('/api/news/:id/comments', async (req, res) => {
+    try {
+      const newsId = req.params.id;
+      const comments = await storage.getNewsComments(newsId);
+      res.json(comments);
+    } catch (error) {
+      console.error('Get comments error:', error);
+      res.status(500).json({ message: 'Error fetching comments' });
+    }
+  });
+
+  // Rate limit store for comments (userId -> last comment timestamp)
+  const commentRateLimitStore = new Map<string, number>();
+  const COMMENT_COOLDOWN_MS = 30000; // 30 seconds between comments
+
+  app.post('/api/news/:id/comments', requireAuth, async (req, res) => {
+    try {
+      const newsId = req.params.id;
+      const userId = req.session.userId!;
+      const { content } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: 'Comment content is required' });
+      }
+
+      // Limit to 49 characters
+      if (content.length > 49) {
+        return res.status(400).json({ message: 'Comment is too long (max 49 characters)' });
+      }
+
+      // Rate limiting - prevent spam
+      const lastCommentTime = commentRateLimitStore.get(userId);
+      const now = Date.now();
+      if (lastCommentTime && (now - lastCommentTime) < COMMENT_COOLDOWN_MS) {
+        const remainingSeconds = Math.ceil((COMMENT_COOLDOWN_MS - (now - lastCommentTime)) / 1000);
+        return res.status(429).json({ 
+          message: `Please wait ${remainingSeconds} seconds before commenting again` 
+        });
+      }
+
+      // Get the news to check the team
+      const newsItem = await storage.getNewsById(newsId);
+      if (!newsItem) {
+        return res.status(404).json({ message: 'News not found' });
+      }
+
+      // Get the user to check their team
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Only allow comments from fans of the same team
+      if (user.teamId !== newsItem.teamId) {
+        return res.status(403).json({ message: 'Only fans of this team can comment' });
+      }
+
+      const comment = await storage.createNewsComment({
+        newsId,
+        userId,
+        content: content.trim(),
+      });
+
+      // Update rate limit store
+      commentRateLimitStore.set(userId, now);
+
+      // Return comment with user info
+      res.status(201).json({
+        ...comment,
+        userName: user.name,
+        userAvatar: user.avatarUrl,
+      });
+    } catch (error) {
+      console.error('Create comment error:', error);
+      res.status(500).json({ message: 'Error creating comment' });
+    }
+  });
+
+  // ============================================
   // PLAYER RATINGS ROUTES
   // ============================================
 

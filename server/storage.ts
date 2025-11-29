@@ -9,6 +9,7 @@ import {
   matchPlayers,
   news,
   newsInteractions,
+  newsComments,
   playerRatings,
   badges,
   userBadges,
@@ -28,6 +29,7 @@ import {
   type InsertNews,
   type NewsInteraction,
   type InsertNewsInteraction,
+  type NewsComment,
   type PlayerRating,
   type InsertPlayerRating,
   type Badge,
@@ -690,6 +692,64 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(news.id, newsId));
+  }
+
+  // Get single news by ID
+  async getNewsById(newsId: string): Promise<News | undefined> {
+    const [newsItem] = await db
+      .select()
+      .from(news)
+      .where(eq(news.id, newsId))
+      .limit(1);
+    return newsItem;
+  }
+
+  // Increment news views
+  async incrementNewsViews(newsId: string): Promise<void> {
+    await db
+      .update(news)
+      .set({
+        viewsCount: sql`COALESCE(${news.viewsCount}, 0) + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(news.id, newsId));
+  }
+
+  // News Comments
+  async getNewsComments(newsId: string): Promise<any[]> {
+    const comments = await db
+      .select({
+        id: newsComments.id,
+        newsId: newsComments.newsId,
+        userId: newsComments.userId,
+        content: newsComments.content,
+        createdAt: newsComments.createdAt,
+        userName: users.name,
+        userAvatar: users.avatarUrl,
+      })
+      .from(newsComments)
+      .innerJoin(users, eq(newsComments.userId, users.id))
+      .where(eq(newsComments.newsId, newsId))
+      .orderBy(desc(newsComments.createdAt));
+    return comments;
+  }
+
+  async createNewsComment(data: { newsId: string; userId: string; content: string }): Promise<NewsComment> {
+    const [comment] = await db
+      .insert(newsComments)
+      .values(data)
+      .returning();
+    
+    // Increment comments count on the news
+    await db
+      .update(news)
+      .set({
+        commentsCount: sql`COALESCE(${news.commentsCount}, 0) + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(news.id, data.newsId));
+    
+    return comment;
   }
 
   // Player Ratings
