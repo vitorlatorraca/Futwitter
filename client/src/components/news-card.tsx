@@ -93,7 +93,16 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
         if (text) {
           try {
             const data = JSON.parse(text);
-            setComments(Array.isArray(data) ? data : []);
+            // Handle both old format (array) and new format (object with comments and totalCount)
+            if (Array.isArray(data)) {
+              setComments(data);
+              setCommentsCount(data.length);
+            } else if (data.comments) {
+              setComments(data.comments);
+              setCommentsCount(data.totalCount || data.comments.length);
+            } else {
+              setComments([]);
+            }
           } catch {
             setComments([]);
           }

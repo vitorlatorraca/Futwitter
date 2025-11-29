@@ -495,7 +495,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const newsId = req.params.id;
       const comments = await storage.getNewsComments(newsId);
-      res.json(comments);
+      const totalCount = await storage.getNewsCommentsCount(newsId);
+      res.json({ comments, totalCount });
     } catch (error) {
       console.error('Get comments error:', error);
       res.status(500).json({ message: 'Error fetching comments' });

@@ -340,7 +340,10 @@ export class DatabaseStorage implements IStorage {
               id, journalist_id, user_id, team_id, title, content, image_url,
               NULL::text as video_url,
               'TEXT'::text as content_type,
-              category, likes_count, dislikes_count, is_published, 
+              category, likes_count, dislikes_count, 
+              COALESCE(views_count, 0) as views_count,
+              COALESCE(comments_count, 0) as comments_count,
+              is_published, 
               published_at, created_at, updated_at
             FROM news
             WHERE ${whereClause}
@@ -373,6 +376,8 @@ export class DatabaseStorage implements IStorage {
             category: row.category,
             likesCount: row.likes_count,
             dislikesCount: row.dislikes_count,
+            viewsCount: row.views_count || 0,
+            commentsCount: row.comments_count || 0,
             isPublished: row.is_published,
             publishedAt: row.published_at,
             createdAt: row.created_at,
@@ -483,6 +488,8 @@ export class DatabaseStorage implements IStorage {
             category: newsItem.category,
             likesCount: newsItem.likesCount,
             dislikesCount: newsItem.dislikesCount,
+            viewsCount: (newsItem as any).viewsCount || 0,
+            commentsCount: (newsItem as any).commentsCount || 0,
             isPublished: newsItem.isPublished,
             publishedAt: newsItem.publishedAt,
             createdAt: newsItem.createdAt,
@@ -732,6 +739,14 @@ export class DatabaseStorage implements IStorage {
       .where(eq(newsComments.newsId, newsId))
       .orderBy(desc(newsComments.createdAt));
     return comments;
+  }
+
+  async getNewsCommentsCount(newsId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(newsComments)
+      .where(eq(newsComments.newsId, newsId));
+    return result[0]?.count || 0;
   }
 
   async createNewsComment(data: { newsId: string; userId: string; content: string }): Promise<NewsComment> {
