@@ -4,23 +4,22 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from '@/components/ui/select';
-import { Globe } from 'lucide-react';
 
 export function LanguageSelector() {
   const { language, setLanguage } = useI18n();
 
+  const displayValue = language === 'pt-BR' ? '🇧🇷 BRA' : '🇺🇸 USA';
+
   return (
-    <div className="flex items-center gap-2">
-      <Globe className="h-4 w-4 text-muted-foreground" />
+    <div className="flex items-center">
       <Select value={language} onValueChange={(value) => setLanguage(value as 'pt-BR' | 'en-US')}>
-        <SelectTrigger className="w-[120px] h-8">
-          <SelectValue />
+        <SelectTrigger className="w-[85px] h-8 bg-white/5 border-white/10 text-white/80 text-xs">
+          <span>{displayValue}</span>
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="pt-BR">🇧🇷 Português</SelectItem>
-          <SelectItem value="en-US">🇺🇸 English</SelectItem>
+        <SelectContent className="bg-[#0f0f0f] border-white/10">
+          <SelectItem value="pt-BR" className="text-white/80 focus:bg-white/10 focus:text-white">🇧🇷 BRA</SelectItem>
+          <SelectItem value="en-US" className="text-white/80 focus:bg-white/10 focus:text-white">🇺🇸 USA</SelectItem>
         </SelectContent>
       </Select>
     </div>

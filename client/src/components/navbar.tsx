@@ -55,7 +55,7 @@ export function Navbar() {
         <Link href="/dashboard" data-testid="link-logo">
           <div className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg md:text-xl font-light tracking-tight hover:opacity-80 transition-opacity cursor-pointer text-white">
             <span className="text-lg sm:text-xl md:text-2xl">⚽</span>
-            <span className="hidden md:inline">Brasileirão</span>
+            <span className="hidden md:inline">Futwitter</span>
           </div>
         </Link>
 

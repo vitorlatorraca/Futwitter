@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
-import { ThumbsUp, ThumbsDown, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Eye, MessageCircle, Share2, Send, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { resolveApiUrl } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import type { News } from '@shared/schema';
 
 interface VideoNewsCardProps {
@@ -20,21 +21,40 @@ interface VideoNewsCardProps {
   onInteract: (newsId: string, type: 'LIKE' | 'DISLIKE') => void;
 }
 
+interface Comment {
+  id: string;
+  newsId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  content: string;
+  createdAt: string;
+}
+
 const CATEGORY_LABELS: Record<string, string> = {
-  NEWS: 'Notícia',
-  ANALYSIS: 'Análise',
-  BACKSTAGE: 'Bastidores',
-  MARKET: 'Mercado',
+  NEWS: 'News',
+  ANALYSIS: 'Analysis',
+  BACKSTAGE: 'Backstage',
+  MARKET: 'Market',
 };
 
 export function VideoNewsCard({ news, canInteract, onInteract }: VideoNewsCardProps) {
+  const { user } = useAuth();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [isInView, setIsInView] = useState(false);
+  const [viewsCount, setViewsCount] = useState(news.viewsCount || 0);
+  const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [newComment, setNewComment] = useState('');
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [isSendingComment, setIsSendingComment] = useState(false);
+  const [commentsCount, setCommentsCount] = useState(news.commentsCount || 0);
+  const [commentError, setCommentError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Intersection Observer para pausar quando sair da tela
+  // Intersection Observer for auto-pause when out of view
   useEffect(() => {
     if (!cardRef.current) return;
 
@@ -55,6 +75,32 @@ export function VideoNewsCard({ news, canInteract, onInteract }: VideoNewsCardPr
     return () => observer.disconnect();
   }, []);
 
+  // Increment view count on mount
+  useEffect(() => {
+    const incrementView = async () => {
+      try {
+        const response = await fetch(resolveApiUrl(`/api/news/${news.id}/view`), {
+          method: 'POST',
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const text = await response.text();
+          if (text) {
+            try {
+              const data = JSON.parse(text);
+              setViewsCount(data.viewsCount || 0);
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      } catch (error) {
+        // Silently fail
+      }
+    };
+    incrementView();
+  }, [news.id]);
+
   const togglePlay = () => {
     if (!videoRef.current) return;
     
@@ -67,15 +113,100 @@ export function VideoNewsCard({ news, canInteract, onInteract }: VideoNewsCardPr
     }
   };
 
-  const toggleMute = () => {
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!videoRef.current) return;
     videoRef.current.muted = !isMuted;
     setIsMuted(!isMuted);
   };
 
-  const handleVideoClick = (e: React.MouseEvent) => {
+  // Load comments
+  const loadComments = async () => {
+    if (isLoadingComments) return;
+    setIsLoadingComments(true);
+    try {
+      const response = await fetch(resolveApiUrl(`/api/news/${news.id}/comments`), {
+        credentials: 'include',
+      });
+      if (response.ok) {
+        const text = await response.text();
+        if (text) {
+          try {
+            const data = JSON.parse(text);
+            if (Array.isArray(data)) {
+              setComments(data);
+              setCommentsCount(data.length);
+            } else if (data.comments) {
+              setComments(data.comments);
+              setCommentsCount(data.totalCount || data.comments.length);
+            }
+          } catch {
+            setComments([]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const handleToggleComments = () => {
+    if (!showComments) {
+      loadComments();
+    }
+    setShowComments(!showComments);
+  };
+
+  // Send comment
+  const handleSendComment = async () => {
+    if (!newComment.trim() || isSendingComment) return;
+    if (newComment.trim().length > 49) {
+      setCommentError('Max 49 characters');
+      return;
+    }
+    
+    setIsSendingComment(true);
+    setCommentError(null);
+    
+    try {
+      const response = await fetch(resolveApiUrl(`/api/news/${news.id}/comments`), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ content: newComment.trim() }),
+      });
+      
+      const text = await response.text();
+      let data = null;
+      if (text) {
+        try {
+          data = JSON.parse(text);
+        } catch {}
+      }
+      
+      if (response.ok && data) {
+        setComments(prev => [data, ...prev]);
+        setCommentsCount(prev => prev + 1);
+        setNewComment('');
+      } else {
+        setCommentError(data?.message || 'Error sending comment');
+      }
+    } catch (error) {
+      setCommentError('Error sending comment');
+    } finally {
+      setIsSendingComment(false);
+    }
+  };
+
+  // Share via WhatsApp
+  const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    togglePlay();
+    const text = `Check out this video: ${news.title}`;
+    const url = `${window.location.origin}/news/${news.id}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${text}\n\n${url}`)}`;
+    window.open(whatsappUrl, '_blank');
   };
 
   if (!news || !news.team || !news.videoUrl) {
@@ -83,47 +214,9 @@ export function VideoNewsCard({ news, canInteract, onInteract }: VideoNewsCardPr
   }
 
   const categoryLabel = CATEGORY_LABELS[news.category] || news.category;
-  const authorName = news.author?.name || news.journalist?.user?.name || 'Autor desconhecido';
+  const authorName = news.author?.name || news.journalist?.user?.name || 'Unknown author';
   const authorAvatarUrl = news.author?.avatarUrl || news.journalist?.user?.avatarUrl;
-
-  const InteractionButton = ({ type, count, icon: Icon }: { type: 'LIKE' | 'DISLIKE', count: number, icon: any }) => {
-    const isActive = news.userInteraction === type;
-    
-    const button = (
-      <Button
-        variant={isActive ? 'default' : 'outline'}
-        size="sm"
-        onClick={() => canInteract && onInteract(news.id, type)}
-        disabled={!canInteract}
-        className={`gap-1 sm:gap-1.5 font-light transition-all duration-200 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3 ${
-          isActive
-            ? 'bg-white/10 border-white/15 text-white'
-            : 'bg-white/3 border-white/5 text-white/50 hover:bg-white/8 hover:text-white/70 hover:border-white/8'
-        }`}
-        data-testid={`button-${type.toLowerCase()}-${news.id}`}
-      >
-        <Icon className="h-3 w-3 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4" />
-        <span className="font-light text-[10px] sm:text-xs">{count}</span>
-      </Button>
-    );
-
-    if (!canInteract) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              {button}
-            </TooltipTrigger>
-            <TooltipContent className="bg-[#16181c] border-white/10 text-white">
-              <p className="text-xs">Você só pode interagir com notícias do seu time</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-
-    return button;
-  };
+  const canComment = user?.teamId === news.team?.id;
 
   return (
     <Card 
@@ -131,109 +224,236 @@ export function VideoNewsCard({ news, canInteract, onInteract }: VideoNewsCardPr
       className="overflow-hidden bg-white/2 backdrop-blur-md border border-white/5 rounded-lg sm:rounded-xl hover:border-white/10 hover:bg-white/3 transition-all duration-300"
       data-testid={`video-news-card-${news.id}`}
     >
-      
-      <CardHeader className="p-3 sm:p-4 md:p-5 pb-2 sm:pb-3 relative z-10">
-        <div className="flex items-center gap-2 sm:gap-2.5">
-          <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0">
-            {authorAvatarUrl ? (
-              <img 
-                src={authorAvatarUrl}
-                alt={authorName}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-white/70 text-[9px] sm:text-[10px] md:text-xs font-light">
-                {authorName.slice(0, 2).toUpperCase()}
-              </span>
-            )}
+      {/* Header */}
+      <CardHeader className="p-3 sm:p-4 pb-2 sm:pb-3 relative z-10">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0 flex-1">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0">
+              {authorAvatarUrl ? (
+                <img src={authorAvatarUrl} alt={authorName} className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-white/70 text-[9px] sm:text-[10px] font-light">
+                  {authorName.slice(0, 2).toUpperCase()}
+                </span>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] sm:text-xs text-white/85 truncate font-light">{authorName}</p>
+              <p className="text-[9px] sm:text-[10px] text-white/35 truncate font-light">{news.team.name}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[11px] sm:text-xs md:text-sm text-white/85 truncate font-light">
-              {authorName}
-            </p>
-            <p className="text-[9px] sm:text-[10px] md:text-xs text-white/35 truncate font-light">{news.team.name}</p>
+          <div className="flex flex-col items-end flex-shrink-0">
+            <span className="text-[9px] sm:text-[10px] text-white/40 font-light">🎬 {categoryLabel}</span>
+            <span className="text-[8px] sm:text-[9px] text-white/25 font-light">
+              {format(new Date(news.publishedAt), "dd/MM HH:mm")}
+            </span>
           </div>
-          <span className="text-[9px] sm:text-[10px] text-white/25 font-light hidden md:inline">{categoryLabel}</span>
         </div>
       </CardHeader>
 
-      {/* Video Container - Tipo TikTok - Ultra responsivo mobile */}
+      {/* Video Container with Overlay Icons */}
       <div className="relative w-full bg-black aspect-[9/16] overflow-hidden group">
         <video
           ref={videoRef}
           src={news.videoUrl}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover cursor-pointer"
           loop
           muted={isMuted}
           playsInline
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
-          onClick={handleVideoClick}
+          onClick={togglePlay}
         />
         
-        {/* Overlay com controles - minimalista mobile */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 sm:group-hover:opacity-100 transition-opacity">
-          {/* Botão Play/Pause centralizado - menor no mobile */}
-          <button
-            onClick={handleVideoClick}
-            className="absolute inset-0 flex items-center justify-center bg-black/10 hover:bg-black/20 transition-colors"
-            aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
+        {/* Play/Pause overlay (center) */}
+        {!isPlaying && (
+          <div 
+            className="absolute inset-0 flex items-center justify-center bg-black/20 cursor-pointer"
+            onClick={togglePlay}
           >
-            {!isPlaying && (
-              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full bg-white/15 backdrop-blur-sm sm:backdrop-blur-md flex items-center justify-center border border-white/20 sm:border-2 sm:border-white/30">
-                <Play className="h-6 w-6 sm:h-8 sm:w-8 md:h-10 md:w-10 text-white ml-0.5 sm:ml-1" fill="white" />
-              </div>
-            )}
-          </button>
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center border border-white/30">
+              <Play className="h-7 w-7 sm:h-8 sm:w-8 text-white ml-1" fill="white" />
+            </div>
+          </div>
+        )}
 
-          {/* Controles no canto inferior - menores no mobile */}
-          <div className="absolute bottom-2 right-2 sm:bottom-4 sm:right-4 flex flex-col gap-1.5 sm:gap-2">
+        {/* Interaction Icons - Bottom overlay, horizontal layout */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent p-3 pt-8">
+          <div className="flex items-center gap-4">
+            {/* Like */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      canInteract && onInteract(news.id, 'LIKE');
+                    }}
+                    className={`flex items-center gap-1.5 transition-all ${
+                      news.userInteraction === 'LIKE' ? 'text-green-400' : 'text-white/90 hover:text-white'
+                    }`}
+                  >
+                    <ThumbsUp className="h-5 w-5" />
+                    <span className="text-xs font-medium">{news.likesCount}</span>
+                  </button>
+                </TooltipTrigger>
+                {!canInteract && (
+                  <TooltipContent className="bg-black/80 border-white/10">
+                    <p className="text-xs">Only your team</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Dislike */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      canInteract && onInteract(news.id, 'DISLIKE');
+                    }}
+                    className={`flex items-center gap-1.5 transition-all ${
+                      news.userInteraction === 'DISLIKE' ? 'text-red-400' : 'text-white/90 hover:text-white'
+                    }`}
+                  >
+                    <ThumbsDown className="h-5 w-5" />
+                    <span className="text-xs font-medium">{news.dislikesCount}</span>
+                  </button>
+                </TooltipTrigger>
+                {!canInteract && (
+                  <TooltipContent className="bg-black/80 border-white/10">
+                    <p className="text-xs">Only your team</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+
+            {/* Views */}
+            <div className="flex items-center gap-1.5 text-white/90">
+              <Eye className="h-5 w-5" />
+              <span className="text-xs font-medium">{viewsCount}</span>
+            </div>
+
+            {/* Comments */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                toggleMute();
+                handleToggleComments();
               }}
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-black/40 backdrop-blur-sm sm:backdrop-blur-md flex items-center justify-center border border-white/15 sm:border-white/20 hover:bg-black/60 transition-colors"
-              aria-label={isMuted ? 'Ativar som' : 'Silenciar'}
+              className={`flex items-center gap-1.5 transition-all ${
+                showComments ? 'text-purple-400' : 'text-white/90 hover:text-white'
+              }`}
+            >
+              <MessageCircle className="h-5 w-5" />
+              <span className="text-xs font-medium">{commentsCount}</span>
+            </button>
+
+            {/* Share */}
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-1.5 text-white/90 hover:text-green-400 transition-all"
+            >
+              <Share2 className="h-5 w-5" />
+            </button>
+
+            {/* Mute button - Right side */}
+            <button
+              onClick={toggleMute}
+              className="ml-auto flex items-center justify-center text-white/90 hover:text-white transition-all"
             >
               {isMuted ? (
-                <VolumeX className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
+                <VolumeX className="h-5 w-5" />
               ) : (
-                <Volume2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 md:h-5 md:w-5 text-white" />
+                <Volume2 className="h-5 w-5" />
               )}
             </button>
           </div>
         </div>
-
-        {/* Badge de categoria no canto superior esquerdo (mobile) */}
-        <div className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 md:hidden">
-          <span className="text-[9px] text-white/30 font-light bg-black/20 backdrop-blur-sm px-1 py-0.5 rounded">
-            {categoryLabel}
-          </span>
-        </div>
       </div>
 
-      <CardContent className="p-3 sm:p-4 md:p-5 space-y-2 sm:space-y-3 relative z-10">
-        <div>
-          <h3 className="font-light text-sm sm:text-base md:text-lg text-white/90 mb-1.5 sm:mb-2 leading-tight tracking-tight">
-            {news.title}
-          </h3>
-          <p className="text-xs sm:text-sm text-white/55 leading-relaxed line-clamp-2 font-light">
-            {news.content}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 text-[9px] sm:text-[10px] md:text-xs text-white/25 font-light">
-          <span className="hidden md:inline">{format(new Date(news.publishedAt), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</span>
-          <span className="md:hidden">{format(new Date(news.publishedAt), "dd/MM 'às' HH:mm", { locale: ptBR })}</span>
-        </div>
+      {/* Content below video */}
+      <CardContent className="p-3 sm:p-4 space-y-2 relative z-10">
+        <h3 className="font-light text-sm sm:text-base text-white/90 leading-tight tracking-tight">
+          {news.title}
+        </h3>
+        <p className="text-xs sm:text-sm text-white/55 leading-relaxed line-clamp-2 font-light">
+          {news.content}
+        </p>
       </CardContent>
 
-      <CardFooter className="p-3 sm:p-4 md:p-5 pt-0 flex gap-1.5 sm:gap-2 relative z-10">
-        <InteractionButton type="LIKE" count={news.likesCount} icon={ThumbsUp} />
-        <InteractionButton type="DISLIKE" count={news.dislikesCount} icon={ThumbsDown} />
-      </CardFooter>
+      {/* Comments Section */}
+      {showComments && (
+        <div className="border-t border-white/5 p-3 sm:p-4 space-y-3">
+          {canComment ? (
+            <div className="space-y-1">
+              <div className="flex gap-2">
+                <div className="flex-1 relative">
+                  <Input
+                    value={newComment}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 49) {
+                        setNewComment(e.target.value);
+                        setCommentError(null);
+                      }
+                    }}
+                    placeholder="Comment... (max 49)"
+                    maxLength={49}
+                    className="bg-white/5 border-white/10 text-white placeholder:text-white/30 text-xs h-8 pr-12"
+                    onKeyDown={(e) => e.key === 'Enter' && handleSendComment()}
+                  />
+                  <span className={`absolute right-2 top-1/2 -translate-y-1/2 text-[9px] ${
+                    newComment.length >= 45 ? 'text-orange-400' : 'text-white/30'
+                  }`}>
+                    {newComment.length}/49
+                  </span>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleSendComment}
+                  disabled={!newComment.trim() || isSendingComment}
+                  className="h-8 px-3 bg-purple-600 hover:bg-purple-700"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+              {commentError && <p className="text-[10px] text-red-400">{commentError}</p>}
+            </div>
+          ) : (
+            <p className="text-[10px] text-white/40 text-center py-2">
+              Only fans of {news.team.name} can comment
+            </p>
+          )}
+
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {isLoadingComments ? (
+              <p className="text-xs text-white/40 text-center py-3">Loading...</p>
+            ) : comments.length === 0 ? (
+              <p className="text-xs text-white/40 text-center py-3">No comments yet</p>
+            ) : (
+              comments.map((comment) => (
+                <div key={comment.id} className="flex gap-2 p-2 bg-white/3 rounded-lg">
+                  <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {comment.userAvatar ? (
+                      <img src={comment.userAvatar} alt={comment.userName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[8px] text-white/70">{comment.userName.slice(0, 2).toUpperCase()}</span>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-white/70 font-medium truncate">{comment.userName}</span>
+                      <span className="text-[8px] text-white/30 ml-2">{format(new Date(comment.createdAt), "HH:mm")}</span>
+                    </div>
+                    <p className="text-[10px] text-white/60 break-words">{comment.content}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
-

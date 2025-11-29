@@ -122,7 +122,7 @@ export default function DashboardPage() {
     },
     enabled: !!user,
     staleTime: 0, // Force refetch every time
-    cacheTime: 0, // Don't cache
+    gcTime: 0, // Don't cache (renamed from cacheTime in v5)
   });
 
   const interactionMutation = useMutation({
@@ -147,12 +147,12 @@ export default function DashboardPage() {
 
   // Debug: Log data when it changes
   useEffect(() => {
-    if (newsData) {
+    if (newsData && Array.isArray(newsData)) {
       console.log('[Dashboard] newsData changed:', newsData);
       console.log('[Dashboard] newsData length:', newsData.length);
       if (newsData.length > 0) {
         console.log('[Dashboard] First news item:', newsData[0]);
-        console.log('[Dashboard] First news team:', newsData[0]?.team);
+        console.log('[Dashboard] First news team:', (newsData[0] as any)?.team);
       }
     }
   }, [newsData]);
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                 }`}
               >
                 <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span className="hidden sm:inline">Text</span>
+                <span className="hidden sm:inline">Newspaper</span>
               </button>
               <button
                 onClick={() => setContentTypeFilter('VIDEO')}
@@ -222,7 +222,7 @@ export default function DashboardPage() {
 
             {/* Team Filter - Dropdown */}
             <div className="flex items-center gap-2">
-              {/* Quick Access: My Team */}
+              {/* Quick Access: User's Team */}
               <button
                 onClick={() => setActiveFilter('my-team')}
                 className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-light transition-all ${
@@ -232,8 +232,20 @@ export default function DashboardPage() {
                 }`}
                 data-testid="filter-my-team"
               >
-                <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span className="hidden sm:inline">My Team</span>
+                {(() => {
+                  const userTeam = TEAMS_DATA.find(t => t.id === user?.teamId);
+                  return userTeam ? (
+                    <>
+                      <TeamLogo logoUrl={userTeam.logoUrl} shortName={userTeam.shortName} />
+                      <span className="hidden sm:inline">{userTeam.shortName}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                      <span className="hidden sm:inline">My Team</span>
+                    </>
+                  );
+                })()}
               </button>
 
               {/* Teams Dropdown */}
@@ -299,9 +311,16 @@ export default function DashboardPage() {
 
       {/* News Feed - Full Width Grid - Mobile First */}
       <div className="w-full px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 py-4 sm:py-6 md:py-8">
-        <div className="max-w-[1920px] mx-auto">
-          {/* Grid responsivo: 1 coluna mobile, 2 tablet, 3 desktop, 4 xl */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-5 lg:gap-6">
+        <div className={`mx-auto ${contentTypeFilter === 'VIDEO' ? 'max-w-[900px]' : 'max-w-[1920px]'}`}>
+          {/* Grid responsivo: 
+              - Video: 1 coluna até lg, 2 colunas no desktop
+              - Text/All: 1 mobile, 2 tablet, 3 desktop, 4 xl 
+          */}
+          <div className={`grid gap-3 sm:gap-4 md:gap-5 lg:gap-6 ${
+            contentTypeFilter === 'VIDEO' 
+              ? 'grid-cols-1 lg:grid-cols-2' 
+              : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+          }`}>
             {isLoading ? (
               <>
                 {[1, 2, 3, 4, 5, 6].map((i) => (
