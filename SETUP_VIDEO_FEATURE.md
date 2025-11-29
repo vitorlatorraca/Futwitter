@@ -1,79 +1,71 @@
-# 🎥 Setup da Funcionalidade de Vídeo
+# 🎥 Video Feature Setup
 
-## ⚠️ IMPORTANTE: Antes de rodar
+## ⚠️ IMPORTANT: Before running
 
-A funcionalidade de vídeo adiciona novos campos ao banco de dados. Você precisa executar a migration primeiro!
+The video feature adds new fields to the database. You need to run the migration first!
 
-## 📋 Passos para rodar:
+## 📋 Steps to run:
 
-### 1. Executar a Migration do Banco de Dados
+### 1. Run the Database Migration
 
-Execute o SQL de migration no seu banco de dados PostgreSQL:
+Execute the migration SQL in your PostgreSQL database:
 
 ```bash
-# Opção 1: Via psql (recomendado)
+# Option 1: Via psql (recommended)
 psql $DATABASE_URL -f migrations/add_video_support_to_news.sql
 
-# Opção 2: Via Drizzle Kit (se preferir)
+# Option 2: Via Drizzle Kit (if you prefer)
 npm run db:push
 ```
 
-**OU** execute manualmente no seu banco:
+**OR** run manually in your database:
 
 ```sql
--- Criar o enum
+-- Create the enum
 DO $$ BEGIN
     CREATE TYPE news_content_type AS ENUM ('TEXT', 'VIDEO');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
--- Adicionar colunas
+-- Add columns
 ALTER TABLE news 
 ADD COLUMN IF NOT EXISTS video_url TEXT;
 
 ALTER TABLE news 
 ADD COLUMN IF NOT EXISTS content_type news_content_type DEFAULT 'TEXT';
 
--- Criar índices
+-- Create indexes
 CREATE INDEX IF NOT EXISTS idx_news_content_type ON news(content_type);
 CREATE INDEX IF NOT EXISTS idx_news_video_url ON news(video_url) WHERE video_url IS NOT NULL;
 ```
 
-### 2. Rodar o Projeto
+### 2. Run the Project
 
 ```bash
 npm run dev
 ```
 
-O site estará disponível em: **http://localhost:5001**
+The site will be available at: **http://localhost:5001**
 
-## ✅ O que foi implementado:
+## ✅ What was implemented:
 
-- ✅ Schema atualizado com campos `videoUrl` e `contentType`
-- ✅ Formulário de criação com opção de vídeo
-- ✅ Componente VideoNewsCard tipo TikTok
-- ✅ Filtros por tipo de conteúdo (Texto/Vídeo)
-- ✅ Layout full-width responsivo
-- ✅ Design minimalista
+- ✅ Updated schema with `videoUrl` and `contentType` fields
+- ✅ Creation form with video option
+- ✅ TikTok-style VideoNewsCard component
+- ✅ Filters by content type (Text/Video)
+- ✅ Responsive full-width layout
+- ✅ Minimalist design
 
-## 🔧 Se o site não abrir:
+## 🔧 If the site doesn't open:
 
-1. **Verifique se a migration foi executada** - Os campos novos precisam existir no banco
-2. **Verifique o console** - Pode haver erros de conexão com o banco
-3. **Verifique o .env** - DATABASE_URL precisa estar configurado
-4. **Limpe o cache** - Tente `npm run build` e depois `npm run dev`
+1. **Check if the migration was executed** - The new fields need to exist in the database
+2. **Check the console** - There may be database connection errors
+3. **Check the .env** - DATABASE_URL needs to be configured
+4. **Clear the cache** - Try `npm run build` and then `npm run dev`
 
-## 📝 Notas:
+## 📝 Notes:
 
-- Os campos são opcionais, então notícias antigas continuarão funcionando
-- Notícias sem `contentType` serão tratadas como "TEXT" automaticamente
-- Vídeos precisam de URL direta para o arquivo (MP4 recomendado, formato 9:16)
-
-
-
-
-
-
-
-
+- The fields are optional, so old news will continue working
+- News without `contentType` will be treated as "TEXT" automatically
+- Videos need a direct URL to the file (MP4 recommended, 9:16 format)

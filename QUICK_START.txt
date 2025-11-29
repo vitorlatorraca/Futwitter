@@ -1,27 +1,27 @@
 ═══════════════════════════════════════════════════════════════
-  🚀 COMO RODAR O PROJETO - GUIA RÁPIDO
+  🚀 HOW TO RUN THE PROJECT - QUICK GUIDE
 ═══════════════════════════════════════════════════════════════
 
-❌ ERRO: "ERR_CONNECTION_REFUSED" 
-Isso significa que o servidor NÃO está rodando!
+❌ ERROR: "ERR_CONNECTION_REFUSED" 
+This means the server is NOT running!
 
 ═══════════════════════════════════════════════════════════════
-PASSO 1: Verificar arquivo .env
+STEP 1: Check .env file
 ═══════════════════════════════════════════════════════════════
 
-Crie um arquivo chamado ".env" na raiz do projeto com:
+Create a file called ".env" in the project root with:
 
-DATABASE_URL=postgresql://usuario:senha@host:porta/database
+DATABASE_URL=postgresql://user:password@host:port/database
 PORT=5001
-SESSION_SECRET=sua-chave-secreta-aqui
+SESSION_SECRET=your-secret-key-here
 
 ═══════════════════════════════════════════════════════════════
-PASSO 2: Executar Migration do Banco
+STEP 2: Run Database Migration
 ═══════════════════════════════════════════════════════════════
 
-IMPORTANTE: Execute este SQL no seu banco PostgreSQL:
+IMPORTANT: Execute this SQL in your PostgreSQL database:
 
-SQL para executar:
+SQL to execute:
 ───────────────────────────────────────────────────────────────
 DO $$ BEGIN
     CREATE TYPE news_content_type AS ENUM ('TEXT', 'VIDEO');
@@ -36,44 +36,37 @@ CREATE INDEX IF NOT EXISTS idx_news_content_type ON news(content_type);
 CREATE INDEX IF NOT EXISTS idx_news_video_url ON news(video_url) WHERE video_url IS NOT NULL;
 ───────────────────────────────────────────────────────────────
 
-Ou execute via arquivo:
+Or run via file:
   psql $DATABASE_URL -f migrations/add_video_support_to_news.sql
 
 ═══════════════════════════════════════════════════════════════
-PASSO 3: Rodar o Servidor
+STEP 3: Run the Server
 ═══════════════════════════════════════════════════════════════
 
-No PowerShell:
+In PowerShell:
   npm run dev
 
-No CMD (Windows):
+In CMD (Windows):
   npm run dev:win
 
 ═══════════════════════════════════════════════════════════════
-PASSO 4: Verificar se Funcionou
+STEP 4: Verify it Worked
 ═══════════════════════════════════════════════════════════════
 
-Você deve ver no terminal:
+You should see in the terminal:
   "serving on port 5001"
 
-Então acesse no navegador:
+Then access in the browser:
   http://localhost:5001
 
 ═══════════════════════════════════════════════════════════════
-🔍 SE AINDA NÃO FUNCIONAR:
+🔍 IF IT STILL DOESN'T WORK:
 ═══════════════════════════════════════════════════════════════
 
-1. Verifique o console do terminal - copie o erro e me envie
-2. Verifique se o PostgreSQL está acessível
-3. Verifique se a DATABASE_URL está correta
-4. Tente executar: npm run db:push
+1. Check the terminal console - copy the error message
+2. Verify if PostgreSQL is accessible
+3. Verify if DATABASE_URL is correct
+4. Try running: npm run db:push
 
 ═══════════════════════════════════════════════════════════════
-
-
-
-
-
-
-
 

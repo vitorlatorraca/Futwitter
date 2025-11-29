@@ -1,75 +1,75 @@
-# 🚀 Guia de Deploy
+# 🚀 Deployment Guide
 
-Este guia explica como colocar o **Brasileirão DataFlow** no ar usando **Render** ou **Railway**.
+This guide explains how to deploy **Futwitter** using **Render** or **Railway**.
 
-## Pré-requisitos
+## Prerequisites
 
-1.  Uma conta no [GitHub](https://github.com/).
-2.  O código do projeto salvo em um repositório no GitHub.
-
----
-
-## Opção 1: Deploy no Render (Recomendado)
-
-O Render é muito fácil de usar e tem um plano gratuito.
-
-1.  Crie uma conta no [Render.com](https://render.com/).
-2.  No painel, clique em **New +** e selecione **Web Service**.
-3.  Conecte sua conta do GitHub e selecione o repositório do projeto.
-4.  Dê um nome para o serviço (ex: `brasileirao-dataflow`).
-5.  **Configurações de Build e Start:**
-    *   **Runtime:** Node
-    *   **Build Command:** `npm install && npm run build`
-    *   **Start Command:** `npm run start:prod`
-6.  **Variáveis de Ambiente (Environment Variables):**
-    Role para baixo até a seção "Environment Variables" e adicione:
-    *   `DATABASE_URL`: A URL do seu banco de dados PostgreSQL (veja abaixo como criar um).
-    *   `SESSION_SECRET`: Uma senha longa e aleatória (ex: digite qualquer coisa segura).
-    *   `NODE_ENV`: `production`
-7.  Clique em **Create Web Service**.
-
-### Como criar um Banco de Dados no Render
-
-1.  No painel do Render, clique em **New +** e selecione **PostgreSQL**.
-2.  Dê um nome (ex: `brasileirao-db`).
-3.  Escolha o plano **Free**.
-4.  Clique em **Create Database**.
-5.  Quando estiver pronto, copie a **Internal Database URL** e use como o valor de `DATABASE_URL` no seu Web Service.
+1. A [GitHub](https://github.com/) account.
+2. The project code saved in a GitHub repository.
 
 ---
 
-## Opção 2: Deploy no Railway
+## Option 1: Deploy on Render (Recommended)
 
-O Railway também é excelente e detecta configurações automaticamente.
+Render is very easy to use and has a free tier.
 
-1.  Crie uma conta no [Railway.app](https://railway.app/).
-2.  Clique em **New Project** > **Deploy from GitHub repo**.
-3.  Selecione o repositório do projeto.
-4.  O Railway vai tentar identificar o projeto.
-5.  Vá em **Variables** e adicione:
-    *   `DATABASE_URL`: (O Railway pode criar um banco para você, veja abaixo).
-    *   `SESSION_SECRET`: Uma senha segura.
-6.  **Banco de Dados:**
-    *   No painel do projeto, clique em **New** > **Database** > **Add PostgreSQL**.
-    *   O Railway vai criar o banco e automaticamente adicionar a variável `DATABASE_URL` ao seu projeto.
+1. Create an account at [Render.com](https://render.com/).
+2. In the dashboard, click **New +** and select **Web Service**.
+3. Connect your GitHub account and select the project repository.
+4. Give the service a name (e.g., `futwitter`).
+5. **Build and Start Settings:**
+    * **Runtime:** Node
+    * **Build Command:** `npm install && npm run build`
+    * **Start Command:** `npm run start:prod`
+6. **Environment Variables:**
+    Scroll down to the "Environment Variables" section and add:
+    * `DATABASE_URL`: Your PostgreSQL database URL (see below how to create one).
+    * `SESSION_SECRET`: A long random password (e.g., any secure string).
+    * `NODE_ENV`: `production`
+7. Click **Create Web Service**.
 
----
+### How to Create a Database on Render
 
-## ⚠️ Importante: Migrations
-
-Após o deploy, o banco de dados estará vazio. Você precisa criar as tabelas.
-
-**No Render:**
-1.  Vá na aba **Shell** do seu Web Service.
-2.  Execute: `npm run db:push`
-
-**No Railway:**
-1.  Vá na aba do seu serviço > **Settings** > **Deploy** > **Build Command**.
-2.  Altere para: `npm install && npm run build && npm run db:push` (Isso vai rodar as migrations a cada deploy).
-    *   *Alternativa:* Use a CLI do Railway ou conecte-se ao banco localmente para rodar o SQL.
+1. In the Render dashboard, click **New +** and select **PostgreSQL**.
+2. Give it a name (e.g., `futwitter-db`).
+3. Choose the **Free** plan.
+4. Click **Create Database**.
+5. When ready, copy the **Internal Database URL** and use it as the `DATABASE_URL` value in your Web Service.
 
 ---
 
-## Verificação
+## Option 2: Deploy on Railway
 
-Acesse a URL gerada pelo Render ou Railway. O sistema deve estar funcionando!
+Railway is also excellent and detects configurations automatically.
+
+1. Create an account at [Railway.app](https://railway.app/).
+2. Click **New Project** > **Deploy from GitHub repo**.
+3. Select the project repository.
+4. Railway will try to identify the project.
+5. Go to **Variables** and add:
+    * `DATABASE_URL`: (Railway can create a database for you, see below).
+    * `SESSION_SECRET`: A secure password.
+6. **Database:**
+    * In the project panel, click **New** > **Database** > **Add PostgreSQL**.
+    * Railway will create the database and automatically add the `DATABASE_URL` variable to your project.
+
+---
+
+## ⚠️ Important: Migrations
+
+After deployment, the database will be empty. You need to create the tables.
+
+**On Render:**
+1. Go to the **Shell** tab of your Web Service.
+2. Run: `npm run db:push`
+
+**On Railway:**
+1. Go to your service tab > **Settings** > **Deploy** > **Build Command**.
+2. Change to: `npm install && npm run build && npm run db:push` (This will run migrations on every deploy).
+    * *Alternative:* Use the Railway CLI or connect to the database locally to run the SQL.
+
+---
+
+## Verification
+
+Access the URL generated by Render or Railway. The system should be working!
