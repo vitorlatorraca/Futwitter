@@ -180,7 +180,7 @@ export default function DashboardPage() {
 
       {/* Filter Bar - Clean & Minimal */}
       <div className="sticky top-12 sm:top-14 z-40 bg-black/20 backdrop-blur-md border-b border-white/5">
-        <div className="container px-3 sm:px-4 md:px-6 py-2 sm:py-2.5">
+        <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 py-2 sm:py-2.5">
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             
             {/* Content Type Filter - With Icons */}

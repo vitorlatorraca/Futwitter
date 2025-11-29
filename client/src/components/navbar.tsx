@@ -50,7 +50,7 @@ export function Navbar() {
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-black/30 backdrop-blur-md supports-[backdrop-filter]:bg-black/10">
-      <div className="container flex h-12 sm:h-14 items-center justify-between px-3 sm:px-4 md:px-6">
+      <div className="w-full max-w-[1920px] mx-auto flex h-12 sm:h-14 items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8">
         {/* Logo - Ultra minimalista mobile */}
         <Link href="/dashboard" data-testid="link-logo">
           <div className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg md:text-xl font-light tracking-tight hover:opacity-80 transition-opacity cursor-pointer text-white">
