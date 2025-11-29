@@ -328,7 +328,7 @@ export class DatabaseStorage implements IStorage {
       } catch (error: any) {
         // Se falhar por causa de colunas que não existem, usar SQL direto
         if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
-          console.log('[getAllNews] Colunas novas não existem, usando query compatível...');
+          console.log('[getAllNews] New columns do not exist, using compatible query...');
           const whereClause = teamId
             ? sql`is_published = true AND team_id = ${teamId}`
             : sql`is_published = true`;
@@ -615,7 +615,7 @@ export class DatabaseStorage implements IStorage {
     } catch (error: any) {
       // Se falhar por causa de colunas que não existem, usar SQL direto
       if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
-        console.log('[createNews] Colunas novas não existem, usando insert compatível...');
+        console.log('[createNews] New columns do not exist, using compatible insert...');
         // Remover campos novos do insert
         const { contentType, videoUrl, ...newsDataWithoutNewFields } = newsData;
         const [newsItem] = await db.insert(news).values(newsDataWithoutNewFields).returning();

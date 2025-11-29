@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserPlus } from 'lucide-react';
+import { Loader2, UserPlus, Check, X } from 'lucide-react';
+import { validateEmail, validatePassword, validateName } from '@/utils/validation';
 
 export default function SignupPage() {
   const [, setLocation] = useLocation();
@@ -20,14 +21,47 @@ export default function SignupPage() {
     confirmPassword: '',
   });
 
+  // Password requirements state
+  const passwordRequirements = {
+    minLength: formData.password.length >= 6,
+    maxLength: formData.password.length <= 128,
+    hasContent: formData.password.length > 0,
+  };
+
+  // Email validation state
+  const emailValidation = validateEmail(formData.email);
+  const nameValidation = validateName(formData.name);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.email || !formData.password) {
+    // Validate name
+    if (!nameValidation.valid) {
       toast({
         variant: 'destructive',
-        title: t('common.error'),
-        description: t('signup.error.fillFields'),
+        title: 'Error',
+        description: nameValidation.error || 'Please enter a valid name',
+      });
+      return;
+    }
+
+    // Validate email
+    if (!emailValidation.valid) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: emailValidation.error || 'Please enter a valid email',
+      });
+      return;
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.valid) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: passwordValidation.error || 'Please enter a valid password',
       });
       return;
     }
@@ -35,17 +69,8 @@ export default function SignupPage() {
     if (formData.password !== formData.confirmPassword) {
       toast({
         variant: 'destructive',
-        title: t('common.error'),
-        description: t('signup.error.passwordMatch'),
-      });
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast({
-        variant: 'destructive',
-        title: t('common.error'),
-        description: 'A senha deve ter pelo menos 6 caracteres',
+        title: 'Error',
+        description: 'Passwords do not match',
       });
       return;
     }
@@ -78,68 +103,103 @@ export default function SignupPage() {
                 <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-light text-white mb-2 tracking-tight">
-                Crie sua conta
+                Create your account
               </h1>
               <p className="text-sm sm:text-base text-gray-400 font-light">
-                Junte-se a milhares de torcedores apaixonados
+                Join thousands of passionate fans
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Name field */}
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-white/80 font-light">Nome completo</Label>
+                <Label htmlFor="name" className="text-white/80 font-light">Full name</Label>
                 <Input
                   id="name"
                   type="text"
-                  placeholder="Seu nome"
+                  placeholder="John Doe"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-name"
                   className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                 />
+                {formData.name && !nameValidation.valid && (
+                  <p className="text-xs text-red-400 mt-1">{nameValidation.error}</p>
+                )}
               </div>
               
+              {/* Email field */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-white/80 font-light">Email</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="seu@email.com"
+                  placeholder="example@mail.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-email"
                   className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                 />
+                {formData.email && !emailValidation.valid && (
+                  <p className="text-xs text-red-400 mt-1">{emailValidation.error}</p>
+                )}
+                <p className="text-xs text-gray-500">Format: example@mail.com</p>
               </div>
               
+              {/* Password field */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-white/80 font-light">Senha</Label>
+                <Label htmlFor="password" className="text-white/80 font-light">Password</Label>
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Enter your password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-password"
                   className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                 />
+                
+                {/* Password requirements indicator */}
+                <div className="mt-2 space-y-1">
+                  <p className="text-xs text-gray-400 mb-1">Password requirements:</p>
+                  <div className="flex items-center gap-2">
+                    {passwordRequirements.minLength ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-gray-500" />
+                    )}
+                    <span className={`text-xs ${passwordRequirements.minLength ? 'text-green-500' : 'text-gray-500'}`}>
+                      At least 6 characters
+                    </span>
+                  </div>               
+              
+                </div>
               </div>
               
+              {/* Confirm password field */}
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-white/80 font-light">Confirmar senha</Label>
+                <Label htmlFor="confirmPassword" className="text-white/80 font-light">Confirm password</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="Digite a senha novamente"
+                  placeholder="Re-enter your password"
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-confirm-password"
                   className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                 />
+                {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                  <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
+                )}
+                {formData.confirmPassword && formData.password === formData.confirmPassword && formData.confirmPassword.length > 0 && (
+                  <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
+                    <Check className="h-3 w-3" /> Passwords match
+                  </p>
+                )}
               </div>
 
               <Button
@@ -151,19 +211,19 @@ export default function SignupPage() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Criando conta...
+                    Creating account...
                   </>
                 ) : (
-                  'Continuar'
+                  'Continue'
                 )}
               </Button>
             </form>
 
             <p className="text-center text-sm text-gray-400 mt-6 font-light">
-              Já tem uma conta?{' '}
+              Already have an account?{' '}
               <Link href="/login" data-testid="link-login">
                 <span className="text-[#8b5cf6] font-medium hover:text-[#7c3aed] cursor-pointer transition-colors">
-                  Fazer login
+                  Sign in
                 </span>
               </Link>
             </p>

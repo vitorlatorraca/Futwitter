@@ -12,7 +12,7 @@ const PgSession = ConnectPgSimple(session);
 // Middleware to check if user is authenticated
 function requireAuth(req: any, res: any, next: any) {
   if (!req.session.userId) {
-    return res.status(401).json({ message: 'Não autenticado' });
+    return res.status(401).json({ message: 'Not authenticated' });
   }
   next();
 }
@@ -31,13 +31,13 @@ async function requireJournalistOrInfluencer(req: any, res: any, next: any) {
     }
   }
 
-  return res.status(403).json({ message: 'Acesso negado. Apenas jornalistas ou influencers.' });
+  return res.status(403).json({ message: 'Access denied. Journalists or influencers only.' });
 }
 
 // Middleware to check if user is an admin
 function requireAdmin(req: any, res: any, next: any) {
   if (req.session.userType !== 'ADMIN') {
-    return res.status(403).json({ message: 'Acesso negado. Apenas administradores.' });
+    return res.status(403).json({ message: 'Access denied. Admin only.' });
   }
   next();
 }
@@ -74,7 +74,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
-        return res.status(400).json({ message: 'Email já cadastrado' });
+        return res.status(400).json({ message: 'Email already registered' });
       }
 
       // Hash password
@@ -99,7 +99,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Registration error:', error);
-      res.status(400).json({ message: error.message || 'Erro ao criar conta' });
+      res.status(400).json({ message: error.message || 'Error creating account' });
     }
   });
 
@@ -108,17 +108,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({ message: 'Email e senha são obrigatórios' });
+        return res.status(400).json({ message: 'Email and password are required' });
       }
 
       const user = await storage.getUserByEmail(email);
       if (!user) {
-        return res.status(401).json({ message: 'Email ou senha incorretos' });
+        return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
-        return res.status(401).json({ message: 'Email ou senha incorretos' });
+        return res.status(401).json({ message: 'Invalid email or password' });
       }
 
       // Set session
@@ -129,14 +129,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('Login error:', error);
       console.error('Error stack:', error.stack);
-      res.status(500).json({ message: error.message || 'Erro ao fazer login' });
+      res.status(500).json({ message: error.message || 'Error logging in' });
     }
   });
 
   app.post('/api/auth/logout', (req, res) => {
     req.session.destroy((err) => {
       if (err) {
-        return res.status(500).json({ message: 'Erro ao fazer logout' });
+        return res.status(500).json({ message: 'Error logging out' });
       }
       res.json({ message: 'Logout realizado com sucesso' });
     });
@@ -144,20 +144,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/auth/me', async (req, res) => {
     if (!req.session.userId) {
-      return res.status(401).json({ message: 'Não autenticado' });
+      return res.status(401).json({ message: 'Not authenticated' });
     }
 
     try {
       const user = await storage.getUser(req.session.userId);
       if (!user) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
+        return res.status(404).json({ message: 'User not found' });
       }
 
       res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
       console.error('Get me error:', error);
       console.error('Error stack:', error.stack);
-      res.status(500).json({ message: error.message || 'Erro ao buscar usuário' });
+      res.status(500).json({ message: error.message || 'Error fetching user' });
     }
   });
 
@@ -171,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(teams);
     } catch (error) {
       console.error('Get teams error:', error);
-      res.status(500).json({ message: 'Erro ao buscar times' });
+      res.status(500).json({ message: 'Error fetching teams' });
     }
   });
 
@@ -179,7 +179,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const team = await storage.getTeam(req.params.id);
       if (!team) {
-        return res.status(404).json({ message: 'Time não encontrado' });
+        return res.status(404).json({ message: 'Team not found' });
       }
 
       const players = await storage.getPlayersByTeam(req.params.id);
@@ -187,7 +187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ ...team, players });
     } catch (error) {
       console.error('Get team error:', error);
-      res.status(500).json({ message: 'Erro ao buscar time' });
+      res.status(500).json({ message: 'Error fetching team' });
     }
   });
 
@@ -205,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(matches);
     } catch (error) {
       console.error('Get recent matches error:', error);
-      res.status(500).json({ message: 'Erro ao buscar partidas' });
+      res.status(500).json({ message: 'Error fetching matches' });
     }
   });
 
@@ -239,7 +239,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error('Get last match error:', error);
-      res.status(500).json({ message: 'Erro ao buscar último jogo' });
+      res.status(500).json({ message: 'Error fetching last match' });
     }
   });
 
@@ -251,7 +251,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(upcoming);
     } catch (error) {
       console.error('Get upcoming matches error:', error);
-      res.status(500).json({ message: 'Erro ao buscar próximos jogos' });
+      res.status(500).json({ message: 'Error fetching upcoming matches' });
     }
   });
 
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(standings);
     } catch (error) {
       console.error('Get standings error:', error);
-      res.status(500).json({ message: 'Erro ao buscar classificação' });
+      res.status(500).json({ message: 'Error fetching standings' });
     }
   });
 
@@ -273,7 +273,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(transfers);
     } catch (error) {
       console.error('Get transfers error:', error);
-      res.status(500).json({ message: 'Erro ao buscar transferências' });
+      res.status(500).json({ message: 'Error fetching transfers' });
     }
   });
 
@@ -325,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error stack:', error?.stack);
       console.error('Error message:', error?.message);
       res.status(500).json({
-        message: 'Erro ao buscar notícias',
+        message: 'Error fetching news',
         error: process.env.NODE_ENV === 'development' ? error?.message : undefined,
         stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       });
@@ -337,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId!;
       const user = await storage.getUser(userId);
       if (!user) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
+        return res.status(404).json({ message: 'User not found' });
       }
 
       let newsItems: any[] = [];
@@ -367,7 +367,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(enrichedNews);
     } catch (error) {
       console.error('Get my news error:', error);
-      res.status(500).json({ message: 'Erro ao buscar suas notícias' });
+      res.status(500).json({ message: 'Error fetching your news' });
     }
   });
 
@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId!;
       const user = await storage.getUser(userId);
       if (!user) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
+        return res.status(404).json({ message: 'User not found' });
       }
 
       const newsData = insertNewsSchema.parse(req.body);
@@ -384,7 +384,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se for influencer, garantir que está postando apenas para o time dele
       if (user.isInfluencer && user.userType !== 'JOURNALIST') {
         if (newsData.teamId !== user.teamId) {
-          return res.status(403).json({ message: 'Influencers só podem postar notícias para o seu próprio time' });
+          return res.status(403).json({ message: 'Influencers can only post news for their own team' });
         }
         // Criar notícia com userId
         console.log(`[POST /api/news] Creating influencer news - userId: ${user.id}, teamId: ${user.teamId}, title: ${newsData.title}`);
@@ -400,7 +400,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Se for jornalista, usar journalistId
       const journalist = await storage.getJournalist(userId);
       if (!journalist) {
-        return res.status(404).json({ message: 'Jornalista não encontrado' });
+        return res.status(404).json({ message: 'Journalist not found' });
       }
 
       const newsItem = await storage.createNews({
@@ -411,17 +411,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(newsItem);
     } catch (error: any) {
       console.error('Create news error:', error?.message || String(error));
-      res.status(400).json({ message: error.message || 'Erro ao criar notícia' });
+      res.status(400).json({ message: error.message || 'Error creating news' });
     }
   });
 
   app.delete('/api/news/:id', requireAuth, requireJournalistOrInfluencer, async (req, res) => {
     try {
       await storage.deleteNews(req.params.id);
-      res.json({ message: 'Notícia excluída com sucesso' });
+      res.json({ message: 'News deleted successfully' });
     } catch (error) {
       console.error('Delete news error:', error);
-      res.status(500).json({ message: 'Erro ao excluir notícia' });
+      res.status(500).json({ message: 'Error deleting news' });
     }
   });
 
@@ -444,7 +444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await storage.deleteNewsInteraction(userId, newsId);
           // Recalculate counts
           await storage.recalculateNewsCounts(newsId);
-          return res.json({ message: 'Interação removida' });
+          return res.json({ message: 'Interaction removed' });
         } else {
           // Delete old interaction before creating new one
           await storage.deleteNewsInteraction(userId, newsId);
@@ -467,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(interaction);
     } catch (error) {
       console.error('Create interaction error:', error);
-      res.status(500).json({ message: 'Erro ao registrar interação' });
+      res.status(500).json({ message: 'Error registering interaction' });
     }
   });
 
@@ -493,7 +493,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(rating);
     } catch (error: any) {
       console.error('Create rating error:', error);
-      res.status(400).json({ message: error.message || 'Erro ao criar avaliação' });
+      res.status(400).json({ message: error.message || 'Error creating rating' });
     }
   });
 
@@ -505,7 +505,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ ratings, average });
     } catch (error) {
       console.error('Get ratings error:', error);
-      res.status(500).json({ message: 'Erro ao buscar avaliações' });
+      res.status(500).json({ message: 'Error fetching ratings' });
     }
   });
 
@@ -523,7 +523,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedUser);
     } catch (error) {
       console.error('Update profile error:', error);
-      res.status(500).json({ message: 'Erro ao atualizar perfil' });
+      res.status(500).json({ message: 'Error updating profile' });
     }
   });
 
@@ -534,21 +534,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const user = await storage.getUser(userId);
       if (!user) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
+        return res.status(404).json({ message: 'User not found' });
       }
 
       const isValidPassword = await bcrypt.compare(currentPassword, user.password);
       if (!isValidPassword) {
-        return res.status(401).json({ message: 'Senha atual incorreta' });
+        return res.status(401).json({ message: 'Current password is incorrect' });
       }
 
       const hashedPassword = await bcrypt.hash(newPassword, 10);
       await storage.updateUser(userId, { password: hashedPassword });
 
-      res.json({ message: 'Senha alterada com sucesso' });
+      res.json({ message: 'Password changed successfully' });
     } catch (error) {
       console.error('Change password error:', error);
-      res.status(500).json({ message: 'Erro ao alterar senha' });
+      res.status(500).json({ message: 'Error changing password' });
     }
   });
 
@@ -558,7 +558,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.session.userId!;
 
       if (!avatarUrl || typeof avatarUrl !== 'string') {
-        return res.status(400).json({ message: 'URL do avatar é obrigatória' });
+        return res.status(400).json({ message: 'Avatar URL is required' });
       }
 
       // Validate URL format (base64 data URL or http/https URL)
@@ -566,7 +566,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isHttpUrl = avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://');
 
       if (!isBase64 && !isHttpUrl) {
-        return res.status(400).json({ message: 'Formato de URL inválido' });
+        return res.status(400).json({ message: 'Invalid URL format' });
       }
 
       // Validate base64 image size (max 2MB)
@@ -576,20 +576,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const sizeInMB = sizeInBytes / (1024 * 1024);
 
         if (sizeInMB > 2) {
-          return res.status(400).json({ message: 'Imagem muito grande. Tamanho máximo: 2MB' });
+          return res.status(400).json({ message: 'Image too large. Maximum size: 2MB' });
         }
       }
 
       const updatedUser = await storage.updateUser(userId, { avatarUrl });
 
       if (!updatedUser) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
+        return res.status(404).json({ message: 'User not found' });
       }
 
       res.json(updatedUser);
     } catch (error) {
       console.error('Update avatar error:', error);
-      res.status(500).json({ message: 'Erro ao atualizar avatar' });
+      res.status(500).json({ message: 'Error updating avatar' });
     }
   });
 
@@ -615,7 +615,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(badgesWithStatus);
     } catch (error) {
       console.error('Get badges error:', error);
-      res.status(500).json({ message: 'Erro ao buscar badges' });
+      res.status(500).json({ message: 'Error fetching badges' });
     }
   });
 
@@ -626,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(newBadges);
     } catch (error) {
       console.error('Check badges error:', error);
-      res.status(500).json({ message: 'Erro ao verificar badges' });
+      res.status(500).json({ message: 'Error checking badges' });
     }
   });
 
@@ -637,12 +637,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/users', requireAuth, requireAdmin, async (req, res) => {
     try {
       const allUsers = await storage.getAllUsers();
-      // Remove senhas dos usuários antes de retornar
+      // Remove passwords from users before returning
       const usersWithoutPasswords = allUsers.map(({ password, ...user }) => user);
       res.json(usersWithoutPasswords);
     } catch (error) {
       console.error('Get all users error:', error);
-      res.status(500).json({ message: 'Erro ao buscar usuários' });
+      res.status(500).json({ message: 'Error fetching users' });
     }
   });
 
@@ -658,15 +658,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const updatedUser = await storage.updateUserInfluencerStatus(id, isInfluencer);
 
       if (!updatedUser) {
-        return res.status(404).json({ message: 'Usuário não encontrado' });
+        return res.status(404).json({ message: 'User not found' });
       }
 
-      // Remove senha antes de retornar
+      // Remove password before returning
       const { password, ...userWithoutPassword } = updatedUser;
       res.json(userWithoutPassword);
     } catch (error) {
       console.error('Update influencer status error:', error);
-      res.status(500).json({ message: 'Erro ao atualizar status de influencer' });
+      res.status(500).json({ message: 'Error updating influencer status' });
     }
   });
 
@@ -687,10 +687,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingRequest = await storage.getInfluencerRequestByUserId(userId);
       if (existingRequest) {
         if (existingRequest.status === 'PENDING') {
-          return res.status(400).json({ message: 'Você já possui uma solicitação pendente' });
+          return res.status(400).json({ message: 'You already have a pending request' });
         }
         if (existingRequest.status === 'APPROVED') {
-          return res.status(400).json({ message: 'Você já é um influencer' });
+          return res.status(400).json({ message: 'You are already an influencer' });
         }
       }
 
@@ -704,9 +704,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Create influencer request error:', error);
       if (error.issues) {
         // Zod validation error
-        return res.status(400).json({ message: 'Dados inválidos', errors: error.issues });
+        return res.status(400).json({ message: 'Invalid data', errors: error.issues });
       }
-      res.status(400).json({ message: error.message || 'Erro ao criar solicitação' });
+      res.status(400).json({ message: error.message || 'Error creating request' });
     }
   });
 
@@ -720,7 +720,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(request || null);
     } catch (error: any) {
       console.error('Get my influencer request error:', error);
-      res.status(500).json({ message: error.message || 'Erro ao buscar solicitação' });
+      res.status(500).json({ message: error.message || 'Error fetching request' });
     }
   });
 
@@ -731,7 +731,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(requests);
     } catch (error) {
       console.error('Get influencer requests error:', error);
-      res.status(500).json({ message: 'Erro ao buscar solicitações' });
+      res.status(500).json({ message: 'Error fetching requests' });
     }
   });
 
@@ -742,19 +742,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const adminId = req.session.userId!;
 
       if (!['APPROVED', 'REJECTED'].includes(status)) {
-        return res.status(400).json({ message: 'Status inválido. Use APPROVED ou REJECTED' });
+        return res.status(400).json({ message: 'Invalid status. Use APPROVED or REJECTED' });
       }
 
       const updatedRequest = await storage.updateInfluencerRequestStatus(id, status, adminId);
 
       if (!updatedRequest) {
-        return res.status(404).json({ message: 'Solicitação não encontrada' });
+        return res.status(404).json({ message: 'Request not found' });
       }
 
       res.json(updatedRequest);
     } catch (error) {
       console.error('Review influencer request error:', error);
-      res.status(500).json({ message: 'Erro ao revisar solicitação' });
+      res.status(500).json({ message: 'Error reviewing request' });
     }
   });
 
