@@ -25,6 +25,10 @@ export default function SignupPage() {
   const passwordRequirements = {
     minLength: formData.password.length >= 6,
     maxLength: formData.password.length <= 128,
+    hasUppercase: /[A-Z]/.test(formData.password),
+    hasLowercase: /[a-z]/.test(formData.password),
+    hasNumber: /\d/.test(formData.password),
+    hasSpecial: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(formData.password),
     hasContent: formData.password.length > 0,
   };
 
@@ -142,10 +146,6 @@ export default function SignupPage() {
                   data-testid="input-email"
                   className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
                 />
-                {formData.email && !emailValidation.valid && (
-                  <p className="text-xs text-red-400 mt-1">{emailValidation.error}</p>
-                )}
-                <p className="text-xs text-gray-500">Format: example@mail.com</p>
               </div>
               
               {/* Password field */}
@@ -174,8 +174,47 @@ export default function SignupPage() {
                     <span className={`text-xs ${passwordRequirements.minLength ? 'text-green-500' : 'text-gray-500'}`}>
                       At least 6 characters
                     </span>
-                  </div>               
-              
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordRequirements.hasUppercase ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-gray-500" />
+                    )}
+                    <span className={`text-xs ${passwordRequirements.hasUppercase ? 'text-green-500' : 'text-gray-500'}`}>
+                      At least one uppercase letter (A-Z)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordRequirements.hasLowercase ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-gray-500" />
+                    )}
+                    <span className={`text-xs ${passwordRequirements.hasLowercase ? 'text-green-500' : 'text-gray-500'}`}>
+                      At least one lowercase letter (a-z)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordRequirements.hasNumber ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-gray-500" />
+                    )}
+                    <span className={`text-xs ${passwordRequirements.hasNumber ? 'text-green-500' : 'text-gray-500'}`}>
+                      At least one number (0-9)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {passwordRequirements.hasSpecial ? (
+                      <Check className="h-3 w-3 text-green-500" />
+                    ) : (
+                      <X className="h-3 w-3 text-gray-500" />
+                    )}
+                    <span className={`text-xs ${passwordRequirements.hasSpecial ? 'text-green-500' : 'text-gray-500'}`}>
+                      At least one special character (!@#$%^&*...)
+                    </span>
+                  </div>
                 </div>
               </div>
               

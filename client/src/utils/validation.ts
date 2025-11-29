@@ -66,7 +66,13 @@ export function validateEmail(email: string): ValidationResult {
 }
 
 /**
- * Validate password
+ * Validate password with strong requirements
+ * - At least 6 characters
+ * - Maximum 128 characters
+ * - At least one uppercase letter
+ * - At least one lowercase letter
+ * - At least one number
+ * - At least one special character
  */
 export function validatePassword(password: string): ValidationResult {
   if (!password || typeof password !== 'string') {
@@ -78,7 +84,27 @@ export function validatePassword(password: string): ValidationResult {
   }
   
   if (password.length > 128) {
-    return { valid: false, error: 'Password is too long' };
+    return { valid: false, error: 'Password is too long (max 128 characters)' };
+  }
+  
+  // Check for at least one uppercase letter
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one uppercase letter' };
+  }
+  
+  // Check for at least one lowercase letter
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one lowercase letter' };
+  }
+  
+  // Check for at least one number
+  if (!/\d/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one number' };
+  }
+  
+  // Check for at least one special character
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one special character (!@#$%^&*...)' };
   }
   
   return { valid: true };
