@@ -6,10 +6,18 @@ import { NewsCard } from '@/components/news-card';
 import { VideoNewsCard } from '@/components/video-news-card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { resolveApiUrl } from '@/lib/api';
 import { TEAMS_DATA } from '@/lib/team-data';
+import { LayoutGrid, FileText, Video, ChevronDown, Shield, Users } from 'lucide-react';
 import type { News } from '@shared/schema';
 
 // Team Logo Component with fallback - Minimalista
@@ -158,103 +166,132 @@ export default function DashboardPage() {
     }
   }, [activeFilter, contentTypeFilter, user?.teamId, queryClient, user, refetch]);
 
-  const filters = [
-    { id: 'my-team', label: 'Meu Time', testId: 'filter-my-team', isText: true },
-    { id: 'all', label: 'Todos', testId: 'filter-all', isText: true },
-    ...TEAMS_DATA.map(team => ({
-      id: team.id,
-      label: team.shortName,
-      logoUrl: team.logoUrl,
-      testId: `filter-team-${team.id}`,
-      isText: false,
-    })),
-  ];
+  // Get selected team name for dropdown display
+  const getSelectedTeamName = () => {
+    if (activeFilter === 'my-team') return 'My Team';
+    if (activeFilter === 'all') return 'All Teams';
+    const team = TEAMS_DATA.find(t => t.id === activeFilter);
+    return team?.shortName || 'Select Team';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
       <Navbar />
 
-      {/* Filter Bar - Ultra Minimalista Mobile */}
-      <div className="sticky top-12 sm:top-14 z-40 bg-black/10 backdrop-blur-md border-b border-white/5">
-        <div className="container px-2 sm:px-3 md:px-6 py-1.5 sm:py-2">
-          <div className="flex items-center gap-2 sm:gap-3 md:gap-4 overflow-x-auto scrollbar-hide -mx-2 sm:-mx-3 md:mx-0 px-2 sm:px-3 md:px-0">
-            {/* Content Type Filter - Ultra minimalista mobile */}
-            <div className="flex items-center gap-0.5 sm:gap-1 border-r border-white/5 pr-2 sm:pr-3 md:pr-4 flex-shrink-0">
+      {/* Filter Bar - Clean & Minimal */}
+      <div className="sticky top-12 sm:top-14 z-40 bg-black/20 backdrop-blur-md border-b border-white/5">
+        <div className="container px-3 sm:px-4 md:px-6 py-2 sm:py-2.5">
+          <div className="flex items-center justify-between gap-3 sm:gap-4">
+            
+            {/* Content Type Filter - With Icons */}
+            <div className="flex items-center gap-1 sm:gap-1.5 bg-white/5 rounded-lg p-0.5 sm:p-1">
               <button
                 onClick={() => setContentTypeFilter('ALL')}
-                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-light transition-all ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-light transition-all ${
                   contentTypeFilter === 'ALL'
-                    ? 'text-white'
-                    : 'text-white/30 hover:text-white/60'
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                 }`}
               >
-                Todos
+                <LayoutGrid className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline">All</span>
               </button>
               <button
                 onClick={() => setContentTypeFilter('TEXT')}
-                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-light transition-all ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-light transition-all ${
                   contentTypeFilter === 'TEXT'
-                    ? 'text-white'
-                    : 'text-white/30 hover:text-white/60'
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                 }`}
               >
-                Texto
+                <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline">Text</span>
               </button>
               <button
                 onClick={() => setContentTypeFilter('VIDEO')}
-                className={`px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-light transition-all ${
+                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-light transition-all ${
                   contentTypeFilter === 'VIDEO'
-                    ? 'text-white'
-                    : 'text-white/30 hover:text-white/60'
+                    ? 'bg-white/10 text-white'
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
                 }`}
               >
-                Vídeo
+                <Video className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline">Video</span>
               </button>
             </div>
-            
-            {/* Team Filter - Ultra minimalista mobile */}
-            <div className="flex items-center gap-1 sm:gap-1.5 flex-1 min-w-0">
-              {filters.map((filter) => (
-                <button
-                  key={filter.id}
-                  onClick={() => setActiveFilter(filter.id)}
-                  className={`group relative flex items-center justify-center transition-all duration-200 flex-shrink-0 ${
-                    filter.isText 
-                      ? 'px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs font-light' 
-                      : 'w-7 h-7 sm:w-8 sm:h-8'
-                  } ${
-                    activeFilter === filter.id
-                      ? 'text-white'
-                      : 'text-white/25 hover:text-white/50'
-                  }`}
-                  data-testid={filter.testId}
-                  title={filter.isText ? filter.label : filter.label}
-                >
-                  {filter.isText ? (
-                    <span className={activeFilter === filter.id ? 'font-medium' : 'font-light'}>
-                      {filter.label}
+
+            {/* Team Filter - Dropdown */}
+            <div className="flex items-center gap-2">
+              {/* Quick Access: My Team */}
+              <button
+                onClick={() => setActiveFilter('my-team')}
+                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-light transition-all ${
+                  activeFilter === 'my-team'
+                    ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white'
+                    : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
+                }`}
+                data-testid="filter-my-team"
+              >
+                <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                <span className="hidden sm:inline">My Team</span>
+              </button>
+
+              {/* Teams Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-light transition-all ${
+                      activeFilter !== 'my-team'
+                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white'
+                        : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
+                    }`}
+                  >
+                    <Users className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                    <span className="max-w-[60px] sm:max-w-[80px] truncate">
+                      {activeFilter === 'my-team' ? 'Teams' : getSelectedTeamName()}
                     </span>
-                  ) : (
-                    <>
-                      {/* Mostrar apenas texto por padrão no mobile */}
-                      <span className="text-[9px] sm:text-[10px] font-light group-hover:opacity-0 transition-opacity">
-                        {filter.label}
-                      </span>
-                      {/* Logo aparece apenas no hover (desktop) */}
-                      <div className="absolute inset-0 hidden sm:flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <TeamLogo 
-                          logoUrl={(filter as any).logoUrl}
-                          shortName={filter.label}
+                    <ChevronDown className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-60" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="w-48 sm:w-56 bg-[#0f0f0f] border-white/10 max-h-[300px] overflow-y-auto"
+                >
+                  <DropdownMenuItem
+                    onClick={() => setActiveFilter('all')}
+                    className={`flex items-center gap-2 cursor-pointer ${
+                      activeFilter === 'all' ? 'bg-white/10 text-white' : 'text-white/70'
+                    }`}
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>All Teams</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  {TEAMS_DATA.map((team) => (
+                    <DropdownMenuItem
+                      key={team.id}
+                      onClick={() => setActiveFilter(team.id)}
+                      className={`flex items-center gap-2 cursor-pointer ${
+                        activeFilter === team.id ? 'bg-white/10 text-white' : 'text-white/70'
+                      }`}
+                      data-testid={`filter-team-${team.id}`}
+                    >
+                      <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                        <img 
+                          src={team.logoUrl} 
+                          alt={team.name}
+                          className="w-4 h-4 object-contain"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
                         />
                       </div>
-                    </>
-                  )}
-                  {/* Indicador ativo sutil */}
-                  {activeFilter === filter.id && (
-                    <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-0.5 h-0.5 sm:w-1 sm:h-1 rounded-full bg-white"></span>
-                  )}
-                </button>
-              ))}
+                      <span className="truncate">{team.name}</span>
+                      <span className="ml-auto text-[10px] text-white/40">{team.shortName}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         </div>
