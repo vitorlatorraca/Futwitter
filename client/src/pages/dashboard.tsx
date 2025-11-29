@@ -222,31 +222,32 @@ export default function DashboardPage() {
 
             {/* Team Filter - Dropdown */}
             <div className="flex items-center gap-2">
-              {/* Quick Access: User's Team */}
-              <button
-                onClick={() => setActiveFilter('my-team')}
-                className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-light transition-all ${
-                  activeFilter === 'my-team'
-                    ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white'
-                    : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
-                }`}
-                data-testid="filter-my-team"
-              >
-                {(() => {
-                  const userTeam = TEAMS_DATA.find(t => t.id === user?.teamId);
-                  return userTeam ? (
-                    <>
-                      <TeamLogo logoUrl={userTeam.logoUrl} shortName={userTeam.shortName} />
-                      <span className="hidden sm:inline">{userTeam.shortName}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Shield className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                      <span className="hidden sm:inline">My Team</span>
-                    </>
-                  );
-                })()}
-              </button>
+              {/* Quick Access: User's Team - Just the logo */}
+              {(() => {
+                const userTeam = TEAMS_DATA.find(t => t.id === user?.teamId);
+                return (
+                  <button
+                    onClick={() => setActiveFilter('my-team')}
+                    className={`flex items-center justify-center p-1 rounded-lg transition-all ${
+                      activeFilter === 'my-team'
+                        ? 'ring-2 ring-[#8b5cf6] ring-offset-1 ring-offset-[#0a0a0a]'
+                        : 'hover:opacity-80'
+                    }`}
+                    data-testid="filter-my-team"
+                    title={userTeam ? userTeam.name : 'My Team'}
+                  >
+                    {userTeam ? (
+                      <img 
+                        src={userTeam.logoUrl} 
+                        alt={userTeam.name}
+                        className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+                      />
+                    ) : (
+                      <Shield className="h-6 w-6 sm:h-7 sm:w-7 text-white/60" />
+                    )}
+                  </button>
+                );
+              })()}
 
               {/* Teams Dropdown */}
               <DropdownMenu>
