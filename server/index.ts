@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { setupApp } from "./app";
 import { setupVite, serveStatic, log } from "./vite";
 

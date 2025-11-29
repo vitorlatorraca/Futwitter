@@ -55,9 +55,9 @@ async function seed() {
       await db.insert(journalists).values({
         userId: journalistUser.id,
         organization: "Brasileirão News",
-        bio: "Jornalista esportiva especializada em futebol brasileiro",
-        verified: true,
-        verificationStatus: "APPROVED",
+        professionalId: "MTB-12345",
+        portfolioUrl: "https://brasileirao-news.com/maria-silva",
+        status: "APPROVED",
       });
 
       console.log("✓ Created journalist user (email: jornalista@brasileirao.com, password: senha123)");

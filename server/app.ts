@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
+import { setupSwagger } from "./swagger";
 
 const app = express();
 
@@ -70,6 +71,9 @@ app.use((req, res, next) => {
 
 // Setup routes and error handling
 export const setupApp = async () => {
+  // Setup Swagger documentation
+  setupSwagger(app);
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

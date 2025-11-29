@@ -410,7 +410,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(newsItem);
     } catch (error: any) {
-      console.error('Create news error:', error);
+      console.error('Create news error:', error?.message || String(error));
       res.status(400).json({ message: error.message || 'Erro ao criar notícia' });
     }
   });
