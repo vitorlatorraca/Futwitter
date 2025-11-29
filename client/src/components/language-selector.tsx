@@ -9,7 +9,7 @@ import {
 export function LanguageSelector() {
   const { language, setLanguage } = useI18n();
 
-  const displayValue = language === 'pt-BR' ? '🇧🇷 BRA' : '🇺🇸 USA';
+  const displayValue = language === 'pt-BR' ? '🇧🇷 POR' : '🇺🇸 ENG';
 
   return (
     <div className="flex items-center">
@@ -18,8 +18,8 @@ export function LanguageSelector() {
           <span>{displayValue}</span>
         </SelectTrigger>
         <SelectContent className="bg-[#0f0f0f] border-white/10">
-          <SelectItem value="pt-BR" className="text-white/80 focus:bg-white/10 focus:text-white">🇧🇷 BRA</SelectItem>
-          <SelectItem value="en-US" className="text-white/80 focus:bg-white/10 focus:text-white">🇺🇸 USA</SelectItem>
+          <SelectItem value="pt-BR" className="text-white/80 focus:bg-white/10 focus:text-white">🇧🇷 POR</SelectItem>
+          <SelectItem value="en-US" className="text-white/80 focus:bg-white/10 focus:text-white">🇺🇸 ENG</SelectItem>
         </SelectContent>
       </Select>
     </div>
