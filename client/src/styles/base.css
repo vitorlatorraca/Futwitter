@@ -1,0 +1,34 @@
+/**
+ * Base Styles
+ * 
+ * Global resets and base element styling.
+ * Uses Tailwind's @layer base for proper specificity.
+ */
+
+@layer base {
+  /* Global Border Color */
+  * {
+    @apply border-border;
+  }
+
+  /* Body Base Styles */
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+
+  /* Focus Styles for Accessibility */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Smooth Scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Selection Color */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+}
+
