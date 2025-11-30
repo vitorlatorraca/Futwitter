@@ -29,3 +29,6 @@
 /* Custom Utilities */
 @import "./utilities.css";
 
+/* Design System */
+@import "./design-system.css";
+

@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'wouter';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
-import { Button } from '@/components/ui/button';
 import { LanguageSelector } from '@/components/language-selector';
 import { 
   LogOut, 
@@ -12,7 +12,6 @@ import {
   Settings,
   type LucideIcon 
 } from 'lucide-react';
-import { useEffect } from 'react';
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -20,17 +19,6 @@ export function Navbar() {
   const [location] = useLocation();
 
   if (!user) return null;
-  
-  // Debug: verificar se avatarUrl está presente
-  useEffect(() => {
-    console.log('📊 Navbar renderizado - User completo:', user);
-    if (user && user.avatarUrl) {
-      console.log('✅ Navbar - User avatarUrl presente:', user.avatarUrl.substring(0, 80) + '...');
-      console.log('✅ Navbar - Avatar URL length:', user.avatarUrl.length);
-    } else {
-      console.log('❌ Navbar - User avatarUrl ausente:', user?.avatarUrl || 'null/undefined');
-    }
-  }, [user, user?.avatarUrl]);
 
   const navLinks: { label: string; href: string; testId: string; icon: LucideIcon }[] = [
     { label: t('nav.feed'), href: '/dashboard', testId: 'link-feed', icon: Newspaper },
@@ -49,47 +37,59 @@ export function Navbar() {
   const isActive = (path: string) => location === path;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-black/30 backdrop-blur-md supports-[backdrop-filter]:bg-black/10">
-      <div className="w-full max-w-[1920px] mx-auto flex h-12 sm:h-14 items-center justify-between px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8">
-        {/* Logo - Ultra minimalista mobile */}
-        <Link href="/dashboard" data-testid="link-logo">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg md:text-xl font-light tracking-tight hover:opacity-80 transition-opacity cursor-pointer text-white">
-            <span className="text-lg sm:text-xl md:text-2xl">⚽</span>
-            <span className="hidden md:inline">Futwitter</span>
-          </div>
-        </Link>
+    <nav className="sticky top-0 z-50 w-full bg-[var(--theme-background)]/95 backdrop-blur-md">
+      <div className="w-full max-w-[1920px] mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8">
+        {/* Logo */}
+        <motion.div
+          whileHover={{ x: [0, -2, 2, -2, 0] }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+        >
+          <Link href="/dashboard" data-testid="link-logo">
+            <div className="flex items-center gap-2 cursor-pointer">
+              <span className="text-xl sm:text-2xl">⚽</span>
+              <span className="hidden md:inline text-lg sm:text-xl font-bold tracking-tight text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] transition-colors">
+                Futwitter
+              </span>
+            </div>
+          </Link>
+        </motion.div>
 
-        {/* Navigation - Icons on mobile, text on desktop */}
-        <div className="flex items-center gap-0.5 sm:gap-1">
+        {/* Navigation - Text only, no boxes */}
+        <div className="flex items-center gap-4 sm:gap-6">
           {navLinks.map((link) => {
-            const Icon = link.icon;
+            const active = isActive(link.href);
             return (
-              <Link key={link.href} href={link.href} data-testid={link.testId}>
-                <Button
-                  variant={isActive(link.href) ? 'default' : 'ghost'}
-                  size="sm"
-                  className={`font-light transition-all duration-300 ${
-                    isActive(link.href)
-                      ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0'
-                      : 'text-white/80 hover:text-white hover:bg-white/5 border-0'
-                  } px-2 sm:px-3 md:px-4`}
-                >
-                  <Icon className="h-4 w-4 md:mr-2" />
-                  <span className="hidden md:inline">{link.label}</span>
-                </Button>
-              </Link>
+              <motion.div
+                key={link.href}
+                whileHover={{ x: [0, -2, 2, -2, 0] }}
+                transition={{ duration: 0.4, ease: "easeInOut" }}
+              >
+                <Link href={link.href} data-testid={link.testId}>
+                  <span
+                    className={`
+                      text-sm font-semibold cursor-pointer transition-colors
+                      ${active 
+                        ? 'text-[var(--theme-primary)]' 
+                        : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'
+                      }
+                    `}
+                  >
+                    {link.label}
+                  </span>
+                </Link>
+              </motion.div>
             );
           })}
         </div>
 
         {/* User Menu */}
-        <div className="flex items-center gap-1 sm:gap-2 md:gap-3">
+        <div className="flex items-center gap-3 sm:gap-4">
           <div className="hidden sm:block">
             <LanguageSelector />
           </div>
           
-          {/* User Avatar - visible on all sizes */}
-          <div className="h-7 w-7 sm:h-8 sm:w-8 rounded-full border border-white/10 overflow-hidden bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center flex-shrink-0">
+          {/* User Avatar */}
+          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full overflow-hidden bg-[var(--theme-background-alt)] flex items-center justify-center flex-shrink-0">
             {user.avatarUrl ? (
               <img 
                 src={user.avatarUrl} 
@@ -100,25 +100,31 @@ export function Navbar() {
                 }}
               />
             ) : (
-              <span className="text-white text-[10px] sm:text-xs font-medium">
+              <span className="text-[var(--theme-text)] text-xs font-semibold">
                 {user.name.slice(0, 2).toUpperCase()}
               </span>
             )}
           </div>
           
-          {/* User name - hidden on mobile */}
-          <span className="text-sm font-light text-white/80 hidden lg:inline">{user.name}</span>
+          {/* User name */}
+          <motion.span 
+            className="text-sm font-medium text-[var(--theme-text-muted)] hidden lg:inline cursor-pointer hover:text-[var(--theme-text)]"
+            whileHover={{ x: [0, -1, 1, -1, 0] }}
+            transition={{ duration: 0.3 }}
+          >
+            {user.name}
+          </motion.span>
           
-          {/* Logout button */}
-          <Button
-            variant="ghost"
-            size="icon"
+          {/* Logout - just icon */}
+          <motion.button
             onClick={() => logout()}
-            className="text-white/60 hover:text-white hover:bg-white/5 border-0 h-8 w-8 sm:h-9 sm:w-9"
+            className="text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] transition-colors"
+            whileHover={{ x: [0, -1, 1, -1, 0] }}
+            transition={{ duration: 0.3 }}
             data-testid="button-logout"
           >
-            <LogOut className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
+            <LogOut className="h-4 w-4" />
+          </motion.button>
         </div>
       </div>
     </nav>

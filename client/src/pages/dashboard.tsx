@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/navbar';
 import { NewsCard } from '@/components/news-card';
 import { VideoNewsCard } from '@/components/video-news-card';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   DropdownMenu,
@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { resolveApiUrl } from '@/lib/api';
 import { TEAMS_DATA } from '@/lib/team-data';
-import { LayoutGrid, FileText, Video, ChevronDown, Shield, Users } from 'lucide-react';
+import { ChevronDown, Shield, Users } from 'lucide-react';
 import type { News } from '@shared/schema';
 
 // Team Logo Component with fallback - Minimalista
@@ -175,64 +175,65 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+    <div className="min-h-screen bg-[var(--theme-background)]">
       <Navbar />
 
-      {/* Filter Bar - Clean & Minimal */}
-      <div className="sticky top-12 sm:top-14 z-40 bg-black/20 backdrop-blur-md border-b border-white/5">
-        <div className="w-full max-w-[1920px] mx-auto px-2 sm:px-3 md:px-4 lg:px-6 xl:px-8 py-2 sm:py-2.5">
-          <div className="flex items-center justify-between gap-3 sm:gap-4">
+      {/* Filter Bar - Text only, no boxes */}
+      <div className="sticky top-14 sm:top-16 z-40 bg-[var(--theme-background)]/95 backdrop-blur-md">
+        <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-3">
+          <div className="flex items-center justify-between gap-4">
             
-            {/* Content Type Filter - With Icons */}
-            <div className="flex items-center gap-1 sm:gap-1.5 bg-white/5 rounded-lg p-0.5 sm:p-1">
-              <button
+            {/* Content Type Filter - Text only */}
+            <div className="flex items-center gap-4 sm:gap-6">
+              <motion.button
                 onClick={() => setContentTypeFilter('ALL')}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-light transition-all ${
+                className={`text-sm font-semibold transition-colors ${
                   contentTypeFilter === 'ALL'
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                    ? 'text-[var(--theme-primary)]'
+                    : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'
                 }`}
+                whileHover={{ x: [0, -1, 1, -1, 0] }}
+                transition={{ duration: 0.3 }}
               >
-                <LayoutGrid className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span className="hidden sm:inline">All</span>
-              </button>
-              <button
+                All
+              </motion.button>
+              <motion.button
                 onClick={() => setContentTypeFilter('TEXT')}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-light transition-all ${
+                className={`text-sm font-semibold transition-colors ${
                   contentTypeFilter === 'TEXT'
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                    ? 'text-[var(--theme-primary)]'
+                    : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'
                 }`}
+                whileHover={{ x: [0, -1, 1, -1, 0] }}
+                transition={{ duration: 0.3 }}
               >
-                <FileText className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span className="hidden sm:inline">Newspaper</span>
-              </button>
-              <button
+                News
+              </motion.button>
+              <motion.button
                 onClick={() => setContentTypeFilter('VIDEO')}
-                className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md text-[10px] sm:text-xs font-light transition-all ${
+                className={`text-sm font-semibold transition-colors ${
                   contentTypeFilter === 'VIDEO'
-                    ? 'bg-white/10 text-white'
-                    : 'text-white/40 hover:text-white/70 hover:bg-white/5'
+                    ? 'text-[var(--theme-primary)]'
+                    : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'
                 }`}
+                whileHover={{ x: [0, -1, 1, -1, 0] }}
+                transition={{ duration: 0.3 }}
               >
-                <Video className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                <span className="hidden sm:inline">Video</span>
-              </button>
+                Video
+              </motion.button>
             </div>
 
-            {/* Team Filter - Dropdown */}
-            <div className="flex items-center gap-2">
-              {/* Quick Access: User's Team - Just the logo */}
+            {/* Team Filter - Just the logo */}
+            <div className="flex items-center gap-3">
+              {/* User's Team - Just the logo, no background */}
               {(() => {
                 const userTeam = TEAMS_DATA.find(t => t.id === user?.teamId);
                 return (
-                  <button
+                  <motion.button
                     onClick={() => setActiveFilter('my-team')}
-                    className={`flex items-center justify-center p-1 rounded-lg transition-all ${
-                      activeFilter === 'my-team'
-                        ? 'ring-2 ring-[#8b5cf6] ring-offset-1 ring-offset-[#0a0a0a]'
-                        : 'hover:opacity-80'
-                    }`}
+                    className="flex items-center justify-center"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                     data-testid="filter-my-team"
                     title={userTeam ? userTeam.name : 'My Team'}
                   >
@@ -240,12 +241,14 @@ export default function DashboardPage() {
                       <img 
                         src={userTeam.logoUrl} 
                         alt={userTeam.name}
-                        className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
+                        className={`w-7 h-7 sm:w-8 sm:h-8 object-contain transition-opacity ${
+                          activeFilter === 'my-team' ? 'opacity-100' : 'opacity-60 hover:opacity-100'
+                        }`}
                       />
                     ) : (
-                      <Shield className="h-6 w-6 sm:h-7 sm:w-7 text-white/60" />
+                      <Shield className="h-6 w-6 sm:h-7 sm:w-7 text-[var(--theme-text-muted)]" />
                     )}
-                  </button>
+                  </motion.button>
                 );
               })()}
 

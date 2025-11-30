@@ -4,8 +4,8 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { I18nProvider } from "@/lib/i18n";
-import { Navbar } from "@/components/navbar";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/login";
 import SignupPage from "@/pages/signup";
@@ -86,10 +86,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
+          <ThemeProvider>
+            <TooltipProvider>
+              {/* Subtle noise texture */}
+              <div className="noise-overlay" />
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </ThemeProvider>
         </AuthProvider>
       </I18nProvider>
     </QueryClientProvider>
