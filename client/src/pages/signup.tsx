@@ -93,17 +93,17 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] px-4 py-12">
       <div className="w-full max-w-md relative">
         {/* Decorative elements */}
-        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[#8b5cf6]/20 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[#6366f1]/20 rounded-full blur-3xl"></div>
+        <div className="absolute -top-20 -right-20 w-40 h-40 bg-[var(--theme-primary)]/20 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-[var(--theme-neon)]/20 rounded-full blur-3xl"></div>
         
         {/* Glassmorphism Card */}
         <div className="relative bg-white/5 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-10 border border-white/10 shadow-2xl">
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/10 via-transparent to-[#6366f1]/10 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--theme-primary)]/10 via-transparent to-[var(--theme-neon)]/10 rounded-2xl sm:rounded-3xl pointer-events-none"></div>
           
           <div className="relative z-10">
             <div className="text-center mb-6 sm:mb-8">
-              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] mb-3 sm:mb-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-neon)] mb-3 sm:mb-4">
                 <UserPlus className="h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 text-white" />
               </div>
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-light text-white mb-2 tracking-tight">
@@ -126,7 +126,7 @@ export default function SignupPage() {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-name"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                 />
                 {formData.name && !nameValidation.valid && (
                   <p className="text-xs text-red-400 mt-1">{nameValidation.error}</p>
@@ -144,7 +144,7 @@ export default function SignupPage() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-email"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                 />
               </div>
               
@@ -159,7 +159,7 @@ export default function SignupPage() {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-password"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                 />
                 
                 {/* Password requirements indicator */}
@@ -229,7 +229,7 @@ export default function SignupPage() {
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                   disabled={isLoading}
                   data-testid="input-confirm-password"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                 />
                 {formData.confirmPassword && formData.password !== formData.confirmPassword && (
                   <p className="text-xs text-red-400 mt-1">Passwords do not match</p>
@@ -243,7 +243,7 @@ export default function SignupPage() {
 
               <Button
                 type="submit"
-                className="w-full font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300 h-12"
+                className="w-full font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg shadow-lg shadow-[var(--theme-primary)]/20 transition-all duration-300 h-12"
                 disabled={isLoading}
                 data-testid="button-signup"
               >
@@ -261,7 +261,7 @@ export default function SignupPage() {
             <p className="text-center text-sm text-gray-400 mt-6 font-light">
               Already have an account?{' '}
               <Link href="/login" data-testid="link-login">
-                <span className="text-[#8b5cf6] font-medium hover:text-[#7c3aed] cursor-pointer transition-colors">
+                <span className="text-[var(--theme-primary)] font-medium hover:opacity-80 cursor-pointer transition-colors">
                   Sign in
                 </span>
               </Link>

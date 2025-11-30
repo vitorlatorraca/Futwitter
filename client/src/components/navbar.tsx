@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
 import { LanguageSelector } from '@/components/language-selector';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { 
   LogOut, 
   Newspaper, 
@@ -54,36 +55,63 @@ export function Navbar() {
           </Link>
         </motion.div>
 
-        {/* Navigation - Text only, no boxes */}
-        <div className="flex items-center gap-4 sm:gap-6">
-          {navLinks.map((link) => {
-            const active = isActive(link.href);
-            return (
-              <motion.div
-                key={link.href}
-                whileHover={{ x: [0, -2, 2, -2, 0] }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
-              >
-                <Link href={link.href} data-testid={link.testId}>
-                  <span
-                    className={`
-                      text-sm font-semibold cursor-pointer transition-colors
-                      ${active 
-                        ? 'text-[var(--theme-primary)]' 
-                        : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'
-                      }
-                    `}
-                  >
-                    {link.label}
-                  </span>
-                </Link>
-              </motion.div>
-            );
-          })}
+        {/* Navigation - Icons on mobile, Text on desktop */}
+        <div className="flex items-center gap-3 sm:gap-4 md:gap-6">
+          <TooltipProvider delayDuration={100}>
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              const Icon = link.icon;
+              return (
+                <motion.div
+                  key={link.href}
+                  whileHover={{ x: [0, -2, 2, -2, 0] }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <Link href={link.href} data-testid={link.testId}>
+                    {/* Mobile: Icon only with tooltip */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={`
+                            md:hidden flex items-center justify-center p-2 rounded-lg cursor-pointer transition-all
+                            ${active 
+                              ? 'text-[var(--theme-primary)] bg-[var(--theme-primary)]/10' 
+                              : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] hover:bg-white/5'
+                            }
+                          `}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        side="bottom" 
+                        className="bg-[#111] border-white/10 text-white text-xs"
+                      >
+                        {link.label}
+                      </TooltipContent>
+                    </Tooltip>
+                    
+                    {/* Desktop: Text only */}
+                    <span
+                      className={`
+                        hidden md:inline text-sm font-semibold cursor-pointer transition-colors
+                        ${active 
+                          ? 'text-[var(--theme-primary)]' 
+                          : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'
+                        }
+                      `}
+                    >
+                      {link.label}
+                    </span>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </TooltipProvider>
         </div>
 
         {/* User Menu */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
           <div className="hidden sm:block">
             <LanguageSelector />
           </div>
@@ -106,7 +134,7 @@ export function Navbar() {
             )}
           </div>
           
-          {/* User name */}
+          {/* User name - only on large screens */}
           <motion.span 
             className="text-sm font-medium text-[var(--theme-text-muted)] hidden lg:inline cursor-pointer hover:text-[var(--theme-text)]"
             whileHover={{ x: [0, -1, 1, -1, 0] }}
@@ -115,16 +143,28 @@ export function Navbar() {
             {user.name}
           </motion.span>
           
-          {/* Logout - just icon */}
-          <motion.button
-            onClick={() => logout()}
-            className="text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] transition-colors"
-            whileHover={{ x: [0, -1, 1, -1, 0] }}
-            transition={{ duration: 0.3 }}
-            data-testid="button-logout"
-          >
-            <LogOut className="h-4 w-4" />
-          </motion.button>
+          {/* Logout */}
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  onClick={() => logout()}
+                  className="text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] transition-colors p-2 rounded-lg hover:bg-white/5"
+                  whileHover={{ x: [0, -1, 1, -1, 0] }}
+                  transition={{ duration: 0.3 }}
+                  data-testid="button-logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent 
+                side="bottom" 
+                className="bg-[#111] border-white/10 text-white text-xs"
+              >
+                Logout
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </nav>

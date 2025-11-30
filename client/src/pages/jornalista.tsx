@@ -267,16 +267,16 @@ export default function JornalistaPage() {
 
   if (user?.userType !== 'JOURNALIST' && !user?.isInfluencer) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+      <div className="min-h-screen bg-[var(--theme-background)]">
         <Navbar />
-        <div className="container px-6 py-20 text-center">
+        <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-20 text-center">
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/5 border border-white/10 mb-6">
             <span className="text-4xl">📝</span>
           </div>
-          <h3 className="font-light text-2xl text-white mb-3 tracking-tight">
+          <h3 className="font-light text-2xl text-[var(--theme-text)] mb-3 tracking-tight">
             Acesso Restrito
           </h3>
-          <p className="text-gray-400 font-light">
+          <p className="text-[var(--theme-text-muted)] font-light">
             Você precisa ser um jornalista ou influencer para acessar esta página
           </p>
         </div>
@@ -285,10 +285,10 @@ export default function JornalistaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+    <div className="min-h-screen bg-[var(--theme-background)]">
       <Navbar />
 
-      <div className="container px-6 py-8 max-w-6xl">
+      <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="font-light text-3xl text-white mb-2 tracking-tight">
@@ -304,7 +304,7 @@ export default function JornalistaPage() {
           <Button 
             onClick={() => setIsCreating(true)} 
             data-testid="button-new-news"
-            className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20 font-light"
+            className="bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white border-0 shadow-lg shadow-[var(--theme-primary)]/20 font-light"
           >
             <PlusCircle className="mr-2 h-4 w-4" />
             Nova Notícia
@@ -548,7 +548,7 @@ export default function JornalistaPage() {
                     type="submit" 
                     disabled={createMutation.isPending} 
                     data-testid="button-publish"
-                    className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20 font-light"
+                    className="bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white border-0 shadow-lg shadow-[var(--theme-primary)]/20 font-light"
                   >
                     {createMutation.isPending ? 'Publicando...' : 'Publicar'}
                   </Button>
@@ -580,7 +580,7 @@ export default function JornalistaPage() {
                         <div className="flex items-center gap-2 mb-3">
                           <Badge 
                             variant="secondary" 
-                            className="bg-purple-500/20 text-purple-300 border-purple-500/30 font-light"
+                            className="bg-[var(--theme-primary)]/20 text-[var(--theme-primary)] border-[var(--theme-primary)]/30 font-light"
                           >
                             {categoryLabels[news.category]}
                           </Badge>

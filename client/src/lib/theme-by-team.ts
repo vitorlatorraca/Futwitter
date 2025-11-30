@@ -289,6 +289,31 @@ export function getThemeCSSVariables(theme: TeamTheme): Record<string, string> {
     '--theme-background': theme.colors.background,
     '--theme-background-alt': theme.colors.backgroundAlt,
     '--theme-border': theme.colors.border,
+    // Gradient stops for buttons and highlights
+    '--theme-gradient-start': theme.colors.primary,
+    '--theme-gradient-end': theme.colors.secondary !== '#000000' ? theme.colors.secondary : theme.colors.neon,
   };
 }
+
+/**
+ * Utility classes using theme variables
+ * Use these in your components for consistent theming
+ */
+export const THEME_CLASSES = {
+  // Buttons
+  buttonPrimary: 'bg-[var(--theme-primary)] hover:opacity-90 text-white border-0 shadow-lg transition-all duration-200',
+  buttonOutline: 'bg-transparent border border-[var(--theme-primary)] text-[var(--theme-primary)] hover:bg-[var(--theme-primary)]/10',
+  
+  // Text
+  textPrimary: 'text-[var(--theme-primary)]',
+  textMuted: 'text-[var(--theme-text-muted)]',
+  textWhite: 'text-white',
+  
+  // Backgrounds
+  bgCard: 'bg-white/5 backdrop-blur-xl border border-white/10',
+  bgHighlight: 'bg-[var(--theme-primary)]/10 border border-[var(--theme-primary)]/30',
+  
+  // Badges
+  badgePrimary: 'bg-[var(--theme-primary)]/20 text-[var(--theme-primary)] border-[var(--theme-primary)]/30',
+};
 

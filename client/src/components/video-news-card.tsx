@@ -413,7 +413,7 @@ export function VideoNewsCard({ news, canInteract, onInteract }: VideoNewsCardPr
                   size="sm"
                   onClick={handleSendComment}
                   disabled={!newComment.trim() || isSendingComment}
-                  className="h-8 px-3 bg-purple-600 hover:bg-purple-700"
+                  className="h-8 px-3 bg-[var(--theme-primary)] hover:opacity-90"
                 >
                   <Send className="h-3.5 w-3.5" />
                 </Button>

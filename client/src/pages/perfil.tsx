@@ -271,22 +271,23 @@ export default function PerfilPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] relative overflow-hidden">
-      {/* Decorative blur circles */}
-      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-[#8b5cf6] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-[#6366f1] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-      <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-[#8b5cf6] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
+    <div className="min-h-screen bg-[var(--theme-background)] relative overflow-hidden">
+      {/* Decorative blur circles using team colors */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-[var(--theme-primary)] rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
+      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-[var(--theme-neon)] rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
+      <div className="absolute bottom-1/4 left-1/3 w-72 h-72 bg-[var(--theme-primary)] rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-4000"></div>
 
       <Navbar />
 
-      <div className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 md:py-8 max-w-4xl relative z-10">
-        <h1 className="font-light text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white mb-4 sm:mb-6 md:mb-8 tracking-tight">{t('profile.title')}</h1>
+      <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8 relative z-10">
+        <div className="max-w-4xl mx-auto">
+        <h1 className="font-light text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-[var(--theme-text)] mb-4 sm:mb-6 md:mb-8 tracking-tight">{t('profile.title')}</h1>
 
         <Tabs defaultValue="info" className="space-y-4 sm:space-y-6">
           <TabsList className="grid w-full grid-cols-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-0.5 sm:p-1">
             <TabsTrigger 
               value="info" 
-              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-[var(--theme-primary)] data-[state=active]:text-white text-[var(--theme-text-muted)] data-[state=inactive]:hover:text-[var(--theme-text)] data-[state=inactive]:hover:bg-white/5" 
               data-testid="tab-info"
             >
               <User className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -295,7 +296,7 @@ export default function PerfilPage() {
             </TabsTrigger>
             <TabsTrigger 
               value="stats" 
-              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-[var(--theme-primary)] data-[state=active]:text-white text-[var(--theme-text-muted)] data-[state=inactive]:hover:text-[var(--theme-text)] data-[state=inactive]:hover:bg-white/5" 
               data-testid="tab-stats"
             >
               <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -304,7 +305,7 @@ export default function PerfilPage() {
             </TabsTrigger>
             <TabsTrigger 
               value="badges" 
-              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5" 
+              className="gap-1 sm:gap-2 font-light text-xs sm:text-sm data-[state=active]:bg-[var(--theme-primary)] data-[state=active]:text-white text-[var(--theme-text-muted)] data-[state=inactive]:hover:text-[var(--theme-text)] data-[state=inactive]:hover:bg-white/5" 
               data-testid="tab-badges"
             >
               <Award className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -318,7 +319,7 @@ export default function PerfilPage() {
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
               <CardHeader className="px-4 sm:px-6">
                 <CardTitle className="text-white font-light text-xl sm:text-2xl flex items-center gap-2">
-                  <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-[#8b5cf6]" />
+                  <Camera className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--theme-primary)]" />
                   Foto de Perfil
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-light text-sm sm:text-base">
@@ -336,7 +337,7 @@ export default function PerfilPage() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center">
+                        <div className="w-full h-full bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-neon)] flex items-center justify-center">
                           <span className="text-xl sm:text-2xl font-medium text-white">
                             {user?.name.slice(0, 2).toUpperCase()}
                           </span>
@@ -380,7 +381,7 @@ export default function PerfilPage() {
                           onClick={handleConfirmAvatar}
                           disabled={isUploadingAvatar}
                           size="sm"
-                          className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                          className="font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg shadow-lg shadow-[var(--theme-primary)]/20 transition-all duration-300"
                         >
                           {isUploadingAvatar ? (
                             <>
@@ -427,7 +428,7 @@ export default function PerfilPage() {
                     onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
                     disabled={!isEditing}
                     data-testid="input-name"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                   />
                 </div>
                 <div className="space-y-2">
@@ -439,7 +440,7 @@ export default function PerfilPage() {
                     onChange={(e) => setProfileData({ ...profileData, email: e.target.value })}
                     disabled={!isEditing}
                     data-testid="input-email"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                   />
                 </div>
                 {isEditing ? (
@@ -448,7 +449,7 @@ export default function PerfilPage() {
                       onClick={handleSaveProfile} 
                       disabled={profileMutation.isPending} 
                       data-testid="button-save"
-                      className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                      className="font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg shadow-lg shadow-[var(--theme-primary)]/20 transition-all duration-300"
                     >
                       {profileMutation.isPending ? (
                         <>
@@ -473,7 +474,7 @@ export default function PerfilPage() {
                   <Button 
                     onClick={() => setIsEditing(true)} 
                     data-testid="button-edit"
-                    className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                    className="font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg shadow-lg shadow-[var(--theme-primary)]/20 transition-all duration-300"
                   >
                     {t('profile.info.edit')}
                   </Button>
@@ -484,7 +485,7 @@ export default function PerfilPage() {
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
               <CardHeader>
                 <CardTitle className="text-white font-light text-2xl flex items-center gap-2">
-                  <Lock className="h-5 w-5 text-[#8b5cf6]" />
+                  <Lock className="h-5 w-5 text-[var(--theme-primary)]" />
                   {t('profile.password.title')}
                 </CardTitle>
                 <CardDescription className="text-gray-400 font-light">{t('profile.password.subtitle')}</CardDescription>
@@ -498,7 +499,7 @@ export default function PerfilPage() {
                     value={passwordData.currentPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
                     data-testid="input-current-password"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                   />
                 </div>
                 <div className="space-y-2">
@@ -509,7 +510,7 @@ export default function PerfilPage() {
                     value={passwordData.newPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                     data-testid="input-new-password"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                   />
                 </div>
                 <div className="space-y-2">
@@ -520,14 +521,14 @@ export default function PerfilPage() {
                     value={passwordData.confirmPassword}
                     onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
                     data-testid="input-confirm-password"
-                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                    className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
                   />
                 </div>
                 <Button 
                   onClick={handleChangePassword} 
                   disabled={passwordMutation.isPending} 
                   data-testid="button-change-password"
-                  className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                  className="font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg shadow-lg shadow-[var(--theme-primary)]/20 transition-all duration-300"
                 >
                   {passwordMutation.isPending ? (
                     <>
@@ -546,7 +547,7 @@ export default function PerfilPage() {
               <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
                 <CardHeader>
                   <CardTitle className="text-white font-light text-2xl flex items-center gap-2">
-                    <Star className="h-5 w-5 text-[#8b5cf6]" />
+                    <Star className="h-5 w-5 text-[var(--theme-primary)]" />
                     Solicitar Status de Influencer
                   </CardTitle>
                   <CardDescription className="text-gray-400 font-light">
@@ -595,7 +596,7 @@ export default function PerfilPage() {
                     <Dialog open={isRequestDialogOpen} onOpenChange={setIsRequestDialogOpen}>
                       <DialogTrigger asChild>
                         <Button
-                          className="w-full font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                          className="w-full font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg shadow-lg shadow-[var(--theme-primary)]/20 transition-all duration-300"
                         >
                           <Star className="h-4 w-4 mr-2" />
                           Solicitar Ser Influencer
@@ -619,7 +620,7 @@ export default function PerfilPage() {
                               value={influencerReason}
                               onChange={(e) => setInfluencerReason(e.target.value)}
                               maxLength={500}
-                              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6] min-h-[120px]"
+                              className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)] min-h-[120px]"
                             />
                             <p className="text-xs text-gray-500 text-right font-light">
                               {influencerReason.length}/500 caracteres
@@ -628,7 +629,7 @@ export default function PerfilPage() {
                           <Button
                             onClick={() => influencerRequestMutation.mutate(influencerReason)}
                             disabled={influencerRequestMutation.isPending}
-                            className="w-full font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-300"
+                            className="w-full font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg shadow-lg shadow-[var(--theme-primary)]/20 transition-all duration-300"
                           >
                             {influencerRequestMutation.isPending ? (
                               <>
@@ -649,10 +650,10 @@ export default function PerfilPage() {
 
             {/* Show influencer badge if user is influencer */}
             {user?.isInfluencer && (
-              <Card className="bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 backdrop-blur-xl border border-[#8b5cf6]/30 shadow-lg shadow-purple-500/20">
+              <Card className="bg-gradient-to-r from-[var(--theme-primary)]/20 to-[var(--theme-neon)]/20 backdrop-blur-xl border border-[var(--theme-primary)]/30 shadow-lg shadow-[var(--theme-primary)]/20">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] flex items-center justify-center">
                       <Star className="h-8 w-8 text-white fill-white" />
                     </div>
                     <div>
@@ -705,7 +706,7 @@ export default function PerfilPage() {
                       <Badge 
                         variant={badge.unlocked ? 'default' : 'secondary'}
                         className={badge.unlocked 
-                          ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white border-0 shadow-md shadow-purple-500/20 font-light' 
+                          ? 'bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] text-white border-0 shadow-md shadow-[var(--theme-primary)]/20 font-light' 
                           : 'bg-white/10 border-white/10 text-white/80 font-light'
                         }
                       >
@@ -718,6 +719,7 @@ export default function PerfilPage() {
             </div>
           </TabsContent>
         </Tabs>
+        </div>
       </div>
     </div>
   );

@@ -32,7 +32,7 @@ export function PublicNavbar() {
           <Link href="/cadastro" data-testid="link-signup">
             <Button
               variant="default"
-              className="font-medium bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white rounded-lg border-0"
+              className="font-medium bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white rounded-lg border-0"
             >
               {t('landing.cta.signup')}
             </Button>

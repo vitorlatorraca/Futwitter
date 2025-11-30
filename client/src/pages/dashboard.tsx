@@ -258,7 +258,7 @@ export default function DashboardPage() {
                   <button
                     className={`flex items-center gap-1.5 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg text-[10px] sm:text-xs font-light transition-all ${
                       activeFilter !== 'my-team'
-                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white'
+                        ? 'bg-[var(--theme-primary)] text-white'
                         : 'bg-white/5 text-white/60 hover:text-white hover:bg-white/10'
                     }`}
                   >
