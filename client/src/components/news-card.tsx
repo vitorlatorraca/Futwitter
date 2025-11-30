@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -47,6 +48,7 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSendingComment, setIsSendingComment] = useState(false);
   const [commentsCount, setCommentsCount] = useState(news.commentsCount || 0);
+  const [isTextHovered, setIsTextHovered] = useState(false);
 
   // Safety check
   if (!news || !news.team) {
@@ -275,29 +277,86 @@ export function NewsCard({ news, canInteract, onInteract }: NewsCardProps) {
         </div>
       </CardHeader>
 
-      {/* Content FIRST (inverted order) */}
+      {/* Content FIRST (inverted order) - Expands on hover, hides image */}
       <CardContent className="p-3 sm:p-4 md:p-5 pt-0 space-y-2 sm:space-y-3 relative z-10">
-        <div>
-          <h3 className="font-light text-sm sm:text-base md:text-lg text-white/90 mb-1.5 sm:mb-2 leading-tight tracking-tight">
+        <motion.div
+          onMouseEnter={() => setIsTextHovered(true)}
+          onMouseLeave={() => setIsTextHovered(false)}
+          className="cursor-pointer rounded-lg p-2 -mx-2 transition-colors duration-300"
+          style={{
+            backgroundColor: isTextHovered ? 'rgba(255,255,255,0.03)' : 'transparent',
+          }}
+        >
+          {/* Title with subtle glow on hover */}
+          <motion.h3 
+            className="font-light text-sm sm:text-base md:text-lg text-white/90 mb-1.5 sm:mb-2 leading-tight tracking-tight transition-all duration-300"
+            animate={{
+              color: isTextHovered ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.9)',
+            }}
+          >
             {news.title}
-          </h3>
-          <p className="text-xs sm:text-sm text-white/55 leading-relaxed line-clamp-3 font-light">
-            {news.content}
-          </p>
-        </div>
+          </motion.h3>
+          
+          {/* Content with smooth height animation */}
+          <motion.div 
+            className="overflow-hidden relative"
+            initial={false}
+            animate={{
+              maxHeight: isTextHovered ? 600 : 58, // ~3 lines when collapsed
+            }}
+            transition={{ 
+              duration: 0.4, 
+              ease: [0.4, 0, 0.2, 1] 
+            }}
+          >
+            <p className="text-xs sm:text-sm text-white/55 leading-relaxed font-light">
+              {news.content}
+            </p>
+          </motion.div>
+          
+          {/* Gradient fade indicator when collapsed */}
+          <motion.div
+            className="h-6 -mt-6 bg-gradient-to-t from-[#0a0a0b] via-[#0a0a0b]/80 to-transparent pointer-events-none relative z-10"
+            initial={false}
+            animate={{ 
+              opacity: isTextHovered ? 0 : 1,
+              height: isTextHovered ? 0 : 24,
+            }}
+            transition={{ duration: 0.3 }}
+          />
+          
+          {/* "Read more" hint */}
+          <motion.span
+            className="text-[10px] text-white/30 font-light"
+            initial={false}
+            animate={{ 
+              opacity: isTextHovered ? 0 : 1,
+            }}
+            transition={{ duration: 0.2 }}
+          >
+            Hover to read more...
+          </motion.span>
+        </motion.div>
       </CardContent>
 
-      {/* Image SECOND (inverted order) */}
-      {news.imageUrl && (
-        <div className="relative aspect-video overflow-hidden mx-3 sm:mx-4 md:mx-5 rounded-lg">
-          <img
-            src={news.imageUrl}
-            alt={news.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
-        </div>
-      )}
+      {/* Image SECOND (inverted order) - Fades out on text hover */}
+      <AnimatePresence>
+        {news.imageUrl && !isTextHovered && (
+          <motion.div 
+            className="relative aspect-video overflow-hidden mx-3 sm:mx-4 md:mx-5 rounded-lg"
+            initial={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
+          >
+            <img
+              src={news.imageUrl}
+              alt={news.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <CardFooter className="p-3 sm:p-4 md:p-5 pt-3 flex flex-wrap gap-1.5 sm:gap-2 relative z-10">
         {/* Like/Dislike buttons */}
