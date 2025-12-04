@@ -1,10 +1,10 @@
-# ⚽ Brasileirão DataFlow
+# ⚽ Futwitter - Brazilian Football Social Platform
 
-Social platform for Brazilian football (Brasileirão) fans to interact with their favorite teams, rate players, read exclusive journalism, and connect with other supporters.
+A social platform for Brazilian football (Brasileirão) fans to interact with their favorite teams, rate players, read exclusive journalism, and connect with other supporters.
 
 ## 🚀 Quick Start
 
-### Command to run the project locally:
+### Run the project locally:
 
 ```bash
 npm run dev
@@ -12,7 +12,7 @@ npm run dev
 
 > **Note:** On Windows (CMD), use `npm run dev:win`
 
-The server will be available at **http://localhost:5000**
+The server will be available at **http://localhost:5001**
 
 ---
 
@@ -27,13 +27,13 @@ Before starting, make sure you have installed:
   - Local PostgreSQL
   - Any PostgreSQL service
 
-## 🔧 Installation and Configuration
+## 🔧 Installation and Setup
 
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
-cd BrasileiraoDataFlow
+git clone https://github.com/vitorlatorraca/Futwitter.git
+cd Futwitter
 ```
 
 ### 2. Install dependencies
@@ -48,7 +48,7 @@ Create a `.env` file in the project root:
 
 ```env
 DATABASE_URL=postgresql://user:password@host:port/database
-PORT=5000
+PORT=5001
 SESSION_SECRET=your-secret-key-here-change-in-production
 ```
 
@@ -57,18 +57,18 @@ SESSION_SECRET=your-secret-key-here-change-in-production
 **Neon (recommended):**
 ```env
 DATABASE_URL=postgresql://user:password@ep-xxx-xxx.region.aws.neon.tech/database?sslmode=require
-PORT=5000
+PORT=5001
 SESSION_SECRET=your-secret-key-here
 ```
 
 **Local PostgreSQL:**
 ```env
-DATABASE_URL=postgresql://postgres:password@localhost:5432/brasileirao
-PORT=5000
+DATABASE_URL=postgresql://postgres:password@localhost:5432/futwitter
+PORT=5001
 SESSION_SECRET=your-secret-key-here
 ```
 
-### 4. Configure the database
+### 4. Setup the database
 
 Run database migrations:
 
@@ -93,7 +93,7 @@ npm run dev:win
 npm run dev
 ```
 
-Access: **http://localhost:5000**
+Access: **http://localhost:5001**
 
 ---
 
@@ -104,7 +104,7 @@ Access: **http://localhost:5000**
 | `npm run dev` | Starts the development server (with hot-reload) |
 | `npm run dev:win` | Version for Windows (CMD) |
 | `npm run build` | Creates production build |
-| `npm run start` | Starts the server in production mode (requires build first) |
+| `npm run start` | Starts the server in production mode |
 | `npm run check` | Checks TypeScript errors |
 | `npm run db:push` | Applies database migrations |
 
@@ -113,7 +113,7 @@ Access: **http://localhost:5000**
 ## 🗄️ Project Structure
 
 ```
-BrasileiraoDataFlow/
+Futwitter/
 ├── client/              # React Frontend
 │   ├── src/
 │   │   ├── pages/       # Application pages
@@ -121,23 +121,25 @@ BrasileiraoDataFlow/
 │   │   └── lib/         # Utilities and contexts
 │   └── index.html
 ├── server/              # Express Backend
-│   ├── index.ts         # Main server
+│   ├── index.ts         # Main server entry
+│   ├── app.ts           # Express app setup
 │   ├── routes.ts        # API routes
+│   ├── swagger.ts       # API documentation
 │   ├── db.ts            # Database configuration
 │   └── storage.ts       # Data access layer
 ├── shared/              # Shared code
-│   └── schema.ts        # Database schema (Drizzle)
+│   └── schema.ts        # Database schema (Drizzle ORM)
 ├── package.json         # Dependencies and scripts
 └── vite.config.ts       # Vite configuration
 ```
 
 ---
 
-## 🛠️ Technologies Used
+## 🛠️ Tech Stack
 
 ### Frontend
-- **React 18** - JavaScript library for interfaces
-- **TypeScript** - JavaScript superset with static typing
+- **React 18** - UI library
+- **TypeScript** - Type-safe JavaScript
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Utility-first CSS framework
 - **Shadcn/ui** - UI components based on Radix UI
@@ -147,13 +149,22 @@ BrasileiraoDataFlow/
 ### Backend
 - **Express.js** - Web framework for Node.js
 - **TypeScript** - Static typing
-- **Passport.js** - Authentication
+- **Swagger** - API documentation
 - **Bcrypt** - Password hashing
+- **Express Session** - Session management
 
 ### Database
 - **PostgreSQL** - Relational database
 - **Drizzle ORM** - Type-safe ORM
 - **Neon** - Serverless PostgreSQL (optional)
+
+---
+
+## 📚 API Documentation
+
+When the server is running, access the Swagger documentation at:
+
+**http://localhost:5001/api-docs**
 
 ---
 
@@ -169,7 +180,7 @@ BrasileiraoDataFlow/
 
 ### Port already in use
 - Change the port in the `.env` file: `PORT=3000`
-- Or stop the process using port 5000
+- Or stop the process using port 5001
 
 ### Database connection error
 - Verify that the database is running
@@ -182,22 +193,27 @@ BrasileiraoDataFlow/
 
 - ✅ User authentication (signup and login)
 - ✅ Favorite team selection
-- ✅ Personalized dashboard
-- ✅ Player ratings
+- ✅ Personalized dashboard with news feed
+- ✅ Player ratings system
 - ✅ News and exclusive journalism
-- ✅ User profile
+- ✅ Video content support (TikTok-style)
+- ✅ Image upload with automatic compression
+- ✅ User profile management
 - ✅ Role system (FAN, JOURNALIST, ADMIN, INFLUENCER)
+- ✅ Influencer request system
+- ✅ Badge/achievement system
+- ✅ RESTful API with Swagger documentation
 
 ---
 
-## 🎯 Next Steps
+## 🎯 Getting Started
 
 After running the project:
 
-1. Access http://localhost:5000
+1. Access http://localhost:5001
 2. Create an account or login
 3. Select your favorite team
-4. Explore the dashboard and features
+4. Explore the dashboard and features!
 
 ---
 
@@ -207,4 +223,4 @@ MIT
 
 ---
 
-Developed with ⚽ for Brasileirão fans!
+Built with ⚽ for Brazilian football fans!

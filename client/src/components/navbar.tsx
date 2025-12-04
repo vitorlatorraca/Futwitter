@@ -1,187 +1,170 @@
 import { Link, useLocation } from 'wouter';
+import { motion } from 'framer-motion';
 import { useAuth } from '@/lib/auth-context';
 import { useI18n } from '@/lib/i18n';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { LanguageSelector } from '@/components/language-selector';
-import { Menu, LogOut } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { 
+  LogOut, 
+  Newspaper, 
+  Shield, 
+  User, 
+  PenSquare, 
+  Settings,
+  type LucideIcon 
+} from 'lucide-react';
 
 export function Navbar() {
   const { user, logout } = useAuth();
   const { t } = useI18n();
   const [location] = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
 
   if (!user) return null;
-  
-  // Debug: verificar se avatarUrl está presente
-  useEffect(() => {
-    console.log('📊 Navbar renderizado - User completo:', user);
-    if (user && user.avatarUrl) {
-      console.log('✅ Navbar - User avatarUrl presente:', user.avatarUrl.substring(0, 80) + '...');
-      console.log('✅ Navbar - Avatar URL length:', user.avatarUrl.length);
-    } else {
-      console.log('❌ Navbar - User avatarUrl ausente:', user?.avatarUrl || 'null/undefined');
-    }
-  }, [user, user?.avatarUrl]);
 
-  const navLinks = [
-    { label: t('nav.feed'), href: '/dashboard', testId: 'link-feed' },
-    { label: t('nav.myTeam'), href: '/meu-time', testId: 'link-meu-time' },
-    { label: t('nav.profile'), href: '/perfil', testId: 'link-perfil' },
+  const navLinks: { label: string; href: string; testId: string; icon: LucideIcon }[] = [
+    { label: t('nav.feed'), href: '/dashboard', testId: 'link-feed', icon: Newspaper },
+    { label: t('nav.myTeam'), href: '/meu-time', testId: 'link-meu-time', icon: Shield },
+    { label: t('nav.profile'), href: '/perfil', testId: 'link-perfil', icon: User },
   ];
 
   if (user.userType === 'JOURNALIST' || user.isInfluencer) {
-    navLinks.push({ label: t('nav.journalist'), href: '/jornalista', testId: 'link-jornalista' });
+    navLinks.push({ label: t('nav.journalist'), href: '/jornalista', testId: 'link-jornalista', icon: PenSquare });
   }
 
   if (user.userType === 'ADMIN') {
-    navLinks.push({ label: 'Admin', href: '/admin', testId: 'link-admin' });
+    navLinks.push({ label: 'Admin', href: '/admin', testId: 'link-admin', icon: Settings });
   }
 
   const isActive = (path: string) => location === path;
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-black/30 backdrop-blur-md supports-[backdrop-filter]:bg-black/10">
-      <div className="container flex h-12 sm:h-14 items-center justify-between px-3 sm:px-4 md:px-6">
-        {/* Logo - Ultra minimalista mobile */}
-        <Link href="/dashboard" data-testid="link-logo">
-          <div className="flex items-center gap-1.5 sm:gap-2 text-base sm:text-lg md:text-xl font-light tracking-tight hover:opacity-80 transition-opacity cursor-pointer text-white">
-            <span className="text-lg sm:text-xl md:text-2xl">⚽</span>
-            <span className="hidden md:inline">Brasileirão</span>
-          </div>
-        </Link>
+    <nav className="sticky top-0 z-50 w-full bg-[var(--theme-background)]/95 backdrop-blur-md">
+      <div className="w-full max-w-[1920px] mx-auto flex h-14 sm:h-16 items-center justify-between px-3 sm:px-4 md:px-6 lg:px-8">
+        {/* Logo */}
+        <motion.div
+          whileHover={{ x: [0, -2, 2, -2, 0] }}
+          transition={{ duration: 0.4, ease: "easeInOut" }}
+        >
+          <Link href="/dashboard" data-testid="link-logo">
+            <div className="flex items-center gap-2 cursor-pointer">
+              <span className="text-xl sm:text-2xl">⚽</span>
+              <span className="hidden md:inline text-lg sm:text-xl font-bold tracking-tight text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] transition-colors">
+                Futwitter
+              </span>
+            </div>
+          </Link>
+        </motion.div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <Link key={link.href} href={link.href} data-testid={link.testId}>
-              <Button
-                variant={isActive(link.href) ? 'default' : 'ghost'}
-                className={`font-light transition-all duration-300 ${
-                  isActive(link.href)
-                    ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0'
-                    : 'text-white/80 hover:text-white hover:bg-white/5 border-0'
-                }`}
-              >
-                {link.label}
-              </Button>
-            </Link>
-          ))}
+        {/* Navigation - Icons on mobile, Text on desktop */}
+        <div className="flex items-center gap-3 sm:gap-4 md:gap-6">
+          <TooltipProvider delayDuration={100}>
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              const Icon = link.icon;
+              return (
+                <motion.div
+                  key={link.href}
+                  whileHover={{ x: [0, -2, 2, -2, 0] }}
+                  transition={{ duration: 0.4, ease: "easeInOut" }}
+                >
+                  <Link href={link.href} data-testid={link.testId}>
+                    {/* Mobile: Icon only with tooltip */}
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={`
+                            md:hidden flex items-center justify-center p-2 rounded-lg cursor-pointer transition-all
+                            ${active 
+                              ? 'text-[var(--theme-primary)] bg-[var(--theme-primary)]/10' 
+                              : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] hover:bg-white/5'
+                            }
+                          `}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        side="bottom" 
+                        className="bg-[#111] border-white/10 text-white text-xs"
+                      >
+                        {link.label}
+                      </TooltipContent>
+                    </Tooltip>
+                    
+                    {/* Desktop: Text only */}
+                    <span
+                      className={`
+                        hidden md:inline text-sm font-semibold cursor-pointer transition-colors
+                        ${active 
+                          ? 'text-[var(--theme-primary)]' 
+                          : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text)]'
+                        }
+                      `}
+                    >
+                      {link.label}
+                    </span>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </TooltipProvider>
         </div>
 
         {/* User Menu */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
           <div className="hidden sm:block">
             <LanguageSelector />
           </div>
-          <div className="hidden md:flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full border border-white/10 overflow-hidden bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] flex items-center justify-center" key={`avatar-${user.avatarUrl ? user.avatarUrl.substring(0, 100).replace(/[^a-zA-Z0-9]/g, '') : 'none'}`}>
-              {user.avatarUrl ? (
-                <img 
-                  src={user.avatarUrl} 
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                  onLoad={() => {
-                    console.log('✅ Avatar imagem carregada com sucesso!');
-                  }}
-                  onError={(e) => {
-                    console.error('❌ Erro ao carregar avatar:', user.avatarUrl?.substring(0, 100));
-                    console.error('❌ Erro completo:', e);
-                    e.currentTarget.style.display = 'none';
-                  }}
-                  key={`img-${user.avatarUrl?.substring(0, 50) || 'none'}`}
-                />
-              ) : (
-                <span className="text-white text-sm font-medium">
-                  {user.name.slice(0, 2).toUpperCase()}
-                </span>
-              )}
-            </div>
-            <span className="text-sm font-light text-white/80 hidden lg:inline">{user.name}</span>
+          
+          {/* User Avatar */}
+          <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-full overflow-hidden bg-[var(--theme-background-alt)] flex items-center justify-center flex-shrink-0">
+            {user.avatarUrl ? (
+              <img 
+                src={user.avatarUrl} 
+                alt={user.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                }}
+              />
+            ) : (
+              <span className="text-[var(--theme-text)] text-xs font-semibold">
+                {user.name.slice(0, 2).toUpperCase()}
+              </span>
+            )}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => logout()}
-            className="hidden md:flex text-white/80 hover:text-white hover:bg-white/5 border-0"
-            data-testid="button-logout"
+          
+          {/* User name - only on large screens */}
+          <motion.span 
+            className="text-sm font-medium text-[var(--theme-text-muted)] hidden lg:inline cursor-pointer hover:text-[var(--theme-text)]"
+            whileHover={{ x: [0, -1, 1, -1, 0] }}
+            transition={{ duration: 0.3 }}
           >
-            <LogOut className="h-5 w-5" />
-          </Button>
-
-          {/* Mobile Menu - Minimalista */}
-          <Sheet open={isOpen} onOpenChange={setIsOpen}>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon" data-testid="button-menu" className="text-white/70 hover:text-white hover:bg-white/5 border-0 h-9 w-9">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] bg-[#0a0a0a] border-white/5">
-              <div className="flex flex-col gap-3 mt-4">
-                <div className="flex items-center gap-2.5 pb-3 border-b border-white/5">
-                  <div className="h-9 w-9 rounded-full border border-white/10 overflow-hidden bg-white/5 flex items-center justify-center flex-shrink-0" key={`avatar-mobile-${user.avatarUrl ? user.avatarUrl.substring(0, 100).replace(/[^a-zA-Z0-9]/g, '') : 'none'}`}>
-                    {user.avatarUrl ? (
-                      <img 
-                        src={user.avatarUrl} 
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                        onLoad={() => {
-                          console.log('✅ Avatar mobile imagem carregada com sucesso!');
-                        }}
-                        onError={(e) => {
-                          console.error('❌ Erro ao carregar avatar mobile:', user.avatarUrl?.substring(0, 100));
-                          e.currentTarget.style.display = 'none';
-                        }}
-                        key={`img-mobile-${user.avatarUrl?.substring(0, 50) || 'none'}`}
-                      />
-                    ) : (
-                      <span className="text-white/80 text-xs font-light">
-                        {user.name.slice(0, 2).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-light text-sm text-white/90 truncate">{user.name}</p>
-                    <p className="text-[10px] text-white/40 font-light truncate">{user.email}</p>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-1">
-                  {navLinks.map((link) => (
-                    <Link key={link.href} href={link.href} data-testid={link.testId}>
-                      <Button
-                        variant={isActive(link.href) ? 'default' : 'ghost'}
-                        className={`w-full justify-start font-light text-sm transition-all duration-200 h-9 ${
-                          isActive(link.href)
-                            ? 'bg-white/10 text-white border-0'
-                            : 'text-white/60 hover:text-white/90 hover:bg-white/5 border-0'
-                        }`}
-                        onClick={() => setIsOpen(false)}
-                      >
-                        {link.label}
-                      </Button>
-                    </Link>
-                  ))}
-                  <div className="pt-2 border-t border-white/5 sm:hidden">
-                    <LanguageSelector />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start text-white/50 hover:text-white/80 hover:bg-white/5 border-0 font-light text-sm h-9 mt-1"
-                    onClick={() => {
-                      setIsOpen(false);
-                      logout();
-                    }}
-                    data-testid="button-logout-mobile"
-                  >
-                    <LogOut className="h-3.5 w-3.5 mr-2" />
-                    {t('nav.logout')}
-                  </Button>
-                </div>
-              </div>
-            </SheetContent>
-          </Sheet>
+            {user.name}
+          </motion.span>
+          
+          {/* Logout */}
+          <TooltipProvider delayDuration={100}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <motion.button
+                  onClick={() => logout()}
+                  className="text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] transition-colors p-2 rounded-lg hover:bg-white/5"
+                  whileHover={{ x: [0, -1, 1, -1, 0] }}
+                  transition={{ duration: 0.3 }}
+                  data-testid="button-logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                </motion.button>
+              </TooltipTrigger>
+              <TooltipContent 
+                side="bottom" 
+                className="bg-[#111] border-white/10 text-white text-xs"
+              >
+                Logout
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
     </nav>

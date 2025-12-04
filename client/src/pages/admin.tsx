@@ -26,14 +26,14 @@ export default function AdminPage() {
   // Verificar se o usuário é admin
   if (user?.userType !== 'ADMIN') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+      <div className="min-h-screen bg-[var(--theme-background)]">
         <Navbar />
-        <div className="container px-6 py-8 max-w-4xl">
-          <Card className="bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/20">
+        <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8">
+          <Card className="bg-white/5 backdrop-blur-xl border border-white/10 max-w-4xl mx-auto">
             <CardContent className="p-12 text-center">
               <Shield className="h-16 w-16 mx-auto mb-4 text-red-400" />
-              <h2 className="text-2xl font-light text-white mb-2">Acesso Negado</h2>
-              <p className="text-gray-400 font-light">Você não tem permissão para acessar esta página.</p>
+              <h2 className="text-2xl font-light text-[var(--theme-text)] mb-2">Acesso Negado</h2>
+              <p className="text-[var(--theme-text-muted)] font-light">Você não tem permissão para acessar esta página.</p>
             </CardContent>
           </Card>
         </div>
@@ -123,18 +123,18 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] relative overflow-hidden">
-      {/* Decorative blur circles */}
-      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-[#8b5cf6] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-[#6366f1] rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
+    <div className="min-h-screen bg-[var(--theme-background)] relative overflow-hidden">
+      {/* Decorative blur circles using team colors */}
+      <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-[var(--theme-primary)] rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob"></div>
+      <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-[var(--theme-neon)] rounded-full mix-blend-multiply filter blur-xl opacity-10 animate-blob animation-delay-2000"></div>
 
       <Navbar />
 
-      <div className="container px-6 py-8 max-w-7xl relative z-10">
+      <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 relative z-10">
         {/* Header */}
         <div className="mb-8">
           <h1 className="font-light text-4xl md:text-5xl text-white mb-4 tracking-tight flex items-center gap-3">
-            <Shield className="h-8 w-8 text-[#8b5cf6]" />
+            <Shield className="h-8 w-8 text-[var(--theme-primary)]" />
             Painel Administrativo
           </h1>
           <p className="text-gray-400 font-light">Gerencie usuários e defina status de influencers</p>
@@ -149,7 +149,7 @@ export default function AdminPage() {
                 placeholder="Buscar por nome ou email..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[#8b5cf6] focus:ring-[#8b5cf6]"
+                className="pl-10 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-[var(--theme-primary)] focus:ring-[var(--theme-primary)]"
               />
             </div>
           </CardContent>
@@ -164,7 +164,7 @@ export default function AdminPage() {
                   <p className="text-sm text-gray-400 font-light mb-1">Total de Usuários</p>
                   <p className="text-3xl font-light text-white">{users?.length || 0}</p>
                 </div>
-                <Users className="h-8 w-8 text-[#8b5cf6]" />
+                <Users className="h-8 w-8 text-[var(--theme-primary)]" />
               </div>
             </CardContent>
           </Card>
@@ -201,14 +201,14 @@ export default function AdminPage() {
           <TabsList className="grid w-full grid-cols-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-lg p-1">
             <TabsTrigger 
               value="users" 
-              className="font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5"
+              className="font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[var(--theme-primary)] data-[state=active]:to-[var(--theme-neon)] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[var(--theme-primary)]/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5"
             >
               <Users className="h-4 w-4 mr-2" />
               Usuários
             </TabsTrigger>
             <TabsTrigger 
               value="requests" 
-              className="font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[#8b5cf6] data-[state=active]:to-[#6366f1] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-purple-500/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5"
+              className="font-light data-[state=active]:bg-gradient-to-r data-[state=active]:from-[var(--theme-primary)] data-[state=active]:to-[var(--theme-neon)] data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:shadow-[var(--theme-primary)]/20 text-white/80 data-[state=inactive]:hover:text-white data-[state=inactive]:hover:bg-white/5"
             >
               <Star className="h-4 w-4 mr-2" />
               Solicitações de Influencer
@@ -240,7 +240,7 @@ export default function AdminPage() {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-1">
-                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] flex items-center justify-center text-white font-light text-lg">
+                        <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] flex items-center justify-center text-white font-light text-lg">
                           {u.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="flex-1">
@@ -248,7 +248,7 @@ export default function AdminPage() {
                             <p className="text-white font-light text-lg">{u.name}</p>
                             {getRoleBadge(u.userType)}
                             {u.isInfluencer && (
-                              <Badge className="bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white border-0 shadow-md shadow-purple-500/20 font-light">
+                              <Badge className="bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] text-white border-0 shadow-md shadow-[var(--theme-primary)]/20 font-light">
                                 Influencer
                               </Badge>
                             )}
@@ -266,7 +266,7 @@ export default function AdminPage() {
                             className={`font-light transition-all duration-300 ${
                               u.isInfluencer
                                 ? 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
-                                : 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                                : 'bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white border-0 shadow-lg shadow-[var(--theme-primary)]/20'
                             }`}
                           >
                             {influencerMutation.isPending ? (
@@ -317,7 +317,7 @@ export default function AdminPage() {
                     onClick={() => setRequestStatusFilter('PENDING')}
                     className={`font-light transition-all duration-300 ${
                       requestStatusFilter === 'PENDING'
-                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                        ? 'bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white border-0 shadow-lg shadow-[var(--theme-primary)]/20'
                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
                     }`}
                   >
@@ -330,7 +330,7 @@ export default function AdminPage() {
                     onClick={() => setRequestStatusFilter('APPROVED')}
                     className={`font-light transition-all duration-300 ${
                       requestStatusFilter === 'APPROVED'
-                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                        ? 'bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white border-0 shadow-lg shadow-[var(--theme-primary)]/20'
                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
                     }`}
                   >
@@ -343,7 +343,7 @@ export default function AdminPage() {
                     onClick={() => setRequestStatusFilter('REJECTED')}
                     className={`font-light transition-all duration-300 ${
                       requestStatusFilter === 'REJECTED'
-                        ? 'bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] hover:from-[#7c3aed] hover:to-[#4f46e5] text-white border-0 shadow-lg shadow-purple-500/20'
+                        ? 'bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] hover:from-[var(--theme-primary)] hover:to-[var(--theme-neon)] text-white border-0 shadow-lg shadow-[var(--theme-primary)]/20'
                         : 'bg-white/5 border-white/10 text-white/80 hover:bg-white/10 hover:text-white hover:border-white/20'
                     }`}
                   >
@@ -367,7 +367,7 @@ export default function AdminPage() {
                       >
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex items-start gap-4 flex-1">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] flex items-center justify-center text-white font-light text-lg">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[var(--theme-primary)] to-[var(--theme-neon)] flex items-center justify-center text-white font-light text-lg">
                               {request.user.name.charAt(0).toUpperCase()}
                             </div>
                             <div className="flex-1">

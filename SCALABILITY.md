@@ -1,58 +1,57 @@
-# Análise de Escalabilidade
+# Scalability Analysis
 
-## ✅ Pontos Positivos
+## ✅ Positive Points
 
-1. **Banco de Dados Neon**: Usa Neon serverless que escala automaticamente
-2. **Connection Pooling**: Já implementado com Pool do Neon
-3. **Sessões no Banco**: Usa PostgreSQL para sessões (escalável)
-4. **Estrutura Modular**: Código bem organizado facilita otimizações
+1. **Neon Database**: Uses Neon serverless which scales automatically
+2. **Connection Pooling**: Already implemented with Neon Pool
+3. **Database Sessions**: Uses PostgreSQL for sessions (scalable)
+4. **Modular Structure**: Well-organized code facilitates optimizations
 
-## ⚠️ Problemas de Escalabilidade Identificados
+## ⚠️ Scalability Issues Identified
 
-### 1. **Problema N+1 na Query getAllNews** ✅ RESOLVIDO
-- ~~**Problema**: Para cada notícia, faz queries separadas para buscar time, jornalista e usuário~~
-- ~~**Impacto**: Com 100 notícias = 100+ queries adicionais~~
-- ✅ **Solução Implementada**: Agora usa batch queries (busca todos os dados relacionados de uma vez)
-- **Melhoria**: De 100+ queries para apenas 4 queries (1 notícias + 1 times + 1 jornalistas + 1 usuários)
+### 1. **N+1 Query Problem in getAllNews** ✅ RESOLVED
+- ~~**Problem**: For each news item, makes separate queries to fetch team, journalist, and user~~
+- ~~**Impact**: With 100 news items = 100+ additional queries~~
+- ✅ **Solution Implemented**: Now uses batch queries (fetches all related data at once)
+- **Improvement**: From 100+ queries to only 4 queries (1 news + 1 teams + 1 journalists + 1 users)
 
-### 2. **Sem Paginação** ✅ RESOLVIDO
-- ~~**Problema**: Busca todas as notícias de uma vez~~
-- ✅ **Solução Implementada**: Paginação com limit (padrão: 50) e offset
+### 2. **No Pagination** ✅ RESOLVED
+- ~~**Problem**: Fetches all news at once~~
+- ✅ **Solution Implemented**: Pagination with limit (default: 50) and offset
 - **API**: `/api/news?limit=50&offset=0`
 
-### 3. **Sem Cache**
-- **Problema**: Cada requisição refaz todas as queries
-- **Impacto**: Queries repetidas desnecessariamente
-- **Solução**: Implementar cache (Redis ou in-memory)
+### 3. **No Cache**
+- **Problem**: Each request redoes all queries
+- **Impact**: Unnecessarily repeated queries
+- **Solution**: Implement cache (Redis or in-memory)
 
-### 4. **Logs Excessivos em Produção**
-- **Problema**: Muitos console.log que impactam performance
-- **Impacto**: I/O desnecessário
-- **Solução**: Usar logger com níveis (só logar em dev)
+### 4. **Excessive Logs in Production**
+- **Problem**: Many console.log that impact performance
+- **Impact**: Unnecessary I/O
+- **Solution**: Use logger with levels (only log in dev)
 
-### 5. **Sem Rate Limiting**
-- **Problema**: Sem proteção contra abuso
-- **Impacto**: Usuários podem sobrecarregar o servidor
-- **Solução**: Implementar rate limiting
+### 5. **No Rate Limiting**
+- **Problem**: No protection against abuse
+- **Impact**: Users can overload the server
+- **Solution**: Implement rate limiting
 
-### 6. **Índices do Banco**
-- **Status**: Verificar se há índices adequados
-- **Solução**: Adicionar índices nas colunas mais consultadas
+### 6. **Database Indexes**
+- **Status**: Check if there are adequate indexes
+- **Solution**: Add indexes on most queried columns
 
-## 🚀 Melhorias Recomendadas
+## 🚀 Recommended Improvements
 
-### Prioridade Alta
-1. Otimizar getAllNews com JOINs
-2. Implementar paginação
-3. Adicionar cache para dados frequentes (times, usuários)
+### High Priority
+1. Optimize getAllNews with JOINs
+2. Implement pagination
+3. Add cache for frequent data (teams, users)
 
-### Prioridade Média
+### Medium Priority
 4. Rate limiting
-5. Remover logs excessivos em produção
-6. Adicionar índices no banco
+5. Remove excessive logs in production
+6. Add database indexes
 
-### Prioridade Baixa
-7. Implementar CDN para imagens
-8. Compressão de respostas
-9. Monitoring e métricas
-
+### Low Priority
+7. Implement CDN for images
+8. Response compression
+9. Monitoring and metrics

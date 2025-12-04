@@ -1,0 +1,34 @@
+/**
+ * Main Styles Entry Point
+ * 
+ * This file imports all style modules in the correct order:
+ * 1. Tailwind directives
+ * 2. Design tokens (CSS custom properties)
+ * 3. Base styles (resets, global element styles)
+ * 4. Custom utilities
+ * 
+ * Structure:
+ * └── styles/
+ *     ├── index.css      # This file (entry point)
+ *     ├── tokens.css     # CSS custom properties / design tokens
+ *     ├── base.css       # Base element styles
+ *     └── utilities.css  # Custom utility classes
+ */
+
+/* Tailwind Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design Tokens - Must come before base styles */
+@import "./tokens.css";
+
+/* Base Styles */
+@import "./base.css";
+
+/* Custom Utilities */
+@import "./utilities.css";
+
+/* Design System */
+@import "./design-system.css";
+

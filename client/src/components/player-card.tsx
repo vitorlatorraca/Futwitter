@@ -21,7 +21,7 @@ export function PlayerCard({ player, onRate }: PlayerCardProps) {
         {[...Array(5)].map((_, i) => (
           <Star
             key={i}
-            className={`h-4 w-4 ${i < stars ? 'fill-[#8b5cf6] text-[#8b5cf6]' : 'text-gray-600'}`}
+            className={`h-4 w-4 ${i < stars ? 'fill-[var(--theme-primary)] text-[var(--theme-primary)]' : 'text-gray-600'}`}
           />
         ))}
         <span className="text-sm font-light text-white ml-1">{player.averageRating.toFixed(1)}</span>
@@ -32,7 +32,7 @@ export function PlayerCard({ player, onRate }: PlayerCardProps) {
   return (
     <Card className="overflow-hidden bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl hover:border-white/20 transition-all duration-300 shadow-2xl" data-testid={`player-card-${player.id}`}>
       {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#8b5cf6]/5 via-transparent to-[#6366f1]/5 rounded-2xl pointer-events-none"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--theme-primary)]/5 via-transparent to-[var(--theme-neon)]/5 rounded-2xl pointer-events-none"></div>
       
       <CardContent className="p-6 space-y-4 relative z-10">
         <div className="flex items-start gap-4">
@@ -50,7 +50,7 @@ export function PlayerCard({ player, onRate }: PlayerCardProps) {
                 </div>
               )}
             </div>
-            <Badge className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] text-white border-0">
+            <Badge className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs font-medium bg-gradient-to-br from-[var(--theme-primary)] to-[var(--theme-neon)] text-white border-0">
               {player.jerseyNumber}
             </Badge>
           </div>

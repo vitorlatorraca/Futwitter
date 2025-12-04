@@ -181,20 +181,20 @@ export default function MeuTimePage() {
 
   if (!user?.teamId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+      <div className="min-h-screen bg-[var(--theme-background)]">
         <Navbar />
-        <div className="container px-6 py-20 text-center">
-          <p className="text-gray-400 font-light">Selecione um time para ver esta página</p>
+        <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-20 text-center">
+          <p className="text-[var(--theme-text-muted)] font-light">Selecione um time para ver esta página</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a]">
+    <div className="min-h-screen bg-[var(--theme-background)]">
       <Navbar />
 
-      <div className="container px-3 sm:px-4 md:px-6 py-4 sm:py-6 max-w-[1600px]">
+      <div className="w-full max-w-[1920px] mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
         {/* Header with Team Info */}
         {isLoadingTeam ? (
           <Skeleton className="h-20 sm:h-24 rounded-xl bg-white/5 mb-4 sm:mb-6" />
@@ -231,7 +231,7 @@ export default function MeuTimePage() {
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-light text-white flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5 text-[#8b5cf6]" />
+                    <MessageSquare className="h-5 w-5 text-[var(--theme-primary)]" />
                     Mensagens
                   </h2>
                   <Badge variant="outline" className="bg-white/5 border-white/10 text-white/60 text-xs font-light">
@@ -279,10 +279,10 @@ export default function MeuTimePage() {
             {isLoadingNews ? (
               <Skeleton className="h-48 rounded-xl bg-white/5" />
             ) : teamNews && teamNews.length > 0 ? (
-              <Card className="bg-gradient-to-br from-[#8b5cf6]/20 via-[#6366f1]/10 to-transparent backdrop-blur-xl border border-[#8b5cf6]/30 rounded-xl shadow-xl">
+              <Card className="bg-gradient-to-br from-[var(--theme-primary)]/20 via-[var(--theme-neon)]/10 to-transparent backdrop-blur-xl border border-[var(--theme-primary)]/30 rounded-xl shadow-xl">
                 <CardHeader className="pb-3">
                   <div className="flex items-center gap-2">
-                    <Star className="h-5 w-5 text-[#8b5cf6]" />
+                    <Star className="h-5 w-5 text-[var(--theme-primary)]" />
                     <h2 className="text-lg font-light text-white">
                       Notícia Mais Importante do Dia
                     </h2>
@@ -330,7 +330,7 @@ export default function MeuTimePage() {
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-[#8b5cf6]" />
+                  <Users className="h-5 w-5 text-[var(--theme-primary)]" />
                   <h2 className="text-lg font-light text-white">Enquete</h2>
                 </div>
               </CardHeader>
@@ -354,7 +354,7 @@ export default function MeuTimePage() {
                           <RadioGroupItem
                             value={option.id}
                             id={`escalacao-${option.id}`}
-                            className="border-white/20 data-[state=checked]:border-[#8b5cf6]"
+                            className="border-white/20 data-[state=checked]:border-[var(--theme-primary)]"
                           />
                           <Label
                             htmlFor={`escalacao-${option.id}`}
@@ -372,7 +372,7 @@ export default function MeuTimePage() {
                           <div className="relative">
                             <Progress
                               value={option.percentage}
-                              className="h-2 bg-white/5 [&>div]:bg-[#8b5cf6]"
+                              className="h-2 bg-white/5 [&>div]:bg-[var(--theme-primary)]"
                             />
                           </div>
                         )}
@@ -392,7 +392,7 @@ export default function MeuTimePage() {
             <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-[#8b5cf6]" />
+                  <TrendingUp className="h-5 w-5 text-[var(--theme-primary)]" />
                   <h2 className="text-lg font-light text-white">Enquete</h2>
                 </div>
               </CardHeader>
@@ -416,7 +416,7 @@ export default function MeuTimePage() {
                           <RadioGroupItem
                             value={option.id}
                             id={`contratacao-${option.id}`}
-                            className="border-white/20 data-[state=checked]:border-[#8b5cf6]"
+                            className="border-white/20 data-[state=checked]:border-[var(--theme-primary)]"
                           />
                           <Label
                             htmlFor={`contratacao-${option.id}`}
@@ -434,7 +434,7 @@ export default function MeuTimePage() {
                           <div className="relative">
                             <Progress
                               value={option.percentage}
-                              className="h-2 bg-white/5 [&>div]:bg-[#8b5cf6]"
+                              className="h-2 bg-white/5 [&>div]:bg-[var(--theme-primary)]"
                             />
                           </div>
                         )}
@@ -454,7 +454,7 @@ export default function MeuTimePage() {
             {isLoadingUpcoming ? (
               <Skeleton className="h-40 sm:h-48 rounded-xl bg-white/5" />
             ) : nextMatch ? (
-              <Card className="bg-gradient-to-br from-[#8b5cf6]/20 via-[#6366f1]/10 to-transparent backdrop-blur-xl border border-[#8b5cf6]/30 rounded-xl shadow-xl">
+              <Card className="bg-gradient-to-br from-[var(--theme-primary)]/20 via-[var(--theme-neon)]/10 to-transparent backdrop-blur-xl border border-[var(--theme-primary)]/30 rounded-xl shadow-xl">
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
                     <div className="flex-1 min-w-0">
@@ -506,7 +506,7 @@ export default function MeuTimePage() {
               <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
                 <CardHeader className="pb-3">
                   <h2 className="text-lg font-light text-white flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-[#8b5cf6]" />
+                    <Calendar className="h-5 w-5 text-[var(--theme-primary)]" />
                     Calendário de Jogos
                   </h2>
                 </CardHeader>
@@ -522,7 +522,7 @@ export default function MeuTimePage() {
                           key={match.id}
                           className={`p-3 rounded-lg border transition-all ${
                             isToday(matchDate)
-                              ? 'bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 border-[#8b5cf6]/30'
+                              ? 'bg-gradient-to-r from-[var(--theme-primary)]/20 to-[var(--theme-neon)]/20 border-[var(--theme-primary)]/30'
                               : 'bg-white/5 border-white/10 hover:bg-white/10'
                           }`}
                         >
@@ -570,7 +570,7 @@ export default function MeuTimePage() {
               <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
                 <CardHeader className="pb-3">
                   <h2 className="text-lg font-light text-white flex items-center gap-2">
-                    <Trophy className="h-5 w-5 text-[#8b5cf6]" />
+                    <Trophy className="h-5 w-5 text-[var(--theme-primary)]" />
                     Classificação
                   </h2>
                 </CardHeader>
@@ -583,7 +583,7 @@ export default function MeuTimePage() {
                           key={team.id}
                           className={`flex items-center gap-2 p-2 rounded-lg transition-all ${
                             isUserTeam
-                              ? 'bg-gradient-to-r from-[#8b5cf6]/20 to-[#6366f1]/20 border border-[#8b5cf6]/30'
+                              ? 'bg-gradient-to-r from-[var(--theme-primary)]/20 to-[var(--theme-neon)]/20 border border-[var(--theme-primary)]/30'
                               : 'hover:bg-white/5'
                           }`}
                         >
@@ -623,7 +623,7 @@ export default function MeuTimePage() {
         <Card className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl shadow-xl">
           <CardHeader className="pb-2 sm:pb-3 px-3 sm:px-6">
             <h2 className="text-base sm:text-lg font-light text-white flex items-center gap-2">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#8b5cf6]" />
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[var(--theme-primary)]" />
               <span className="hidden sm:inline">Calendário {format(today, 'MMMM yyyy', { locale: ptBR })}</span>
               <span className="sm:hidden">Calendário {format(today, 'MMM yyyy', { locale: ptBR })}</span>
             </h2>
@@ -655,7 +655,7 @@ export default function MeuTimePage() {
                     key={day.toISOString()}
                     className={`aspect-square p-1 rounded-lg border transition-all ${
                       isCurrentDay
-                        ? 'bg-gradient-to-br from-[#8b5cf6]/30 to-[#6366f1]/30 border-[#8b5cf6]/50'
+                        ? 'bg-gradient-to-br from-[var(--theme-primary)]/30 to-[var(--theme-neon)]/30 border-[var(--theme-primary)]/50'
                         : isPastDay
                         ? 'bg-white/5 border-white/10'
                         : 'bg-white/5 border-white/10 hover:bg-white/10'
@@ -671,7 +671,7 @@ export default function MeuTimePage() {
                       </span>
                       {dayMatches.length > 0 && (
                         <div className="flex-1 flex items-center justify-center">
-                          <div className="w-2 h-2 rounded-full bg-[#8b5cf6]"></div>
+                          <div className="w-2 h-2 rounded-full bg-[var(--theme-primary)]"></div>
                         </div>
                       )}
                     </div>

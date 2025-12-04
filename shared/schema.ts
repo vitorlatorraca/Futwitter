@@ -106,16 +106,18 @@ export const matchPlayers = pgTable("match_players", {
 export const news = pgTable("news", {
   id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   journalistId: varchar("journalist_id", { length: 36 }),
-  userId: varchar("user_id", { length: 36 }), // Para influencers que não são jornalistas
+  userId: varchar("user_id", { length: 36 }), // For influencers who are not journalists
   teamId: varchar("team_id", { length: 36 }).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   content: text("content").notNull(),
   imageUrl: text("image_url"),
-  videoUrl: text("video_url"), // URL do vídeo para notícias tipo TikTok (opcional)
-  contentType: newsContentTypeEnum("content_type").default("TEXT"), // TEXT ou VIDEO (opcional para compatibilidade)
+  videoUrl: text("video_url"), // Video URL for TikTok-style news (optional)
+  contentType: newsContentTypeEnum("content_type").default("TEXT"), // TEXT or VIDEO
   category: newsCategoryEnum("category").notNull().default("NEWS"),
   likesCount: integer("likes_count").notNull().default(0),
   dislikesCount: integer("dislikes_count").notNull().default(0),
+  viewsCount: integer("views_count").notNull().default(0), // View counter
+  commentsCount: integer("comments_count").notNull().default(0), // Comments counter
   isPublished: boolean("is_published").notNull().default(true),
   publishedAt: timestamp("published_at").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -127,6 +129,15 @@ export const newsInteractions = pgTable("news_interactions", {
   userId: varchar("user_id", { length: 36 }).notNull(),
   newsId: varchar("news_id", { length: 36 }).notNull(),
   interactionType: interactionTypeEnum("interaction_type").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const newsComments = pgTable("news_comments", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  newsId: varchar("news_id", { length: 36 }).notNull(),
+  userId: varchar("user_id", { length: 36 }).notNull(),
+  content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -273,6 +284,18 @@ export const newsRelations = relations(news, ({ one, many }) => ({
     references: [teams.id],
   }),
   interactions: many(newsInteractions),
+  comments: many(newsComments),
+}));
+
+export const newsCommentsRelations = relations(newsComments, ({ one }) => ({
+  news: one(news, {
+    fields: [newsComments.newsId],
+    references: [news.id],
+  }),
+  user: one(users, {
+    fields: [newsComments.userId],
+    references: [users.id],
+  }),
 }));
 
 export const newsInteractionsRelations = relations(newsInteractions, ({ one }) => ({
@@ -436,3 +459,5 @@ export type InsertTransfer = z.infer<typeof insertTransferSchema>;
 
 export type InfluencerRequest = typeof influencerRequests.$inferSelect;
 export type InsertInfluencerRequest = z.infer<typeof insertInfluencerRequestSchema>;
+
+export type NewsComment = typeof newsComments.$inferSelect;

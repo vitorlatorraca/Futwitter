@@ -9,6 +9,7 @@ import {
   matchPlayers,
   news,
   newsInteractions,
+  newsComments,
   playerRatings,
   badges,
   userBadges,
@@ -28,6 +29,7 @@ import {
   type InsertNews,
   type NewsInteraction,
   type InsertNewsInteraction,
+  type NewsComment,
   type PlayerRating,
   type InsertPlayerRating,
   type Badge,
@@ -328,7 +330,7 @@ export class DatabaseStorage implements IStorage {
       } catch (error: any) {
         // Se falhar por causa de colunas que não existem, usar SQL direto
         if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
-          console.log('[getAllNews] Colunas novas não existem, usando query compatível...');
+          console.log('[getAllNews] New columns do not exist, using compatible query...');
           const whereClause = teamId
             ? sql`is_published = true AND team_id = ${teamId}`
             : sql`is_published = true`;
@@ -338,7 +340,10 @@ export class DatabaseStorage implements IStorage {
               id, journalist_id, user_id, team_id, title, content, image_url,
               NULL::text as video_url,
               'TEXT'::text as content_type,
-              category, likes_count, dislikes_count, is_published, 
+              category, likes_count, dislikes_count, 
+              COALESCE(views_count, 0) as views_count,
+              COALESCE(comments_count, 0) as comments_count,
+              is_published, 
               published_at, created_at, updated_at
             FROM news
             WHERE ${whereClause}
@@ -371,6 +376,8 @@ export class DatabaseStorage implements IStorage {
             category: row.category,
             likesCount: row.likes_count,
             dislikesCount: row.dislikes_count,
+            viewsCount: row.views_count || 0,
+            commentsCount: row.comments_count || 0,
             isPublished: row.is_published,
             publishedAt: row.published_at,
             createdAt: row.created_at,
@@ -481,6 +488,8 @@ export class DatabaseStorage implements IStorage {
             category: newsItem.category,
             likesCount: newsItem.likesCount,
             dislikesCount: newsItem.dislikesCount,
+            viewsCount: (newsItem as any).viewsCount || 0,
+            commentsCount: (newsItem as any).commentsCount || 0,
             isPublished: newsItem.isPublished,
             publishedAt: newsItem.publishedAt,
             createdAt: newsItem.createdAt,
@@ -615,7 +624,7 @@ export class DatabaseStorage implements IStorage {
     } catch (error: any) {
       // Se falhar por causa de colunas que não existem, usar SQL direto
       if (error.message && (error.message.includes('video_url') || error.message.includes('content_type'))) {
-        console.log('[createNews] Colunas novas não existem, usando insert compatível...');
+        console.log('[createNews] New columns do not exist, using compatible insert...');
         // Remover campos novos do insert
         const { contentType, videoUrl, ...newsDataWithoutNewFields } = newsData;
         const [newsItem] = await db.insert(news).values(newsDataWithoutNewFields).returning();
@@ -690,6 +699,72 @@ export class DatabaseStorage implements IStorage {
         updatedAt: new Date()
       })
       .where(eq(news.id, newsId));
+  }
+
+  // Get single news by ID
+  async getNewsById(newsId: string): Promise<News | undefined> {
+    const [newsItem] = await db
+      .select()
+      .from(news)
+      .where(eq(news.id, newsId))
+      .limit(1);
+    return newsItem;
+  }
+
+  // Increment news views
+  async incrementNewsViews(newsId: string): Promise<void> {
+    await db
+      .update(news)
+      .set({
+        viewsCount: sql`COALESCE(${news.viewsCount}, 0) + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(news.id, newsId));
+  }
+
+  // News Comments
+  async getNewsComments(newsId: string): Promise<any[]> {
+    const comments = await db
+      .select({
+        id: newsComments.id,
+        newsId: newsComments.newsId,
+        userId: newsComments.userId,
+        content: newsComments.content,
+        createdAt: newsComments.createdAt,
+        userName: users.name,
+        userAvatar: users.avatarUrl,
+      })
+      .from(newsComments)
+      .innerJoin(users, eq(newsComments.userId, users.id))
+      .where(eq(newsComments.newsId, newsId))
+      .orderBy(desc(newsComments.createdAt));
+    return comments;
+  }
+
+  async getNewsCommentsCount(newsId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(newsComments)
+      .where(eq(newsComments.newsId, newsId));
+    return result[0]?.count || 0;
+  }
+
+  async createNewsComment(data: { newsId: string; userId: string; content: string }): Promise<NewsComment> {
+    const [comment] = await db
+      .insert(newsComments)
+      .values(data)
+      .returning();
+    
+    // Increment comments count on the news
+    await db
+      .update(news)
+      .set({
+        commentsCount: sql`COALESCE(${news.commentsCount}, 0) + 1`,
+        updatedAt: new Date()
+      })
+      .where(eq(news.id, data.newsId));
+    
+    return comment;
   }
 
   // Player Ratings
