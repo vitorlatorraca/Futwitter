@@ -69,18 +69,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/register', async (req, res) => {
     try {
-      const { name, email, password, teamId } = insertUserSchema.parse(req.body);
+      console.log('📝 REGISTER REQUEST - Body:', JSON.stringify(req.body, null, 2));
+      console.log('📝 REGISTER REQUEST - Content-Type:', req.headers['content-type']);
+      
+      // Parse and validate the request body
+      // Handle undefined teamId by converting it to null
+      const bodyToParse = {
+        ...req.body,
+        teamId: req.body.teamId || null,
+      };
+      const parsed = insertUserSchema.parse(bodyToParse);
+      const { name, email, password, teamId } = parsed;
+      console.log('📝 REGISTER REQUEST - Parsed data:', { name, email, password: '***', teamId });
 
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
+        console.log('⚠️ REGISTER - Email já cadastrado:', email);
         return res.status(400).json({ message: 'Email já cadastrado' });
       }
 
       // Hash password
+      console.log('🔐 REGISTER - Hashing password...');
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // Create user
+      console.log('👤 REGISTER - Creating user...');
       const user = await storage.createUser({
         name,
         email,
@@ -88,47 +102,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
         teamId: teamId || null,
         userType: 'FAN',
       });
+      console.log('✅ REGISTER - User created:', { id: user.id, email: user.email });
 
       // Set session
       req.session.userId = user.id;
       req.session.userType = user.userType;
+      console.log('🔑 REGISTER - Session set:', { userId: user.id, userType: user.userType });
 
       // Award signup badge
-      await storage.checkAndAwardBadges(user.id);
+      try {
+        await storage.checkAndAwardBadges(user.id);
+      } catch (badgeError: any) {
+        console.warn('⚠️ REGISTER - Error awarding badges (non-critical):', badgeError.message);
+      }
 
       res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
-      console.error('Registration error:', error);
+      console.error('❌ REGISTRATION ERROR:', error);
+      console.error('❌ REGISTRATION ERROR - Name:', error.name);
+      console.error('❌ REGISTRATION ERROR - Message:', error.message);
+      console.error('❌ REGISTRATION ERROR - Stack:', error.stack);
+      
+      // Handle Zod validation errors
+      if (error.issues && Array.isArray(error.issues)) {
+        const validationErrors = error.issues.map((issue: any) => ({
+          path: issue.path.join('.'),
+          message: issue.message
+        }));
+        console.error('❌ REGISTRATION ERROR - Validation issues:', validationErrors);
+        const firstError = validationErrors[0];
+        return res.status(400).json({ 
+          message: firstError?.message || 'Erro de validação',
+          errors: validationErrors 
+        });
+      }
+      
       res.status(400).json({ message: error.message || 'Erro ao criar conta' });
     }
   });
 
   app.post('/api/auth/login', async (req, res) => {
     try {
+      console.log('🔐 LOGIN REQUEST - Body:', JSON.stringify({ ...req.body, password: '***' }, null, 2));
+      console.log('🔐 LOGIN REQUEST - Content-Type:', req.headers['content-type']);
+      
       const { email, password } = req.body;
 
       if (!email || !password) {
+        console.log('⚠️ LOGIN - Missing email or password');
         return res.status(400).json({ message: 'Email e senha são obrigatórios' });
       }
 
+      console.log('🔍 LOGIN - Looking for user with email:', email);
       const user = await storage.getUserByEmail(email);
       if (!user) {
+        console.log('❌ LOGIN - User not found:', email);
         return res.status(401).json({ message: 'Email ou senha incorretos' });
       }
 
+      console.log('🔍 LOGIN - User found:', { id: user.id, email: user.email, hasPassword: !!user.password });
+      
+      if (!user.password) {
+        console.error('❌ LOGIN - User has no password hash!');
+        return res.status(500).json({ message: 'Erro interno: usuário sem senha cadastrada' });
+      }
+
+      console.log('🔐 LOGIN - Comparing passwords...');
       const isValidPassword = await bcrypt.compare(password, user.password);
       if (!isValidPassword) {
+        console.log('❌ LOGIN - Invalid password for user:', email);
         return res.status(401).json({ message: 'Email ou senha incorretos' });
       }
 
+      console.log('✅ LOGIN - Password valid, setting session...');
       // Set session
       req.session.userId = user.id;
       req.session.userType = user.userType;
+      console.log('🔑 LOGIN - Session set:', { userId: user.id, userType: user.userType });
 
       res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
     } catch (error: any) {
-      console.error('Login error:', error);
-      console.error('Error stack:', error.stack);
+      console.error('❌ LOGIN ERROR:', error);
+      console.error('❌ LOGIN ERROR - Name:', error.name);
+      console.error('❌ LOGIN ERROR - Message:', error.message);
+      console.error('❌ LOGIN ERROR - Stack:', error.stack);
+      
+      // Check for specific database errors
+      if (error.message?.includes('relation') || error.message?.includes('does not exist')) {
+        console.error('❌ LOGIN ERROR - Database schema issue detected!');
+        return res.status(500).json({ 
+          message: 'Erro de banco de dados. Verifique se as migrations foram executadas.',
+          details: 'Execute: npm run db:push'
+        });
+      }
+      
       res.status(500).json({ message: error.message || 'Erro ao fazer login' });
     }
   });

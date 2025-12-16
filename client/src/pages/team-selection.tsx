@@ -99,25 +99,23 @@ export default function TeamSelectionPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-center">Confirmar escolha</DialogTitle>
-            <DialogDescription className="text-center pt-4">
-              {team && (
-                <div className="flex flex-col items-center gap-4">
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-2" style={{ borderColor: team.primaryColor }}>
-                    <img
-                      src={team.logoUrl}
-                      alt={`Escudo do ${team.name}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <p className="font-display font-bold text-xl mb-2">{team.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Tem certeza? Esta escolha é <span className="font-semibold text-foreground">permanente</span> e não poderá ser alterada depois!
-                    </p>
-                  </div>
+            {team && (
+              <div className="flex flex-col items-center gap-4 pt-4">
+                <div className="w-24 h-24 rounded-full overflow-hidden border-2" style={{ borderColor: team.primaryColor }}>
+                  <img
+                    src={team.logoUrl}
+                    alt={`Escudo do ${team.name}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              )}
-            </DialogDescription>
+                <div className="text-center">
+                  <p className="font-display font-bold text-xl mb-2">{team.name}</p>
+                  <DialogDescription className="text-sm">
+                    Tem certeza? Esta escolha é <span className="font-semibold text-foreground">permanente</span> e não poderá ser alterada depois!
+                  </DialogDescription>
+                </div>
+              </div>
+            )}
           </DialogHeader>
           <DialogFooter className="sm:justify-center gap-2">
             <Button
