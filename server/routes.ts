@@ -58,7 +58,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', // 'lax' works for same-site and cross-site top-level navigations
+        // In development, ensure cookie works with localhost
+        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
       },
     })
   );
@@ -145,6 +147,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log('🔐 LOGIN REQUEST - Body:', JSON.stringify({ ...req.body, password: '***' }, null, 2));
       console.log('🔐 LOGIN REQUEST - Content-Type:', req.headers['content-type']);
+      console.log('🔐 LOGIN REQUEST - Origin:', req.headers.origin);
+      console.log('🔐 LOGIN REQUEST - Cookie:', req.headers.cookie);
       
       const { email, password } = req.body;
 
@@ -153,8 +157,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Email e senha são obrigatórios' });
       }
 
+      // Validate email format
+      if (typeof email !== 'string' || !email.includes('@')) {
+        console.log('⚠️ LOGIN - Invalid email format');
+        return res.status(400).json({ message: 'Formato de email inválido' });
+      }
+
+      // Validate password is a string
+      if (typeof password !== 'string' || password.length === 0) {
+        console.log('⚠️ LOGIN - Invalid password format');
+        return res.status(400).json({ message: 'Senha é obrigatória' });
+      }
+
       console.log('🔍 LOGIN - Looking for user with email:', email);
-      const user = await storage.getUserByEmail(email);
+      
+      let user;
+      try {
+        user = await storage.getUserByEmail(email);
+      } catch (dbError: any) {
+        console.error('❌ LOGIN - Database error when fetching user:', dbError);
+        // Check for specific database errors
+        if (dbError.message?.includes('relation') || dbError.message?.includes('does not exist')) {
+          console.error('❌ LOGIN ERROR - Database schema issue detected!');
+          return res.status(500).json({ 
+            message: 'Erro de banco de dados. Verifique se as migrations foram executadas.',
+            details: 'Execute: npm run db:push'
+          });
+        }
+        throw dbError; // Re-throw to be caught by outer catch
+      }
+      
       if (!user) {
         console.log('❌ LOGIN - User not found:', email);
         return res.status(401).json({ message: 'Email ou senha incorretos' });
@@ -168,19 +200,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('🔐 LOGIN - Comparing passwords...');
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      let isValidPassword = false;
+      try {
+        isValidPassword = await bcrypt.compare(password, user.password);
+      } catch (bcryptError: any) {
+        console.error('❌ LOGIN - Bcrypt comparison error:', bcryptError);
+        return res.status(500).json({ message: 'Erro ao verificar senha' });
+      }
+      
       if (!isValidPassword) {
         console.log('❌ LOGIN - Invalid password for user:', email);
         return res.status(401).json({ message: 'Email ou senha incorretos' });
       }
 
       console.log('✅ LOGIN - Password valid, setting session...');
-      // Set session
-      req.session.userId = user.id;
-      req.session.userType = user.userType;
-      console.log('🔑 LOGIN - Session set:', { userId: user.id, userType: user.userType });
-
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
+      
+      // Set session with error handling
+      try {
+        req.session.userId = user.id;
+        req.session.userType = user.userType;
+        console.log('🔑 LOGIN - Session set:', { userId: user.id, userType: user.userType });
+        
+        // Save session explicitly to catch any session store errors
+        req.session.save((err) => {
+          if (err) {
+            console.error('❌ LOGIN - Error saving session:', err);
+            return res.status(500).json({ message: 'Erro ao criar sessão' });
+          }
+          
+          console.log('✅ LOGIN - Session saved successfully');
+          res.json({ 
+            id: user.id, 
+            name: user.name, 
+            email: user.email, 
+            teamId: user.teamId, 
+            userType: user.userType, 
+            isInfluencer: user.isInfluencer, 
+            avatarUrl: user.avatarUrl 
+          });
+        });
+      } catch (sessionError: any) {
+        console.error('❌ LOGIN - Session error:', sessionError);
+        return res.status(500).json({ message: 'Erro ao criar sessão' });
+      }
     } catch (error: any) {
       console.error('❌ LOGIN ERROR:', error);
       console.error('❌ LOGIN ERROR - Name:', error.name);
@@ -196,7 +258,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      res.status(500).json({ message: error.message || 'Erro ao fazer login' });
+      // Check for connection errors
+      if (error.message?.includes('connect') || error.message?.includes('ECONNREFUSED')) {
+        console.error('❌ LOGIN ERROR - Database connection issue detected!');
+        return res.status(500).json({ 
+          message: 'Erro de conexão com o banco de dados. Verifique a configuração.',
+          details: 'Verifique se DATABASE_URL está correto no arquivo .env'
+        });
+      }
+      
+      res.status(500).json({ 
+        message: error.message || 'Erro ao fazer login',
+        ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
+      });
     }
   });
 

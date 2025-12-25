@@ -18,6 +18,28 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 
+// CORS middleware - MUST be before routes
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  // Allow requests from same origin (development) or any origin in development
+  // In production, you should restrict this to your frontend domain
+  if (process.env.NODE_ENV === 'development' || !origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  } else {
+    // In production, set this to your frontend domain
+    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || origin || '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
