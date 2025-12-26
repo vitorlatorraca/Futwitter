@@ -1,6 +1,5 @@
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
-import { Pool as PgPool } from 'pg';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
@@ -22,6 +21,3 @@ export const pool = new Pool({
 });
 export const db = drizzle({ client: pool, schema });
 
-// Pool for connect-pg-simple (standard pg pool)
-// connect-pg-simple requires a standard pg Pool, not Neon's Pool
-export const sessionPool = new PgPool({ connectionString: process.env.DATABASE_URL });

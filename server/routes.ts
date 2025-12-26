@@ -1,69 +1,50 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import session from "express-session";
-import ConnectPgSimple from "connect-pg-simple";
-import { sessionPool } from "./db";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import { insertUserSchema, insertNewsSchema, insertPlayerRatingSchema, insertInfluencerRequestSchema } from "@shared/schema";
-
-const PgSession = ConnectPgSimple(session);
-
-// Middleware to check if user is authenticated
-function requireAuth(req: any, res: any, next: any) {
-  if (!req.session.userId) {
-    return res.status(401).json({ message: 'Não autenticado' });
-  }
-  next();
-}
+import { signToken } from "./auth/jwt";
+import { setAuthCookie, clearAuthCookie } from "./auth/cookies";
+import { requireAuth, authenticateOptional } from "./auth/middleware";
 
 // Middleware to check if user is a journalist or influencer
 async function requireJournalistOrInfluencer(req: any, res: any, next: any) {
-  if (req.session.userType === 'JOURNALIST') {
-    return next();
+  if (!req.user?.id) {
+    return res.status(401).json({ message: 'Não autenticado' });
   }
-  
-  // Check if user is an influencer
-  if (req.session.userId) {
-    const user = await storage.getUser(req.session.userId);
-    if (user?.isInfluencer) {
-      return next();
-    }
+
+  const user = await storage.getUser(String(req.user.id));
+  if (!user) {
+    return res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+
+  if (user.userType === 'JOURNALIST' || user.isInfluencer) {
+    return next();
   }
   
   return res.status(403).json({ message: 'Acesso negado. Apenas jornalistas ou influencers.' });
 }
 
 // Middleware to check if user is an admin
-function requireAdmin(req: any, res: any, next: any) {
-  if (req.session.userType !== 'ADMIN') {
+async function requireAdmin(req: any, res: any, next: any) {
+  if (!req.user?.id) {
+    return res.status(401).json({ message: 'Não autenticado' });
+  }
+
+  const user = await storage.getUser(String(req.user.id));
+  if (!user) {
+    return res.status(404).json({ message: 'Usuário não encontrado' });
+  }
+
+  if (user.userType !== 'ADMIN') {
     return res.status(403).json({ message: 'Acesso negado. Apenas administradores.' });
   }
   next();
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Configure session
-  app.use(
-    session({
-      store: new PgSession({
-        pool: sessionPool,
-        tableName: 'user_sessions',
-        createTableIfMissing: true,
-      }),
-      secret: process.env.SESSION_SECRET || 'brasileirao-secret-key-change-in-production',
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'lax' : 'lax', // 'lax' works for same-site and cross-site top-level navigations
-        // In development, ensure cookie works with localhost
-        domain: process.env.NODE_ENV === 'production' ? process.env.COOKIE_DOMAIN : undefined,
-      },
-    })
-  );
+  // Apply optional authentication middleware globally to parse cookies
+  app.use(authenticateOptional);
 
   // ============================================
   // AUTHENTICATION ROUTES
@@ -106,10 +87,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.log('✅ REGISTER - User created:', { id: user.id, email: user.email });
 
-      // Set session
-      req.session.userId = user.id;
-      req.session.userType = user.userType;
-      console.log('🔑 REGISTER - Session set:', { userId: user.id, userType: user.userType });
+      // Issue JWT token
+      const token = signToken(user.id);
+      setAuthCookie(res, token);
+      console.log('🔑 REGISTER - JWT token issued:', { userId: user.id });
 
       // Award signup badge
       try {
@@ -118,7 +99,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn('⚠️ REGISTER - Error awarding badges (non-critical):', badgeError.message);
       }
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
+      // Return public user fields (no password)
+      res.json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        teamId: user.teamId, 
+        userType: user.userType, 
+        isInfluencer: user.isInfluencer, 
+        avatarUrl: user.avatarUrl 
+      });
     } catch (error: any) {
       console.error('❌ REGISTRATION ERROR:', error);
       console.error('❌ REGISTRATION ERROR - Name:', error.name);
@@ -137,6 +127,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: firstError?.message || 'Erro de validação',
           errors: validationErrors 
         });
+      }
+      
+      // Infrastructure/DB errors should return 500
+      if (error.message?.includes('relation') || error.message?.includes('does not exist') || error.message?.includes('connect')) {
+        return res.status(500).json({ message: error.message || 'Erro ao criar conta' });
       }
       
       res.status(400).json({ message: error.message || 'Erro ao criar conta' });
@@ -213,36 +208,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Email ou senha incorretos' });
       }
 
-      console.log('✅ LOGIN - Password valid, setting session...');
+      console.log('✅ LOGIN - Password valid, issuing JWT token...');
       
-      // Set session with error handling
-      try {
-        req.session.userId = user.id;
-        req.session.userType = user.userType;
-        console.log('🔑 LOGIN - Session set:', { userId: user.id, userType: user.userType });
-        
-        // Save session explicitly to catch any session store errors
-        req.session.save((err) => {
-          if (err) {
-            console.error('❌ LOGIN - Error saving session:', err);
-            return res.status(500).json({ message: 'Erro ao criar sessão' });
-          }
-          
-          console.log('✅ LOGIN - Session saved successfully');
-          res.json({ 
-            id: user.id, 
-            name: user.name, 
-            email: user.email, 
-            teamId: user.teamId, 
-            userType: user.userType, 
-            isInfluencer: user.isInfluencer, 
-            avatarUrl: user.avatarUrl 
-          });
-        });
-      } catch (sessionError: any) {
-        console.error('❌ LOGIN - Session error:', sessionError);
-        return res.status(500).json({ message: 'Erro ao criar sessão' });
-      }
+      // Issue JWT token
+      const token = signToken(user.id);
+      setAuthCookie(res, token);
+      console.log('🔑 LOGIN - JWT token issued:', { userId: user.id });
+
+      // Return public user fields (no password)
+      res.json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        teamId: user.teamId, 
+        userType: user.userType, 
+        isInfluencer: user.isInfluencer, 
+        avatarUrl: user.avatarUrl 
+      });
     } catch (error: any) {
       console.error('❌ LOGIN ERROR:', error);
       console.error('❌ LOGIN ERROR - Name:', error.name);
@@ -275,26 +257,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post('/api/auth/logout', (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        return res.status(500).json({ message: 'Erro ao fazer logout' });
-      }
-      res.json({ message: 'Logout realizado com sucesso' });
-    });
+    clearAuthCookie(res);
+    res.json({ ok: true });
   });
 
-  app.get('/api/auth/me', async (req, res) => {
-    if (!req.session.userId) {
-      return res.status(401).json({ message: 'Não autenticado' });
-    }
-
+  app.get('/api/auth/me', requireAuth, async (req, res) => {
     try {
-      const user = await storage.getUser(req.session.userId);
+      const user = await storage.getUser(String(req.user!.id));
       if (!user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
       }
 
-      res.json({ id: user.id, name: user.name, email: user.email, teamId: user.teamId, userType: user.userType, isInfluencer: user.isInfluencer, avatarUrl: user.avatarUrl });
+      // Return public user fields (no password)
+      res.json({ 
+        id: user.id, 
+        name: user.name, 
+        email: user.email, 
+        teamId: user.teamId, 
+        userType: user.userType, 
+        isInfluencer: user.isInfluencer, 
+        avatarUrl: user.avatarUrl 
+      });
     } catch (error: any) {
       console.error('Get me error:', error);
       console.error('Error stack:', error.stack);
@@ -360,13 +343,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Add user ratings if logged in
-      if (req.session.userId) {
+      if (req.user?.id) {
         const playersWithUserRating = await Promise.all(
           lastMatch.players.map(async (player) => {
             const userRating = await storage.getPlayerRatingForMatch(
               player.id,
               lastMatch.id,
-              req.session.userId!
+              String(req.user!.id)
             );
             return {
               ...player,
@@ -426,12 +409,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { teamId, filter } = req.query;
       
-      console.log(`[GET /api/news] Request received - filter: ${filter}, teamId: ${teamId}, sessionUserId: ${req.session.userId}`);
+      console.log(`[GET /api/news] Request received - filter: ${filter}, teamId: ${teamId}, userId: ${req.user?.id}`);
       
       let filterTeamId: string | undefined;
       
-      if (filter === 'my-team' && req.session.userId) {
-        const user = await storage.getUser(req.session.userId);
+      if (filter === 'my-team' && req.user?.id) {
+        const user = await storage.getUser(String(req.user.id));
         filterTeamId = user?.teamId || undefined;
         console.log(`[GET /api/news] my-team filter - user teamId: ${user?.teamId}`);
       } else if (filter === 'all') {
@@ -453,9 +436,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Add user interaction info if logged in
-      if (req.session.userId) {
+      if (req.user?.id) {
         for (const newsItem of newsItems) {
-          const interaction = await storage.getUserNewsInteraction(req.session.userId, newsItem.id);
+          const interaction = await storage.getUserNewsInteraction(String(req.user.id), newsItem.id);
           (newsItem as any).userInteraction = interaction?.interactionType || null;
         }
       }
@@ -475,7 +458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/news/my-news', requireAuth, requireJournalistOrInfluencer, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
@@ -514,7 +497,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/news', requireAuth, requireJournalistOrInfluencer, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: 'Usuário não encontrado' });
@@ -574,7 +557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { type } = req.body;
       const newsId = req.params.id;
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
 
       // Check if interaction already exists
       const existing = await storage.getUserNewsInteraction(userId, newsId);
@@ -619,7 +602,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/players/:id/ratings', requireAuth, async (req, res) => {
     try {
       const playerId = req.params.id;
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
       const ratingData = insertPlayerRatingSchema.parse(req.body);
 
       const rating = await storage.createPlayerRating({
@@ -657,7 +640,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/profile', requireAuth, async (req, res) => {
     try {
       const { name, email } = req.body;
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
 
       const updatedUser = await storage.updateUser(userId, { name, email });
 
@@ -671,7 +654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/profile/password', requireAuth, async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
 
       const user = await storage.getUser(userId);
       if (!user) {
@@ -696,7 +679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/profile/avatar', requireAuth, async (req, res) => {
     try {
       const { avatarUrl } = req.body;
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
 
       if (!avatarUrl || typeof avatarUrl !== 'string') {
         return res.status(400).json({ message: 'URL do avatar é obrigatória' });
@@ -740,7 +723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/badges', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
       const userBadges = await storage.getUserBadges(userId);
       const allBadges = await storage.getAllBadges();
 
@@ -762,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/badges/check', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
+      const userId = String(req.user!.id);
       const newBadges = await storage.checkAndAwardBadges(userId);
       res.json(newBadges);
     } catch (error) {
@@ -817,10 +800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/influencer/request', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
-      if (!userId) {
-        return res.status(401).json({ message: 'Usuário não autenticado' });
-      }
+      const userId = String(req.user!.id);
 
       const requestData = insertInfluencerRequestSchema.parse(req.body);
 
@@ -853,10 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/influencer/request/my', requireAuth, async (req, res) => {
     try {
-      const userId = req.session.userId!;
-      if (!userId) {
-        return res.status(401).json({ message: 'Usuário não autenticado' });
-      }
+      const userId = String(req.user!.id);
       const request = await storage.getInfluencerRequestByUserId(userId);
       res.json(request || null);
     } catch (error: any) {
@@ -880,7 +857,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const adminId = req.session.userId!;
+      const adminId = String(req.user!.id);
 
       if (!['APPROVED', 'REJECTED'].includes(status)) {
         return res.status(400).json({ message: 'Status inválido. Use APPROVED ou REJECTED' });
