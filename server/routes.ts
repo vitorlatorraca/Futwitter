@@ -52,19 +52,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/register', async (req, res) => {
     try {
-      console.log('📝 REGISTER REQUEST - Body:', JSON.stringify(req.body, null, 2));
+      // ============================================
+      // COMPREHENSIVE REQUEST LOGGING
+      // ============================================
+      console.log('📝 REGISTER REQUEST - Raw req.body:', JSON.stringify(req.body, null, 2));
+      console.log('📝 REGISTER REQUEST - req.body type:', typeof req.body);
+      console.log('📝 REGISTER REQUEST - req.body keys:', Object.keys(req.body || {}));
       console.log('📝 REGISTER REQUEST - Content-Type:', req.headers['content-type']);
+      console.log('📝 REGISTER REQUEST - Body is empty?', !req.body || Object.keys(req.body).length === 0);
       
-      // Parse and validate the request body
-      // Handle undefined teamId by converting it to null
+      // Check if body is empty or not parsed
+      if (!req.body || Object.keys(req.body).length === 0) {
+        console.error('❌ REGISTER - Empty or unparsed request body');
+        return res.status(400).json({ 
+          message: 'Corpo da requisição vazio ou não parseado. Verifique se Content-Type é application/json.',
+          errors: [{ path: 'body', message: 'Request body is empty or not parsed' }]
+        });
+      }
+
+      // ============================================
+      // PREPARE BODY FOR VALIDATION
+      // ============================================
+      // Handle teamId: convert undefined, null, or empty string to null
       const bodyToParse = {
         ...req.body,
-        teamId: req.body.teamId || null,
+        teamId: req.body.teamId === undefined || req.body.teamId === null || req.body.teamId === '' 
+          ? null 
+          : req.body.teamId,
       };
-      const parsed = insertUserSchema.parse(bodyToParse);
-      const { name, email, password, teamId } = parsed;
-      console.log('📝 REGISTER REQUEST - Parsed data:', { name, email, password: '***', teamId });
+      
+      console.log('📝 REGISTER REQUEST - Body to parse:', JSON.stringify(bodyToParse, null, 2));
+      console.log('📝 REGISTER REQUEST - teamId value:', bodyToParse.teamId, 'type:', typeof bodyToParse.teamId);
 
+      // ============================================
+      // VALIDATE WITH ZOD
+      // ============================================
+      let parsed;
+      try {
+        parsed = insertUserSchema.parse(bodyToParse);
+        console.log('✅ REGISTER REQUEST - Validation passed');
+        console.log('📝 REGISTER REQUEST - Parsed data:', { 
+          name: parsed.name, 
+          email: parsed.email, 
+          password: '***', 
+          teamId: parsed.teamId,
+          userType: parsed.userType,
+          isInfluencer: parsed.isInfluencer 
+        });
+      } catch (validationError: any) {
+        // ============================================
+        // DETAILED ZOD ERROR LOGGING
+        // ============================================
+        console.error('❌ REGISTRATION VALIDATION ERROR - Full error object:', JSON.stringify(validationError, null, 2));
+        console.error('❌ REGISTRATION VALIDATION ERROR - Error name:', validationError.name);
+        console.error('❌ REGISTRATION VALIDATION ERROR - Error message:', validationError.message);
+        console.error('❌ REGISTRATION VALIDATION ERROR - Error issues:', validationError.issues);
+        
+        if (validationError.issues && Array.isArray(validationError.issues)) {
+          const validationErrors = validationError.issues.map((issue: any) => {
+            const errorDetail = {
+              path: issue.path.join('.'),
+              message: issue.message,
+              code: issue.code,
+              received: issue.received,
+              expected: issue.expected,
+            };
+            console.error(`❌ REGISTRATION VALIDATION ERROR - Issue:`, errorDetail);
+            return errorDetail;
+          });
+          
+          const firstError = validationErrors[0];
+          return res.status(400).json({ 
+            message: firstError?.message || 'Erro de validação',
+            errors: validationErrors,
+            receivedBody: bodyToParse
+          });
+        }
+        
+        return res.status(400).json({ 
+          message: validationError.message || 'Erro de validação',
+          receivedBody: bodyToParse
+        });
+      }
+
+      const { name, email, password, teamId } = parsed;
+
+      // ============================================
+      // BUSINESS LOGIC
+      // ============================================
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
@@ -82,7 +157,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         name,
         email,
         password: hashedPassword,
-        teamId: teamId || null,
+        teamId: teamId === undefined || teamId === null || teamId === '' ? null : teamId,
         userType: 'FAN',
       });
       console.log('✅ REGISTER - User created:', { id: user.id, email: user.email });
@@ -110,24 +185,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         avatarUrl: user.avatarUrl 
       });
     } catch (error: any) {
-      console.error('❌ REGISTRATION ERROR:', error);
+      // ============================================
+      // GENERAL ERROR HANDLING
+      // ============================================
+      console.error('❌ REGISTRATION ERROR - Full error:', error);
       console.error('❌ REGISTRATION ERROR - Name:', error.name);
       console.error('❌ REGISTRATION ERROR - Message:', error.message);
       console.error('❌ REGISTRATION ERROR - Stack:', error.stack);
-      
-      // Handle Zod validation errors
-      if (error.issues && Array.isArray(error.issues)) {
-        const validationErrors = error.issues.map((issue: any) => ({
-          path: issue.path.join('.'),
-          message: issue.message
-        }));
-        console.error('❌ REGISTRATION ERROR - Validation issues:', validationErrors);
-        const firstError = validationErrors[0];
-        return res.status(400).json({ 
-          message: firstError?.message || 'Erro de validação',
-          errors: validationErrors 
-        });
-      }
       
       // Infrastructure/DB errors should return 500
       if (error.message?.includes('relation') || error.message?.includes('does not exist') || error.message?.includes('connect')) {

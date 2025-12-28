@@ -332,7 +332,16 @@ export const insertUserSchema = createInsertSchema(users, {
   email: z.string().email("Email inválido"),
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
-}).omit({ id: true, createdAt: true, updatedAt: true });
+}).omit({ 
+  id: true, 
+  createdAt: true, 
+  updatedAt: true, 
+  userType: true,  // Has default "FAN", set by backend
+  isInfluencer: true,  // Has default false, set by backend
+  avatarUrl: true  // Optional, not needed for registration
+}).extend({
+  teamId: z.string().nullable().optional(),  // Explicitly handle teamId as optional/nullable
+});
 
 export const selectUserSchema = createSelectSchema(users);
 
