@@ -3,6 +3,13 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Fail fast if required environment variables are missing
+if (!process.env.JWT_SECRET) {
+  throw new Error(
+    "JWT_SECRET environment variable is required. Please set it in your .env file or environment variables."
+  );
+}
+
 const app = express();
 
 declare module 'http' {
@@ -18,17 +25,35 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 
+// Health check endpoint - MUST be before CORS to avoid issues
+app.get('/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
 // CORS middleware - MUST be before routes
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  // Allow requests from same origin (development) or any origin in development
-  // In production, you should restrict this to your frontend domain
-  if (process.env.NODE_ENV === 'development' || !origin) {
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+  const frontendUrl = process.env.FRONTEND_URL;
+  
+  // Determine allowed origin
+  let allowedOrigin: string;
+  
+  if (process.env.NODE_ENV === 'development') {
+    // In development, allow the origin from the request or any origin
+    allowedOrigin = origin || '*';
   } else {
-    // In production, set this to your frontend domain
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || origin || '*');
+    // In production, use FRONTEND_URL if set, otherwise allow the request origin
+    if (frontendUrl) {
+      allowedOrigin = frontendUrl;
+    } else if (origin) {
+      // Fallback to request origin if FRONTEND_URL not set
+      allowedOrigin = origin;
+    } else {
+      allowedOrigin = '*';
+    }
   }
+  
+  res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -96,6 +121,10 @@ app.use((req, res, next) => {
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
   server.listen(port, "0.0.0.0", () => {
-    log(`serving on port ${port}`);
+    log(`🚀 Server running on port ${port}`);
+    log(`📡 Health check: http://0.0.0.0:${port}/health`);
+    if (process.env.FRONTEND_URL) {
+      log(`🌐 Frontend URL: ${process.env.FRONTEND_URL}`);
+    }
   });
 })();

@@ -16,7 +16,7 @@ function getCookieOptions() {
   
   return {
     httpOnly: true,
-    secure: isProduction || isCrossOrigin, // Secure required for eesameSite: "none"
+    secure: isProduction || isCrossOrigin, // Secure required for sameSite: "none"
     sameSite: (isCrossOrigin ? "none" : "lax") as "none" | "lax" | "strict",
     path: "/",
     maxAge: getCookieMaxAge(),

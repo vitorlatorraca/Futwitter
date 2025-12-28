@@ -8,13 +8,22 @@ Isso significa que o servidor não está rodando. Siga estes passos:
 
 ### 1. Verificar se o .env existe
 
-Crie um arquivo `.env` na raiz do projeto com:
+Copie o arquivo `env.example.txt` para `.env` e preencha com seus valores:
+
+```bash
+cp env.example.txt .env
+```
+
+Edite o `.env` com:
 
 ```env
 DATABASE_URL=postgresql://usuario:senha@host:porta/database
 PORT=5001
 SESSION_SECRET=sua-chave-secreta-aqui
+JWT_SECRET=sua-jwt-secret-aqui
 ```
+
+> **Importante:** Gere secrets seguros com: `openssl rand -base64 32`
 
 ### 2. Executar a Migration (IMPORTANTE!)
 
@@ -95,6 +104,37 @@ Se aparecer algum erro, copie e me envie!
 Acesse: **http://localhost:5001**
 
 Você verá a página inicial do Brasileirão DataFlow!
+
+---
+
+## 🚀 Deploy em Produção
+
+### Railway (Backend)
+
+1. Conecte seu repositório GitHub ao Railway
+2. Configure as variáveis de ambiente:
+   - `DATABASE_URL` - URL do PostgreSQL
+   - `JWT_SECRET` - Secret para JWT (gere com `openssl rand -base64 32`)
+   - `SESSION_SECRET` - Secret para sessões (gere com `openssl rand -base64 32`)
+   - `FRONTEND_URL` - URL do frontend no Vercel (ex: `https://seu-app.vercel.app`)
+   - `NODE_ENV=production` - Definido automaticamente pelo Railway
+3. Railway executará automaticamente:
+   - Build: `npm run build`
+   - Start: `npm run start:prod`
+4. Health check disponível em: `https://seu-backend.railway.app/health`
+
+### Vercel (Frontend)
+
+1. Conecte seu repositório GitHub ao Vercel
+2. Configure a variável de ambiente:
+   - `VITE_API_BASE_URL` - URL do backend no Railway (ex: `https://seu-backend.railway.app`)
+3. Vercel detectará automaticamente Vite e fará o build
+4. Output directory: `dist/public`
+
+### Importante para Cross-Origin
+
+- Certifique-se que `FRONTEND_URL` no Railway seja exatamente a URL do Vercel (incluindo `https://`)
+- Cookies são configurados automaticamente para funcionar entre Railway e Vercel
 
 
 

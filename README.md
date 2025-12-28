@@ -44,12 +44,19 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the project root:
+Copy `env.example.txt` to `.env` and fill in the required values:
+
+```bash
+cp env.example.txt .env
+```
+
+Edit `.env` with your values:
 
 ```env
 DATABASE_URL=postgresql://user:password@host:port/database
 PORT=5000
 SESSION_SECRET=your-secret-key-here-change-in-production
+JWT_SECRET=your-jwt-secret-here-change-in-production
 ```
 
 **Examples:**
@@ -59,6 +66,7 @@ SESSION_SECRET=your-secret-key-here-change-in-production
 DATABASE_URL=postgresql://user:password@ep-xxx-xxx.region.aws.neon.tech/database?sslmode=require
 PORT=5000
 SESSION_SECRET=your-secret-key-here
+JWT_SECRET=your-jwt-secret-here
 ```
 
 **Local PostgreSQL:**
@@ -66,7 +74,10 @@ SESSION_SECRET=your-secret-key-here
 DATABASE_URL=postgresql://postgres:password@localhost:5432/brasileirao
 PORT=5000
 SESSION_SECRET=your-secret-key-here
+JWT_SECRET=your-jwt-secret-here
 ```
+
+> **Note:** Generate secure secrets with: `openssl rand -base64 32`
 
 ### 4. Configure the database
 
@@ -103,8 +114,9 @@ Access: **http://localhost:5000**
 |---------|-------------|
 | `npm run dev` | Starts the development server (with hot-reload) |
 | `npm run dev:win` | Version for Windows (CMD) |
-| `npm run build` | Creates production build |
+| `npm run build` | Creates production build (frontend + backend) |
 | `npm run start` | Starts the server in production mode (requires build first) |
+| `npm run start:prod` | Alias for `start` - used by Railway for production |
 | `npm run check` | Checks TypeScript errors |
 | `npm run db:push` | Applies database migrations |
 
@@ -154,6 +166,53 @@ BrasileiraoDataFlow/
 - **PostgreSQL** - Relational database
 - **Drizzle ORM** - Type-safe ORM
 - **Neon** - Serverless PostgreSQL (optional)
+
+---
+
+## 🚀 Production Deployment
+
+### Railway (Backend)
+
+The backend is configured to run on Railway. Railway will automatically:
+- Run `npm run build` to build the application
+- Run `npm run start:prod` to start the server
+- Provide `PORT` environment variable automatically
+
+**Required Environment Variables on Railway:**
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - Secret for JWT token signing (generate with `openssl rand -base64 32`)
+- `SESSION_SECRET` - Secret for session management (generate with `openssl rand -base64 32`)
+- `FRONTEND_URL` - Your Vercel frontend URL (e.g., `https://your-app.vercel.app`)
+- `NODE_ENV=production` - Set automatically by Railway
+
+**Railway Configuration:**
+- **Root Directory:** `.` (root of repository)
+- **Build Command:** `npm run build`
+- **Start Command:** `npm run start:prod` (or leave empty, Railway will use start:prod)
+
+**Health Check:** Railway can use `GET /health` endpoint for health checks.
+
+### Vercel (Frontend)
+
+The frontend is configured to deploy on Vercel. 
+
+**Required Environment Variables on Vercel:**
+- `VITE_API_BASE_URL` - Your Railway backend URL (e.g., `https://your-backend.railway.app`)
+
+**Vercel Configuration:**
+- **Framework Preset:** Vite
+- **Build Command:** `npm run build` (builds frontend to `dist/public`)
+- **Output Directory:** `dist/public`
+- **Install Command:** `npm install`
+
+### Cross-Origin Configuration
+
+The backend is configured to handle cross-origin requests from Vercel:
+- CORS is enabled with `FRONTEND_URL` as allowed origin
+- Cookies use `sameSite: "none"` and `secure: true` for cross-origin
+- Credentials are enabled for cookie-based authentication
+
+**Important:** Ensure `FRONTEND_URL` on Railway matches your Vercel deployment URL exactly (including `https://`).
 
 ---
 
