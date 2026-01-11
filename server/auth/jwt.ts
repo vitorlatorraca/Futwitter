@@ -57,3 +57,4 @@ export function getCookieMaxAge(): number {
   return JWT_EXPIRY_SECONDS * 1000;
 }
 
+
